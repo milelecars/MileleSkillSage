@@ -15,8 +15,10 @@ export default {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                theme: '#1247AB',
-                theme_hovered: '#5277B7'
+                theme: '#102141',
+                theme_hovered: '#5277B7',
+                warning: '#ECD7BE',
+                info:"#CBD7DD"
             }
         },
     },

@@ -18,8 +18,8 @@
         <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.jpg') }}" />
         <div class="relative min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
             <div>
-                <a href="/">
-                    <x-application-logo/>
+                <a href="/" class="w-[30%] mx-auto my-2 block object-contain">
+                    <x-application-logo />
                 </a>
             </div>
 
