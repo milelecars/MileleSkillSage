@@ -20,7 +20,7 @@
                     {{ Auth::user()->email }}
                 </div>
             </div>
-            <div class="grid grid-col gap-4">
+            <div class="grid grid-cols-2 gap-4 mx-4">
                 {{-- left --}}
                 <div>
                     <h2>Camera Setup</h2>
@@ -28,17 +28,18 @@
                         We use camera images to ensure fairness for everyone.</br>
                         Make sure that you are in front of your camera.
                     </p>
-                    
+
+                    {{-- <x-webcam videoElementId="webcam"></x-webcam> --}}
                 </div>
                 {{-- right --}}
                 <div>
-                    <div class="flex flex-row items-center gap-5 bg-warning p-6 mx-4 mb-4 overflow-hidden shadow-sm rounded">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                    <div class="flex items-center gap-5 bg-warning p-5 mb-4 overflow-hidden shadow-sm rounded">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-24 h-24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                         </svg>
-                        <p class="text-sm text-justify">It seems you don't have a camera connected to your computer or your camera is blocked. To enable the camera, click on the camera blocked icon in your browser's address bar and reload the page. If you don't enable a camera, you can still take the assessment, but then Milele Motors cannot verify fair play.</p>
+                        <p class="text-sm text-justify ">It seems you don't have a camera connected to your computer or your camera is blocked. To enable, click on the camera blocked icon in your browser's address bar and reload the page. If you don't enable a camera, you can still take the assessment, but then Milele Motors cannot verify fair play.</p>
                     </div>
-                    <div class="bg-info p-6 mx-4 mb-4 overflow-hidden shadow-sm rounded">
+                    <div class="bg-info p-6 mb-4 overflow-hidden shadow-sm rounded">
                         <p class="text-sm leading-9">
                             <strong>Trouble with your webcam?</strong></br>
                             Ensure you have granted permission for your browser to access your camera.</br>
@@ -49,8 +50,17 @@
                             Restart your device and try accessing the assessment again using the link in the invitation email.
                         </p>
                     </div>
+                    <a href="{{ route('description') }}" class="flex justify-end mt-10">
+                        <button class="flex flex-row items-center right-0 gap-1 text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </button>
+                    </a>
                 </div>
             </div>
+            
         </div>
     </div>
 </x-app-layout>

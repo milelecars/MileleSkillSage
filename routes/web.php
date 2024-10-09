@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TestController;
+use App\Http\Controllers\DescriptionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
@@ -18,13 +20,19 @@ Route::middleware('guest')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
                 ->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    
 });
 
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-
+    
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-                ->name('logout');
+    ->name('logout');
+    
+    Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
+    
+    Route::get('/test', [TestController::class, 'startTest'])->name('test');
 });
