@@ -11,7 +11,7 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex items-center">
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="">
                         {{ __('Dashboard') }}
                     </x-nav-link>

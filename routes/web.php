@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 // use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\CreateTestController;
 use App\Http\Controllers\DescriptionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -34,5 +35,9 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
     
-    Route::get('/test', [TestController::class, 'startTest'])->name('test');
+    Route::get('/tests', [TestController::class, 'index'])->name('tests.index'); 
+    Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
+    Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
+    Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    Route::get('/tests/{id}/edit', [TestController::class, 'edit'])->name('tests.edit');
 });
