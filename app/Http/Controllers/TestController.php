@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Test; // Make sure to import the Test model
+use App\Models\Test;
+use App\Models\TestInvitation;
 use Illuminate\Support\Str;
 
 class TestController extends Controller
 {
-
     public function index()
     {
         $tests = Test::all(); 
@@ -22,16 +22,8 @@ class TestController extends Controller
 
     public function store(Request $request)
     {
-        if ($request->has('generate_link')) {
-            $generatedLink = $this->generateInvitationLink();
-            
-            // Store all the old input, and add the generated link
-            $oldInput = $request->except('_token', 'generate_link');
-            $oldInput['invitation_link'] = $generatedLink;
-            
-            return redirect()->back()->withInput($oldInput);
-        }
-
+        $invitationLink = Str::random(32);
+        
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -40,13 +32,19 @@ class TestController extends Controller
 
         $test = Test::create($validatedData);
 
-        return redirect()->route('tests.index')->with('success', 'Test created successfully.');
-    }
+        // Create test invitation
+        TestInvitation::create([
+            'test_id' => $test->id,
+            'invitation_link' => $invitationLink,
+            'email_list' => json_encode($validatedData['email_list']),
+            'expires_at' => now()->addDays($validatedData['expiration_days']),
+            'created_by' => auth()->id(),
+        ]);
 
-    private function generateInvitationLink()
-    {
-        $token = Str::random(32);
-        return url("/test-invitation/{$token}");
+        // Here you would typically send emails to the email list
+        // This is left as a TODO for you to implement based on your email sending setup
+
+        return redirect()->route('tests.index')->with('success', 'Test created successfully. Invitation link: ' . route('invitation.show', ['invitationLink' => $invitationLink]));
     }
 
     public function show($id)
@@ -63,7 +61,6 @@ class TestController extends Controller
 
     public function update(Request $request, $id)
     {
-        
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -74,7 +71,6 @@ class TestController extends Controller
 
         return redirect()->route('tests.index')->with('success', 'Test updated successfully.'); 
     }
-
 
     public function destroy($id)
     {

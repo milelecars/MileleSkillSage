@@ -44,14 +44,14 @@
                 </ul>
                 <p class="text-lg mt-16">By proceeding, you agree to these terms and conditions. <strong>Good luck!</strong></p>
                 
-                <a href="{{ route('test') }}" class="flex justify-end mt-10">
+                {{-- <a href="{{ route('test') }}" class="flex justify-end mt-10">
                     <button class="flex flex-row items-center right-0 gap-1 text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">
                         Start
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                         </svg>
                     </button>
-                </a>
+                </a> --}}
             </div>
         </div>
     </div>
