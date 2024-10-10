@@ -15,7 +15,13 @@
             </a>            
             @if (Route::has('login'))
                 @auth
-                    <a href="{{ url('/dashboard') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Dashboard</a>
+                    @if(Auth::user()->role === 'admin')
+                        <a href="{{ route('admin.dashboard') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Admin Dashboard</a>
+                    @elseif(Auth::user()->role === 'candidate')
+                        <a href="{{ route('candidate.dashboard') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Candidate Dashboard</a>
+                    @else
+                        <a href="{{ url('/dashboard') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Dashboard</a>
+                    @endif
                 @else
                     <div class="grid grid-cols-2 gap-10">
                         <a href="{{ route('login') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Log in</a>

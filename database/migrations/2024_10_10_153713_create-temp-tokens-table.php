@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('test_invitations', function (Blueprint $table) {
+        Schema::create('temporary_tokens', function (Blueprint $table) {
             $table->id();
+            $table->string('email')->index();
+            $table->string('token')->unique();
+            $table->timestamp('expires_at');
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_invitations');
+        Schema::dropIfExists('temporary_tokens');
     }
 };

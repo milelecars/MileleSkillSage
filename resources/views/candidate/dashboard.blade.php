@@ -12,7 +12,7 @@
                     @endif
                 </div> --}}
             {{-- </div> --}}
-            @if (Auth::user()->role === "candidate")
+
                 {{-- header --}}
                 <div class="px-2 mb-10 border-b-2 border-sky-950">
                     <h1 class="text-2xl font-bold">
@@ -56,17 +56,14 @@
                         </div>
                         <a href="{{ route('tests.show', ['id' => $test->id]) }}" class="flex justify-end mt-10">
                             <button class="flex flex-row items-center right-0 gap-1 text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">
-                                Next
+                                Start
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                                 </svg>
                             </button>
-                        </a>
+                        </a>                        
                     </div>
                 </div>
-            @elseif (Auth::user()->role === "admin")
-                <a href="{{ route('tests.index') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Tests</a>
-            @endif
         </div>
     </div>
 </x-app-layout>
