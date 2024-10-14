@@ -23,9 +23,10 @@
            
             {{-- content --}}
             <div class="bg-white rounded mx-4 p-16 text-theme">
-                <h1 class="text-3xl font-extrabold mb-6">AGCT Test</h1>
+                <h1 class="text-3xl font-extrabold mb-6">{{$test->name}}</h1>
                 <p class="text-lg mb-16 text-justify">
-                    You are about to begin the AGCT online cognitive test, consisting of <u>150 multiple-choice questions</u>. The test is designed to assess a wide range of cognitive abilities and must be completed in one sitting. Please carefully read the following important guidelines before starting the test.
+                    {{-- You are about to begin the AGCT online cognitive test, consisting of <u>150 multiple-choice questions</u>. The test is designed to assess a wide range of cognitive abilities and must be completed in one sitting. Please carefully read the following important guidelines before starting the test. --}}
+                    {{$test->description}}
                 </p>
                 
                 <div class="flex gap-2 items-center my-6">

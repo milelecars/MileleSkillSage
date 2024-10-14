@@ -10,63 +10,56 @@ class CandidateController extends Controller
 {
     public function dashboard(Request $request)
     {
-        // if ($request->user()->role !== 'candidate') {
-        //     abort(403, 'Unauthorized action.');
-        // }
-    
-        // $invitationLink = session('invitation_link');
-        // $candidateEmail = session('candidate_email');
-        
-        // if (!$invitationLink || !$candidateEmail) {
-        //     return redirect()->route('invitation.expired');
-        // }
-
-        // $invitation = TestInvitation::where('invitation_link', $invitationLink)
-        //     ->where('expires_at', '>', now())
-        //     ->first();
-
-        // if (!$invitation) {
-        //     return redirect()->route('invitation.expired');
-        // }
-
-        // return view('candidate.dashboard', [
-        //     'invitation' => $invitation,
-        //     'candidateEmail' => $candidateEmail
-        // ]);
-        
-        
-        // Fetch the specific test with the name 'AGCT test'
-        $test = Test::where('name', 'AGCT Test')->first(); 
-
-        if (!$test) {
-            return redirect()->back()->with('error', 'Test not found.');
-        }
-
-        return view('candidate.dashboard', compact('test'));
-
-    }
-
-    public function startTest()
-    {
         $invitationLink = session('invitation_link');
         $candidateEmail = session('candidate_email');
         
         if (!$invitationLink || !$candidateEmail) {
             return redirect()->route('invitation.expired');
         }
+    
+        $invitation = TestInvitation::where('invitation_link', $invitationLink)
+            ->where('expires_at', '>', now())
+            ->first();
+    
+        if (!$invitation) {
+            return redirect()->route('invitation.expired');
+        }
+    
+        // Pass the test associated with the invitation to the view
+        return view('candidate.dashboard', [
+            'test' => $invitation->test,
+            'candidateEmail' => $candidateEmail
+        ]);
+    }
+    private function validateSession()
+    {
+        $invitationLink = session('invitation_link');
+        $candidateEmail = session('candidate_email');
+
+        if (!$invitationLink || !$candidateEmail) {
+            return false;
+        }
 
         $invitation = TestInvitation::where('invitation_link', $invitationLink)
             ->where('expires_at', '>', now())
             ->first();
 
+        return $invitation;
+    }
+
+    public function startTest()
+    {
+        $invitation = $this->validateSession();
+
         if (!$invitation) {
             return redirect()->route('invitation.expired');
         }
 
-        // Logic to start the test
         return view('candidate.test', [
             'test' => $invitation->test,
-            'candidateEmail' => $candidateEmail
+            'candidateEmail' => session('candidate_email')
         ]);
     }
+
+    
 }

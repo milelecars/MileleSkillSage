@@ -8,6 +8,21 @@ use Illuminate\Support\Facades\DB;
 
 class InvitationController extends Controller
 {
+    public function show($invitationLink)
+    {
+        // Fetch the invitation based on the invitation link
+        $invitation = TestInvitation::where('invitation_link', $invitationLink)
+            ->where('expires_at', '>', now())
+            ->first(); // Use first() to get the first match
+
+        if (!$invitation) {
+            return redirect()->route('invitation.expired')->with('error', 'Invitation not found or expired.');
+        }
+
+        // Return a view with the invitation details (adjust as necessary)
+        return view('invitation.show', compact('invitation'));
+    }
+ 
     public function validateEmail(Request $request, $invitationLink)
     {
         $request->validate([
@@ -34,9 +49,14 @@ class InvitationController extends Controller
             'candidate_email' => $request->email
         ]);
 
-        return response()->json([
-            'success' => true, 
-            'redirect' => route('candidate.dashboard')
-        ]);
+        // Instead of returning a JSON response, redirect the user to the candidate dashboard
+        return redirect()->route('candidate.dashboard')
+            ->with('success', 'Email validated successfully.');
     }
+    public function expired()
+    {
+        return view('invitation.expired'); // Create this view to inform the user
+    }
+
+
 }

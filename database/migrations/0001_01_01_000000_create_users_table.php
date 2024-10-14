@@ -16,11 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->enum('role', ['admin', 'candidate'])->default('admin');
-            $table->timestamp('test_started_at')->nullable();
-            $table->timestamp('test_completed_at')->nullable();
-            $table->integer('test_score')->nullable();
+            $table->string('password'); // For admin use
+            $table->enum('role', ['admin'])->default('admin'); // Only admins in this table
             $table->rememberToken();
             $table->timestamps();
         });

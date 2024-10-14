@@ -25,9 +25,20 @@ Route::middleware('guest')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    Route::get('/invitation/show/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::get('/invitation/show/{id}', [InvitationController::class, 'show']);
+    Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
+    Route::get('/invitation/candidate-auth', [InvitationController::class, 'showInputForm'])->name('invitation.input');
+
+    // Handle the authentication and redirection
+    // Route::post('/invitation/authenticate', [InvitationController::class, 'authenticate'])->name('invitation.authenticate');
+
+
     // Candidate invitation routes
-    Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
-    Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
+    // Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
+    // Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
+    
+
 });
 
 // Authenticated routes

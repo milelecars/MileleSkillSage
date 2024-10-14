@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ url()->current() }}" class="w-28 ">
+                    <a href="/" class="w-28 ">
                         <x-application-logo />
                     </a>
                 </div>

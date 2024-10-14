@@ -17,7 +17,7 @@ class CreateTestsTable extends Migration
             $table->id();
             $table->string('name'); 
             $table->text('description')->nullable(); 
-            $table->string('invitation_link')->nullable();
+            $table->string('invitation_link');
             $table->timestamps();
         });
     }

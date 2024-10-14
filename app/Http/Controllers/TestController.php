@@ -22,8 +22,6 @@ class TestController extends Controller
 
     public function store(Request $request)
     {
-        $invitationLink = Str::random(32);
-        
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -35,17 +33,17 @@ class TestController extends Controller
         // Create test invitation
         TestInvitation::create([
             'test_id' => $test->id,
-            'invitation_link' => $invitationLink,
-            'email_list' => json_encode($validatedData['email_list']),
-            'expires_at' => now()->addDays($validatedData['expiration_days']),
+            'invitation_link' => $validatedData['invitation_link'], // Use the validated invitation link
+            'email_list' => [],
+            'expires_at' => now()->addDays(7),
             'created_by' => auth()->id(),
         ]);
 
-        // Here you would typically send emails to the email list
-        // This is left as a TODO for you to implement based on your email sending setup
-
-        return redirect()->route('tests.index')->with('success', 'Test created successfully. Invitation link: ' . route('invitation.show', ['invitationLink' => $invitationLink]));
+        return redirect()->route('tests.show', $test->id)
+            ->with('success', 'Test created and invitation link generated successfully!');
     }
+
+
 
     public function show($id)
     {
@@ -53,30 +51,60 @@ class TestController extends Controller
         return view('tests.show', compact('test')); 
     }
 
-    public function edit($id)
+    // public function edit($id)
+    // {
+    //     $test = Test::findOrFail($id); 
+    //     return view('tests.edit', compact('test')); 
+    // }
+
+    // public function update(Request $request, $id)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'description' => 'nullable|string',
+    //     ]);
+
+    //     $test = Test::findOrFail($id); 
+    //     $test->update($request->only(['name', 'description'])); 
+
+    //     return redirect()->route('tests.index')->with('success', 'Test updated successfully.'); 
+    // }
+
+    // public function destroy($id)
+    // {
+    //     $test = Test::findOrFail($id); 
+    //     $test->delete(); 
+
+    //     return redirect()->route('tests.index')->with('success', 'Test deleted successfully.'); 
+    // }
+
+    public function startTest(Request $request)
     {
-        $test = Test::findOrFail($id); 
-        return view('tests.edit', compact('test')); 
+        if (!$request->hasValidSignature()) {
+            abort(401, 'Invalid or expired invitation link.');
+        }
+
+        $invitation = TestInvitation::where('token', $request->token)
+            ->where('expires_at', '>', now())
+            ->firstOrFail();
+
+        // Store session for the candidate
+        $request->session()->put('candidate_id', $invitation->id);
+        $request->session()->put('test_id', $invitation->test_id);
+
+        return redirect()->route('test.take');
     }
 
-    public function update(Request $request, $id)
+    public function takeTest(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        if (!$request->session()->has('candidate_id')) {
+            abort(401, 'Unauthorized access to the test.');
+        }
 
-        $test = Test::findOrFail($id); 
-        $test->update($request->only(['name', 'description'])); 
+        $testId = $request->session()->get('test_id');
+        $test = Test::findOrFail($testId);
 
-        return redirect()->route('tests.index')->with('success', 'Test updated successfully.'); 
-    }
-
-    public function destroy($id)
-    {
-        $test = Test::findOrFail($id); 
-        $test->delete(); 
-
-        return redirect()->route('tests.index')->with('success', 'Test deleted successfully.'); 
+        // Display the test
+        return view('tests.take', compact('test'));
     }
 }

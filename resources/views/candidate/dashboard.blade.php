@@ -16,10 +16,10 @@
                 {{-- header --}}
                 <div class="px-2 mb-10 border-b-2 border-sky-950">
                     <h1 class="text-2xl font-bold">
-                        Welcome, {{ Auth::user()->name }}!
+                        Welcome, {{ session('name', Auth::user()->name ?? 'Guest') }}!
                     </h1>
                     <div class="text-sm text-gray-500 mb-4">
-                        {{ Auth::user()->email }}
+                        {{ session('email', Auth::user()->email ?? 'No email provided') }}
                     </div>
                 </div>
 
