@@ -13,7 +13,6 @@
             <a href="/" class="w-[30%] mx-auto my-2 mb-16 block object-contain">
                 <x-application-logo />
             </a>            
-            @if (Route::has('login'))
                 @auth
                     @if(Auth::user()->role === 'admin')
                         <a href="{{ route('admin.dashboard') }}" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Admin Dashboard</a>
@@ -30,7 +29,7 @@
                         @endif
                     </div>
                 @endauth
-            @endif
+
         </div>
     </div>
 </body>

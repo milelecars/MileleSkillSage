@@ -26,7 +26,6 @@ class AuthenticatedSessionController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
-            Log::info('User logged in', ['user_id' => $user->id, 'role' => $user->role]);
 
             if ($user->role === 'admin') {
                 return redirect()->intended(route('admin.dashboard'));
@@ -34,10 +33,6 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->intended(route('candidate.dashboard'));
             }
 
-            // If we get here, something's wrong with the role
-            Log::warning('User has invalid role', ['user_id' => $user->id, 'role' => $user->role]);
-            Auth::logout();
-            return redirect()->route('login')->withErrors(['email' => 'Invalid user role.']);
         }
 
         return back()->withErrors([
