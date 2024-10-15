@@ -3,16 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable; 
+use Illuminate\Notifications\Notifiable;
 
-class Candidate extends Model
+class Candidate extends Authenticatable 
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
         'email',
-        // Add any other columns you may need
+        'email_verified_at',
+        'test_started_at',
+        'test_completed_at',
+        'test_score',
     ];
 
     public function tests()
