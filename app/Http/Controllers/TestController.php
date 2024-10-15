@@ -61,15 +61,10 @@ class TestController extends Controller
 
     public function startTest(Request $request, $id)
     {
-        \Log::info('Attempting to start test. Auth status: ' . (Auth::guard('candidate')->check() ? 'Authenticated' : 'Not authenticated'));
-        \Log::info('Candidate ID: ' . Auth::guard('candidate')->id());
-
+        
         if (!Auth::guard('candidate')->check()) {
-            \Log::info('Redirecting to candidate auth');
             return redirect()->route('invitation.candidate-auth')->with('error', 'Unauthorized access to the test.');
         }
-
-        \Log::info('Proceeding with test start');
         
         // Find the test by ID
         $test = Test::findOrFail($id);

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CandidateController;
@@ -10,6 +11,23 @@ use App\Http\Controllers\DescriptionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
+// Root route
+Route::get('/', function () {
+    if (Auth::guard('web')->check()) {
+        return redirect()->route('admin.dashboard');
+    } elseif (Auth::guard('candidate')->check()) {
+        return redirect()->route('candidate.dashboard');
+    } else {
+        return redirect()->route('welcome');
+    }
+});
+
+// Welcome route
+Route::get('/welcome', function () {
+    return view('welcome');
+})->name('welcome');
+
+
 // Guest routes
 Route::middleware('guest')->group(function () {
     // Admin registration and login routes
@@ -17,8 +35,7 @@ Route::middleware('guest')->group(function () {
     Route::post('admin/register', [RegisteredUserController::class, 'store']);
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
-
+    
     // Invitation handling for guests
     Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
     Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
@@ -31,7 +48,7 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
-
+    
     // Test routes for admins
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
@@ -44,3 +61,8 @@ Route::middleware('auth:candidate')->group(function () {
     Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
     Route::get('/tests/{id}/start', [TestController::class, 'startTest'])->name('tests.start');
 });
+
+// Logout route (accessible to both admins and candidates)
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->name('logout')
+    ->middleware('auth:web,candidate');
