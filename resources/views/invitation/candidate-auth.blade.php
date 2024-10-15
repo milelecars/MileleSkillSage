@@ -1,7 +1,6 @@
 <x-guest-layout>
     <div>
-        <form action="{{ route('invitation.validate', ['invitationLink' => $invitation_token]) }}" method="POST" class="w-full max-w-sm mx-auto my-2">
-            @csrf
+        <form action="{{ route('invitation.validate', ['invitationLink' => $invitation_token]) }}" method="POST">            @csrf
 
             <div class="mb-4">
                 <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name</label>
@@ -27,7 +26,7 @@
                 </button>
             </div>
         </form>
-
+        
         @if (session('success'))
             <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4" role="alert">
                 <span class="block sm:inline">{{ session('success') }}</span>

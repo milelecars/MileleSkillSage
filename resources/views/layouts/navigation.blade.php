@@ -12,16 +12,16 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex items-center">
-                    @if(Auth::check()) <!-- Check if the user is authenticated -->
-                        @if(Auth::user()->role === 'admin')
-                            <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                                {{ __('Admin Dashboard') }}
-                            </x-nav-link>
-                        @elseif(Auth::user()->role === 'candidate')
-                            <x-nav-link :href="route('candidate.dashboard')" :active="request()->routeIs('candidate.dashboard')">
-                                {{ __('Candidate Dashboard') }}
-                            </x-nav-link>
-                        @endif
+                    @if(Auth::guard('web')->check())
+                        <!-- Admin user -->
+                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
+                            {{ __('Admin Dashboard') }}
+                        </x-nav-link>
+                    @elseif(Auth::guard('candidate')->check())
+                        <!-- Candidate user -->
+                        <x-nav-link :href="route('candidate.dashboard')" :active="request()->routeIs('candidate.dashboard')">
+                            {{ __('Candidate Dashboard') }}
+                        </x-nav-link>
                     @endif
                 </div>
 
@@ -73,25 +73,30 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            @if(Auth::check()) 
-                @if(Auth::user()->role === 'admin')
-                    <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                        {{ __('Admin Dashboard') }}
-                    </x-responsive-nav-link>
-                @elseif(Auth::user()->role === 'candidate')
-                    <x-responsive-nav-link :href="route('candidate.dashboard')" :active="request()->routeIs('candidate.dashboard')">
-                        {{ __('Candidate Dashboard') }}
-                    </x-responsive-nav-link>
-                @endif
+            @if(Auth::guard('web')->check()) 
+                <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
+                    {{ __('Admin Dashboard') }}
+                </x-responsive-nav-link>
+            @elseif(Auth::guard('candidate')->check())
+                <x-responsive-nav-link :href="route('candidate.dashboard')" :active="request()->routeIs('candidate.dashboard')">
+                    {{ __('Candidate Dashboard') }}
+                </x-responsive-nav-link>
             @endif
+        
         </div>        
 
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
-                <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                @if(Auth::guard('web')->check())
+                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                @elseif(Auth::guard('candidate')->check())
+                    <div class="font-medium text-base text-gray-800">{{ Auth::guard('candidate')->user()->name }}</div>
+                    <div class="font-medium text-sm text-gray-500">{{ Auth::guard('candidate')->user()->email }}</div>
+                @endif
             </div>
+            
 
             <div class="mt-3 space-y-1">
                 {{-- <x-responsive-nav-link :href="route('profile.edit')">

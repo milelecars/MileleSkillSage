@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Test;
-use App\Models\TestInvitation;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Models\TestInvitation;
+use Illuminate\Support\Facades\Auth;
 
 class TestController extends Controller
 {
@@ -58,34 +59,38 @@ class TestController extends Controller
         return view('tests.show', compact('test'));
     }
 
-    public function startTest(Request $request, $invitationToken)
+    public function startTest(Request $request, $id)
     {
-        // Find the invitation using the invitation token
-        $invitation = TestInvitation::where('invitation_token', $invitationToken)
-            ->where('expires_at', '>', now())
-            ->first();
+        \Log::info('Attempting to start test. Auth status: ' . (Auth::guard('candidate')->check() ? 'Authenticated' : 'Not authenticated'));
+        \Log::info('Candidate ID: ' . Auth::guard('candidate')->id());
 
-        if (!$invitation) {
-            return redirect()->route('invitation.expired')->with('error', 'Invitation not found or expired.');
+        if (!Auth::guard('candidate')->check()) {
+            \Log::info('Redirecting to candidate auth');
+            return redirect()->route('invitation.candidate-auth')->with('error', 'Unauthorized access to the test.');
         }
 
-        // Store session for the candidate
-        $request->session()->put('candidate_id', $invitation->id);
-        $request->session()->put('test_id', $invitation->test_id);
+        \Log::info('Proceeding with test start');
+        
+        // Find the test by ID
+        $test = Test::findOrFail($id);
+    
+        // Store the test ID in the session (only if needed)
+        $request->session()->put('test_id', $test->id);
+    
+        // Display the test for the candidate
+        return view('tests.start', compact('test'));
+    }    
 
-        return redirect()->route('test.take');
-    }
+    // public function takeTest(Request $request)
+    // {
+    //     if (!$request->session()->has('candidate_id')) {
+    //         abort(401, 'Unauthorized access to the test.');
+    //     }
 
-    public function takeTest(Request $request)
-    {
-        if (!$request->session()->has('candidate_id')) {
-            abort(401, 'Unauthorized access to the test.');
-        }
+    //     $testId = $request->session()->get('test_id');
+    //     $test = Test::findOrFail($testId);
 
-        $testId = $request->session()->get('test_id');
-        $test = Test::findOrFail($testId);
-
-        // Display the test
-        return view('tests.take', compact('test'));
-    }
+    //     // Display the test
+    //     return view('tests.take', compact('test'));
+    // }
 }

@@ -16,12 +16,13 @@
                 {{-- header --}}
                 <div class="px-2 mb-10 border-b-2 border-sky-950">
                     <h1 class="text-2xl font-bold">
-                        Welcome, {{ session('name', Auth::user()->name ?? 'Guest') }}!
+                        Welcome, {{ session('candidate_name', Auth::guard('candidate')->user()->name ?? 'Guest') }}!
                     </h1>
                     <div class="text-sm text-gray-500 mb-4">
-                        {{ session('email', Auth::user()->email ?? 'No email provided') }}
+                        {{ session('candidate_email', Auth::guard('candidate')->user()->email ?? 'No email provided') }}
                     </div>
                 </div>
+
 
                 {{-- content --}}
                 <div class="grid grid-cols-2 gap-4 mx-4">
@@ -54,14 +55,28 @@
                                 Restart your device and try accessing the assessment again using the link in the invitation email.
                             </p>
                         </div>
-                        <a href="{{ route('tests.show', ['id' => $test->id]) }}" class="flex justify-end mt-10">
-                            <button class="flex flex-row items-center right-0 gap-1 text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">
-                                Start
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                </svg>
-                            </button>
-                        </a>                        
+
+                        @if(isset($test))
+                            <p>Test ID: {{ $test->id }}</p>
+                            <a href="{{ route('tests.start', $test->id) }}" class="flex justify-end mt-10">
+                                <button class="flex flex-row items-center right-0 gap-1 text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">
+                                    Start
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+                                    </svg>
+                                </button>
+                            </a>
+                            
+                        @else
+                            <p>No test is currently available. Please check your invitation or contact the administrator.</p>
+                        @endif
+                       
+
+                        @if(Auth::guard('candidate')->check())
+                            <p>Logged in as candidate: {{ Auth::guard('candidate')->user()->name }}</p>
+                        @else
+                            <p>Not logged in as candidate</p>
+                        @endif
                     </div>
                 </div>
         </div>

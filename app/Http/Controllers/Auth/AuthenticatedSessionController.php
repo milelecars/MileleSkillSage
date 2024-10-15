@@ -22,17 +22,19 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // Attempt login with 'admin' guard (users table)
+        if (Auth::guard('web')->attempt($credentials)) {
             $request->session()->regenerate();
 
-            $user = Auth::user();
+            // Redirect to admin dashboard
+            return redirect()->intended(route('admin.dashboard'));
+        }
 
-            if ($user->role === 'admin') {
-                return redirect()->intended(route('admin.dashboard'));
-            } elseif ($user->role === 'candidate') {
-                return redirect()->intended(route('candidate.dashboard'));
-            }
-
+        // Attempt login with 'candidate' guard (candidates table)
+        if (Auth::guard('candidate')->attempt($credentials)) {
+            $request->session()->regenerate();
+            $request->session()->put('candidate_id', Auth::guard('candidate')->id());
+            return redirect()->intended(route('candidate.dashboard'));
         }
 
         return back()->withErrors([
@@ -42,10 +44,15 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request)
     {
-        Auth::guard('web')->logout();
+        // Logout from the active guard
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        } elseif (Auth::guard('candidate')->check()) {
+            Auth::guard('candidate')->logout();
+        }
 
+        // Invalidate session and regenerate token
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TestInvitation;
+use App\Models\Test;
 use App\Models\Candidate;
-use App\Http\Requests\Auth\ValidateInvitationEmailRequest;
 use Illuminate\Http\Request;
+use App\Models\TestInvitation;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\Auth\ValidateInvitationEmailRequest;
 
 class InvitationController extends Controller
 {
@@ -19,6 +20,11 @@ class InvitationController extends Controller
         if ($invitation->isExpired()) {
             return redirect()->route('invitation.expired');
         }
+        if (Auth::guard('candidate')->check()) {
+            // If the candidate is authenticated, show the invitation details
+            return view('candidate.dashboard', compact('invitation'));
+        }
+    
 
         return view('invitation.candidate-auth', [
             'invitation' => $invitation,
@@ -28,45 +34,57 @@ class InvitationController extends Controller
 
     public function validateEmail(Request $request, $invitationLink)
     {
+        // Step 1: Validate input data
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
         ]);
-    
         $invitationToken = $request->input('invitation_token');
-    
-        // Retrieve the invitation using the token
+
+        // Step 2: Retrieve the invitation using the token
         $invitation = TestInvitation::where('invitation_token', $invitationToken)->firstOrFail();
-    
-        // Use the email_list directly (no need to decode)
-        $emailList = $invitation->email_list; 
-    
-        // Check if the email exists in the email list
+
+        // Use the email_list directly
+        $emailList = $invitation->email_list;
+
+        // Step 3: Check if the email exists in the invitation's email list
         if (!in_array($validatedData['email'], $emailList)) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
 
-        // Check if the candidate already exists
-        $existingCandidate = Candidate::where('email', $validatedData['email'])->first();
-        if ($existingCandidate) {
-            return back()->withErrors(['email' => 'This email is already registered.']);
+        // Step 4: Check if the candidate already exists
+        $candidate = Candidate::where('email', $validatedData['email'])->first();
+
+        // Step 5: If the candidate exists, log them in
+        if ($candidate) {
+            Auth::guard('candidate')->login($candidate);
+        } else {
+            // Step 6: Create a new candidate if they don't exist
+            $candidate = Candidate::create([
+                'name' => $validatedData['name'],
+                'email' => $validatedData['email'],
+            ]);
+            // Log in the newly created candidate
+            Auth::guard('candidate')->login($candidate);
         }
 
-        // Create a new candidate in the database
-        $candidate = Candidate::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
+        // Step 7: Set session data for both new and existing candidates
+        $this->setCandidateSession($candidate, $invitation->test_id);
+
+        // Step 8: Redirect to candidate dashboard
+        return redirect()->route('candidate.dashboard');
+    }
+
+    private function setCandidateSession($candidate, $testId)
+    {
+        $test = Test::findOrFail($testId);
+        session([
+            'candidate_name' => $candidate->name,
+            'candidate_email' => $candidate->email,
+            'current_test_id' => $testId,
+            'test' => $test,
+            'invitation_link' => request()->url(), // Store the current URL as the invitation link
         ]);
-
-        // Log in the candidate
-        Auth::login($candidate); // Start an authorized session
-
-        // Redirect to the candidate dashboard with invitation details
-        return redirect()->route('candidate.dashboard', [
-            'invitationLink' => $invitationLink,
-            'invitationToken' => $invitationToken,
-            'testProps' => $invitation->test_id // or any other associated properties you need
-        ])->with('success', 'Email validated and candidate created successfully.');
     }
 
     public function expired()
