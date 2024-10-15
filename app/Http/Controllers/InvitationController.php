@@ -3,60 +3,59 @@
 namespace App\Http\Controllers;
 
 use App\Models\TestInvitation;
+use App\Http\Requests\Auth\ValidateInvitationEmailRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 
 class InvitationController extends Controller
 {
-    public function show($invitationLink)
+    public function show(Request $request, $invitationLink)
     {
-        // Fetch the invitation based on the invitation link
-        $invitation = TestInvitation::where('invitation_link', $invitationLink)
-            ->where('expires_at', '>', now())
-            ->first(); // Use first() to get the first match
+        $fullUrl = URL::route('invitation.show', ['invitationLink' => $invitationLink]);
+        $invitation = TestInvitation::where('invitation_link', $fullUrl)->firstOrFail();
 
-        if (!$invitation) {
-            return redirect()->route('invitation.expired')->with('error', 'Invitation not found or expired.');
+        if ($invitation->isExpired()) {
+            return redirect()->route('invitation.expired');
         }
 
-        // Return a view with the invitation details (adjust as necessary)
-        return view('invitation.show', compact('invitation'));
+        return view('invitation.candidate-auth', [
+            'invitation' => $invitation,
+            'invitation_token' => $invitation->invitation_token,
+        ]);
     }
- 
+
     public function validateEmail(Request $request, $invitationLink)
     {
-        $request->validate([
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
             'email' => 'required|email',
         ]);
-
-        $invitation = TestInvitation::where('invitation_link', $invitationLink)
-            ->where('expires_at', '>', now())
-            ->first();
-
-        if (!$invitation) {
-            return response()->json(['error' => 'Invalid or expired invitation link'], 400);
+    
+        $invitationToken = $request->input('invitation_token');
+    
+        // Retrieve the invitation using the token
+        $invitation = TestInvitation::where('invitation_token', $invitationToken)->firstOrFail();
+    
+        // Use the email_list directly (no need to decode)
+        $emailList = $invitation->email_list; 
+    
+        // Check if the email exists in the email list
+        if (!in_array($validatedData['email'], $emailList)) {
+            return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
-
-        $emailList = json_decode($invitation->email_list, true);
-
-        if (!in_array($request->email, $emailList)) {
-            return response()->json(['error' => 'Email not found for this invitation'], 400);
-        }
-
-        // Email is valid, create a session for the candidate
-        session([
-            'invitation_link' => $invitationLink,
-            'candidate_email' => $request->email
-        ]);
-
-        // Instead of returning a JSON response, redirect the user to the candidate dashboard
-        return redirect()->route('candidate.dashboard')
-            ->with('success', 'Email validated successfully.');
+    
+        // Redirect to the candidate dashboard with invitation details
+        return redirect()->route('candidate.dashboard', [
+            'invitationLink' => $invitationLink,
+            'invitationToken' => $invitationToken,
+            'testProps' => $invitation->test_id // or any other associated properties you need
+        ])->with('success', 'Email validated successfully.');
     }
+    
+    
+
     public function expired()
     {
-        return view('invitation.expired'); // Create this view to inform the user
+        return view('invitation.expired');
     }
-
-
 }

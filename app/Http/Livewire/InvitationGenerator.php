@@ -14,6 +14,7 @@ class InvitationGenerator extends Component
     {
         $token = Str::random(32);
         $this->invitationLink = URL::route('invitation.show', ['invitationLink' => $token]);
+        // $this->invitationLink = URL::secure('invitation/' . $token); 
 
 
         logger('Link generated: ' . $this->invitationLink);

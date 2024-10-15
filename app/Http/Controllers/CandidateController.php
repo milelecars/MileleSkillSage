@@ -10,27 +10,17 @@ class CandidateController extends Controller
 {
     public function dashboard(Request $request)
     {
-        $invitationLink = session('invitation_link');
-        $candidateEmail = session('candidate_email');
-        
-        if (!$invitationLink || !$candidateEmail) {
-            return redirect()->route('invitation.expired');
-        }
-    
-        $invitation = TestInvitation::where('invitation_link', $invitationLink)
-            ->where('expires_at', '>', now())
-            ->first();
-    
-        if (!$invitation) {
-            return redirect()->route('invitation.expired');
-        }
-    
-        // Pass the test associated with the invitation to the view
-        return view('candidate.dashboard', [
-            'test' => $invitation->test,
-            'candidateEmail' => $candidateEmail
-        ]);
+        // Retrieve invitation and test details from the session
+        $invitation = $request->session()->get('invitation');
+        $testId = $request->session()->get('test_id');
+
+        // Optionally, you can retrieve the invitation again from the database if needed
+        // $invitation = TestInvitation::findOrFail($testId);
+
+        return view('candidate.dashboard', compact('invitation', 'testId'));
     }
+
+
     private function validateSession()
     {
         $invitationLink = session('invitation_link');
@@ -60,6 +50,4 @@ class CandidateController extends Controller
             'candidateEmail' => session('candidate_email')
         ]);
     }
-
-    
 }

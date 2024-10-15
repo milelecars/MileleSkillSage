@@ -9,12 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    
     public function up(): void
     {
-        Schema::create('user_responses', function (Blueprint $table) {
+        Schema::create('candidate_responses', function (Blueprint $table) { // Renamed table
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('candidate_id') // Updated to candidate_id
+                  ->constrained('candidates') // Change to reference candidates table
+                  ->onDelete('cascade');
             $table->foreignId('question_id')->constrained()->onDelete('cascade');
             $table->string('user_answer');
             $table->boolean('is_correct');
@@ -22,17 +23,12 @@ return new class extends Migration
             $table->timestamps();
         });
     }
- 
-    
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_responses');
+        Schema::dropIfExists('candidate_responses'); // Renamed here
     }
-
-
-
 };

@@ -11,13 +11,13 @@ class TestController extends Controller
 {
     public function index()
     {
-        $tests = Test::all(); 
-        return view('tests.index', compact('tests')); 
+        $tests = Test::all();
+        return view('tests.index', compact('tests'));
     }
 
     public function create()
     {
-        return view('tests.create'); 
+        return view('tests.create');
     }
 
     public function store(Request $request)
@@ -28,12 +28,21 @@ class TestController extends Controller
             'invitation_link' => 'required|string|url',
         ]);
 
-        $test = Test::create($validatedData);
+        // Extract the token from the invitation link
+        $urlParts = explode('/', $validatedData['invitation_link']);
+        $invitationToken = end($urlParts); // Get the last part of the URL
 
-        // Create test invitation
+        // Create the Test model without the invitation_link
+        $test = Test::create([
+            'name' => $validatedData['name'],
+            'description' => $validatedData['description'],
+        ]);
+
+        // Create test invitation with the token and link it to the test
         TestInvitation::create([
             'test_id' => $test->id,
-            'invitation_link' => $validatedData['invitation_link'], // Use the validated invitation link
+            'invitation_link' => $validatedData['invitation_link'],
+            'invitation_token' => $invitationToken,
             'email_list' => [],
             'expires_at' => now()->addDays(7),
             'created_by' => auth()->id(),
@@ -43,50 +52,22 @@ class TestController extends Controller
             ->with('success', 'Test created and invitation link generated successfully!');
     }
 
-
-
     public function show($id)
     {
-        $test = Test::findOrFail($id);
-        return view('tests.show', compact('test')); 
+        $test = Test::with('invitation')->findOrFail($id);
+        return view('tests.show', compact('test'));
     }
 
-    // public function edit($id)
-    // {
-    //     $test = Test::findOrFail($id); 
-    //     return view('tests.edit', compact('test')); 
-    // }
-
-    // public function update(Request $request, $id)
-    // {
-    //     $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'description' => 'nullable|string',
-    //     ]);
-
-    //     $test = Test::findOrFail($id); 
-    //     $test->update($request->only(['name', 'description'])); 
-
-    //     return redirect()->route('tests.index')->with('success', 'Test updated successfully.'); 
-    // }
-
-    // public function destroy($id)
-    // {
-    //     $test = Test::findOrFail($id); 
-    //     $test->delete(); 
-
-    //     return redirect()->route('tests.index')->with('success', 'Test deleted successfully.'); 
-    // }
-
-    public function startTest(Request $request)
+    public function startTest(Request $request, $invitationToken)
     {
-        if (!$request->hasValidSignature()) {
-            abort(401, 'Invalid or expired invitation link.');
-        }
-
-        $invitation = TestInvitation::where('token', $request->token)
+        // Find the invitation using the invitation token
+        $invitation = TestInvitation::where('invitation_token', $invitationToken)
             ->where('expires_at', '>', now())
-            ->firstOrFail();
+            ->first();
+
+        if (!$invitation) {
+            return redirect()->route('invitation.expired')->with('error', 'Invitation not found or expired.');
+        }
 
         // Store session for the candidate
         $request->session()->put('candidate_id', $invitation->id);

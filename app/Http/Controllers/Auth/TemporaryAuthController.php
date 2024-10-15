@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Auth;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\TemporaryToken;
+use Illuminate\Support\Str;
 
 class TemporaryAuthController extends Controller
 {
@@ -32,15 +35,13 @@ class TemporaryAuthController extends Controller
             return redirect()->route('login')->withErrors(['token' => 'Invalid or expired token']);
         }
 
-        $user = User::firstOrCreate(
-            ['email' => $temporaryToken->email],
-            ['name' => 'Candidate', 'password' => bcrypt(Str::random()), 'role' => 'candidate']
-        );
+        // Since only admins exist in the users table, we won't create a user for candidates.
+        // Instead, you may want to handle the candidate's session here or redirect them to the candidate dashboard directly.
+        
+        // Here you can handle candidate login logic, for example:
+        // session(['candidate_email' => $temporaryToken->email]);
 
-        Auth::login($user);
-
-        $temporaryToken->delete();
-
-        return redirect()->route('candidate.dashboard');
+        // After setting the candidate session, redirect to the candidate dashboard.
+        return redirect()->route('candidate.dashboard')->with('success', 'Login successful.');
     }
 }

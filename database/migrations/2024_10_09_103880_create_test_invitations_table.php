@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('test_invitations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('test_id')->constrained('tests')->onDelete('cascade'); 
-            $table->string('invitation_link')->unique(); 
-            $table->json('email_list');
-            $table->timestamp('expires_at'); 
-            $table->foreignId('created_by')->constrained('users'); 
+            $table->foreignId('test_id')->constrained('tests')->onDelete('cascade');
+            $table->string('invitation_link')->unique();
+            $table->json('email_list')->default(json_encode([])); 
+            $table->timestamp('expires_at');
+            $table->foreignId('created_by')->constrained('users'); // Admin can create invitations
             $table->timestamps();
         });
     }

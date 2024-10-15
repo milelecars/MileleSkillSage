@@ -11,14 +11,22 @@ class Test extends Model
 
     protected $fillable = [
         'name',
-        'description',
-        'invitation_link', // Add any other columns that are in your migration
+        'description'
     ];
+    public function invitation()
+    {
+        return $this->hasOne(TestInvitation::class);
+    }
 
     // Define relationships, if any
     public function users()
     {
         return $this->belongsToMany(User::class, 'test_user')->withTimestamps();
+    }
+
+    public function candidates()
+    {
+        return $this->belongsToMany(Candidate::class, 'test_user')->withTimestamps();
     }
 
     public function questions()

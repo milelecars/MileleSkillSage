@@ -24,48 +24,31 @@ Route::middleware('guest')->group(function () {
     // Login routes (for both admin and candidates)
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::get('/invitation/show/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
-    Route::get('/invitation/show/{id}', [InvitationController::class, 'show']);
     Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
-    Route::get('/invitation/candidate-auth', [InvitationController::class, 'showInputForm'])->name('invitation.input');
-
-    // Handle the authentication and redirection
-    // Route::post('/invitation/authenticate', [InvitationController::class, 'authenticate'])->name('invitation.authenticate');
-
-
-    // Candidate invitation routes
-    // Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
-    // Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
-    
+    Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 
 });
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    // Logout route (for both admin and candidates)
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
-
     // Admin routes
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-        Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
-        
-        Route::get('/tests', [TestController::class, 'index'])->name('tests.index'); 
-        Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
-        Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
-        Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
-        Route::get('/tests/{id}/edit', [TestController::class, 'edit'])->name('tests.edit');
-    });
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
+    
+    Route::get('/tests', [TestController::class, 'index'])->name('tests.index'); 
+    Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
+    Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
+    Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    Route::get('/tests/{id}/edit', [TestController::class, 'edit'])->name('tests.edit');
 
     // Candidate routes
-    Route::middleware(['auth'])->group(function () {
-        Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
-        Route::get('/candidate/test', [CandidateController::class, 'startTest'])->name('candidate.test');
-    });
+    Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
+    Route::get('/candidate/test', [CandidateController::class, 'startTest'])->name('candidate.test');
 
     // Temporary token routes
-    Route::post('/send-token', [TemporaryAuthController::class, 'sendToken'])->name('send.token');
-    Route::get('/login/{token}', [TemporaryAuthController::class, 'login'])->name('login.token');
-
+    // Route::post('/send-token', [TemporaryAuthController::class, 'sendToken'])->name('send.token');
+    // Route::get('/login/{token}', [TemporaryAuthController::class, 'login'])->name('login.token');
 });
