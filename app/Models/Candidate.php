@@ -29,11 +29,6 @@ class Candidate extends Authenticatable
         'test_completed_at' => 'datetime',
     ];
 
-    public function tests()
-    {
-        return $this->belongsToMany(Test::class, 'test_user')->withTimestamps();
-    }
-
     public function userResponses()
     {
         return $this->hasMany(UserResponse::class);

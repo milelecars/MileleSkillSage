@@ -54,11 +54,16 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
     Route::get('/tests/{id}/edit', [TestController::class, 'edit'])->name('tests.edit');
+    Route::put('/tests/{id}', [TestController::class, 'update'])->name('tests.update');
+    Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    Route::delete('/tests/{id}', [TestController::class, 'destroy'])->name('tests.destroy');
+
 });
 
 // Candidate authenticated routes
 Route::middleware('auth:candidate')->group(function () {
     Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
+    // Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{id}/start', [TestController::class, 'startTest'])->name('tests.start');
 });
 
