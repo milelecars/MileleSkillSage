@@ -24,27 +24,50 @@ class TestController extends Controller
         return view('tests.create');
     }
 
-    public function update(Request $request, Test $test)
+    public function update(Request $request, $id)
     {
+        $test = Test::findOrFail($id);
+
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'questions_csv' => 'nullable|file|mimes:csv,xlsx,txt',
+            'file' => 'sometimes|file|mimes:xlsx,csv,json',
         ]);
-
+    
         // Update the test attributes
-        $test->update($validatedData);
-
-        // Handle file upload if a new CSV is provided
-        if ($request->hasFile('questions_csv')) {
-            $path = $request->file('questions_csv')->store('csvs'); // Store the CSV file and get the path
-            $test->csv_file_path = $path; // Save the path in the database
-            $test->save(); // Save the changes to the test
-
-            $this->processQuestionsCSV($path, $test); // Process the CSV to create questions
+        $test->update([
+            'name' => $validatedData['name'],
+            'description' => $validatedData['description'],
+        ]);
+        
+        // Handle the file upload
+        if ($request->hasFile('file') && $request->file('file')->isValid()) {
+            // Delete the old file if it exists
+            if ($test->questions_file_path) {
+                Storage::disk('public')->delete($test->questions_file_path);
+            }
+    
+            $filePath = $request->file('file')->store('questions', 'public');
+            
+            // Save the new file path to the database
+            $test->update(['questions_file_path' => $filePath]);
+    
+            // Process the file based on its type
+            $extension = $request->file('file')->getClientOriginalExtension();
+            
+            if (in_array($extension, ['xlsx', 'csv'])) {
+                Excel::import(new QuestionsImport($test), $request->file('file'));
+            } elseif ($extension === 'json') {
+                $jsonContent = file_get_contents($request->file('file')->getRealPath());
+                $questions = json_decode($jsonContent, true);
+                // Here you might want to process and save the JSON data to your database
+                // This depends on how you want to store and use the data
+            }
+    
+            return redirect()->route('tests.index')->with('success', 'Test updated and questions processed successfully.');
         }
-
-        return redirect()->route('tests.show', $test)->with('success', 'Test updated successfully.');
+    
+        return redirect()->route('tests.show', $test->id)->with('success', 'Test updated successfully.');
     }
 
    
@@ -127,6 +150,12 @@ class TestController extends Controller
     public function destroy($id)
     {
         $test = Test::findOrFail($id);
+        
+        // Delete the file if it exists
+        if ($test->questions_file_path) {
+            Storage::disk('public')->delete($test->questions_file_path);
+        }
+        
         $test->delete();
 
         return redirect()->route('tests.index')

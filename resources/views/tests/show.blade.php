@@ -16,47 +16,8 @@
                     {{$test->description}}
                 </p>
 
-                @if(!empty($questions))
-                    @foreach ($questions as $question)
-                        <div class="mb-6 p-4 border rounded">
-                            <p class="text-lg mb-4 text-justify">
-                                {{ $question['question'] ?? 'No question available' }}
-                            </p>
-                            
-                            @if(isset($question['image_url']) && $question['image_url'])
-                                <img src="{{ asset('storage/' . $question['image_url']) }}" alt="Question Image" class="mb-4 max-w-full h-auto">
-                            @endif
-                            
-                            <div class="flex flex-col gap-1 ml-4 mb-4">
-                                <label>
-                                    <input type="radio" name="option" value={{ $question['choice_a'] ?? '' }}>
-                                    A. {{ $question['choice_a'] ?? '' }}
-                                </label>
-                                <label>
-                                    <input type="radio" name="option" value={{ $question['choice_b'] ?? '' }}>
-                                    B. {{ $question['choice_b'] ?? '' }}
-                                </label>
-                                <label>
-                                    <input type="radio" name="option" value={{ $question['choice_c'] ?? '' }}>
-                                    C. {{ $question['choice_c'] ?? '' }}
-                                </label>
-                                <label>
-                                    <input type="radio" name="option" value={{ $question['choice_d'] ?? '' }}>
-                                    D. {{ $question['choice_d'] ?? '' }}
-                                </label>
-                            </div>
-                            
-                            @if(isset($question['answer']))
-                                <p class="mt-2"><strong>Answer: {{ $question['answer'] }}</strong></p>
-                            @endif
-                        </div>
-                    @endforeach
-                @else
-                    <p>No questions available for this test.</p>
-                @endif
-
                 @if(Auth::guard('web')->check())
-                    <div class="flex justify-end space-x-2 mt-4">
+                    <div class="flex justify-end space-x-2 my-4">
                         <a href="{{ route('tests.edit', $test->id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">
                             Edit
                         </a>
@@ -68,6 +29,46 @@
                             </button>
                         </form>
                     </div>
+
+                    {{-- test preview --}}
+                    @if(!empty($questions))
+                        @foreach (array_slice($questions, 0, 10) as $question)
+                            <div class="mb-6 p-4 border rounded">
+                                <p class="text-lg mb-4 text-justify">
+                                    {{ $question['question'] ?? 'No question available' }}
+                                </p>
+                                
+                                @if(isset($question['image_url']) && $question['image_url'])
+                                    <img src={{$question['image_url'] }} alt="Question Image" class="mb-4 max-w-full h-auto">
+                                @endif
+                                
+                                <div class="flex flex-col gap-1 ml-4 mb-4">
+                                    <label>
+                                        <input type="radio" name="option" value={{ $question['choice_a'] ?? '' }}>
+                                        A. {{ $question['choice_a'] ?? '' }}
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="option" value={{ $question['choice_b'] ?? '' }}>
+                                        B. {{ $question['choice_b'] ?? '' }}
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="option" value={{ $question['choice_c'] ?? '' }}>
+                                        C. {{ $question['choice_c'] ?? '' }}
+                                    </label>
+                                    <label>
+                                        <input type="radio" name="option" value={{ $question['choice_d'] ?? '' }}>
+                                        D. {{ $question['choice_d'] ?? '' }}
+                                    </label>
+                                </div>
+                                
+                                @if(isset($question['answer']))
+                                    <p class="mt-2"><strong>Answer: {{ $question['answer'] }}</strong></p>
+                                @endif
+                            </div>
+                        @endforeach
+                    @else
+                        <p>No questions available for this test.</p>
+                    @endif
                 @endif
 
                 @if(Auth::guard('candidate')->check())
