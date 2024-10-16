@@ -9,10 +9,8 @@ class Test extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'description'
-    ];
+    protected $fillable = ['name', 'description', 'questions_file_path'];
+    
     public function invitation()
     {
         return $this->hasOne(TestInvitation::class);
@@ -24,14 +22,16 @@ class Test extends Model
         return $this->belongsToMany(User::class, 'test_user')->withTimestamps();
     }
 
-    public function candidates()
+    protected static function boot()
     {
-        return $this->belongsToMany(Candidate::class, 'test_user')->withTimestamps();
-    }
+        parent::boot();
 
-    public function questions()
-    {
-        return $this->hasMany(Question::class);
+        static::deleting(function ($test) {
+            // Delete associated invitation
+            $test->invitation()->delete();
+            
+            $test->users()->detach();
+        });
     }
 
     // Add any other methods or relationships you may need
