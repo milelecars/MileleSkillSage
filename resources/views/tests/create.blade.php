@@ -9,6 +9,11 @@
                         <label for="name" class="block text-gray-700 text-md font-bold mb-2">Test Name</label>
                         <input type="text" name="name" id="name" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test name" value="{{ old('name') }}">
                     </div>
+                    <div class="ml-4" wire:ignore.self>
+                        <label for="invitation_link" class="block text-gray-700 text-md font-bold mb-2">Invitation Link</label>
+                       
+                        @livewire('invitation-generator')
+                    </div>
                     <div class="col-span-2">
                         <label for="description" class="block text-gray-700 text-md font-bold mb-2">Description</label>
                         <textarea name="description" id="description" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter a description for the test">{{ old('description') }}</textarea>

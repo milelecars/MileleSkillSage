@@ -53,13 +53,28 @@ class TestController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'invitation_link' => 'required|string|url',
             'file' => 'required|file|mimes:xlsx,csv,json',
         ]);
+
+        // Extract the token from the invitation link
+        $urlParts = explode('/', $validatedData['invitation_link']);
+        $invitationToken = end($urlParts); // Get the last part of the URL
 
         // Store the test first
         $test = Test::create([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'],
+        ]);
+
+        // Create test invitation with the token and link it to the test
+        TestInvitation::create([
+            'test_id' => $test->id,
+            'invitation_link' => $validatedData['invitation_link'],
+            'invitation_token' => $invitationToken,
+            'email_list' => [],
+            'expires_at' => now()->addDays(7),
+            'created_by' => auth()->id(),
         ]);
 
         // Handle the file upload
@@ -81,7 +96,9 @@ class TestController extends Controller
                 // This depends on how you want to store and use the data
             }
 
-            return redirect()->route('tests.index')->with('success', 'Test created and questions processed successfully.');
+            // return redirect()->route('tests.index')->with('success', 'Test created and questions processed successfully.');
+            return redirect()->route('tests.show', $test->id)
+            ->with('success', 'Test created and invitation link generated successfully!');
         }
 
         return redirect()->back()->with('error', 'Invalid file upload.');
