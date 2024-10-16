@@ -15,7 +15,7 @@
                     </div>
                     <div class="col-span-2">
                         <label for="file" class="block text-gray-700 text-md font-bold mb-2">Import Questions</label>
-                        <input type="file" name="file" accept=".xlsx" required>
+                        <input type="file" name="file" accept=".xlsx,.csv" required>
                     </div>
                     <div class="flex items-center justify-center col-span-2 mt-5">
                         <button type="submit" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Create Test</button>

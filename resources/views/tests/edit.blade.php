@@ -16,19 +16,19 @@
                             <textarea name="description" id="description" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{{ old('description', $test->description) }}</textarea>
                         </div>
                         <div class="mb-4">
-                            <label for="file" class="block text-gray-700 text-md font-bold mb-2">Import Questions</label>
-                            <input type="file" name="file" accept=".xlsx,.csv" required>
+                            <label for="file" class="block text-gray-700 text-md font-bold mb-2">Import Questions (Optional)</label>
+                            <input type="file" name="file" accept=".xlsx,.csv,.json">
                         </div>
                         <div class="flex items-center justify-between">
-                            <a href="{{ url()->previous() == route('tests.index') ? route('tests.index') : route('tests.show', $test->id) }}" 
-                                class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
-                                 Cancel
-                             </a>                             
+                            <a href="{{ url()->previous() == route('tests.index') ? route('tests.index') : route('tests.show', $test->id) }}"
+                               class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+                                Cancel
+                            </a>
                             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                 Update Test
                             </button>
                         </div>
-                    </form>                    
+                    </form>                  
                 </div>
             </div>
         </div>
