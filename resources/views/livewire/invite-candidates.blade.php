@@ -12,7 +12,7 @@
         @endforeach
     </div>
 
-    <form wire:submit="addEmail" class="flex gap-2">
+    <form wire:submit.prevent="addEmail" class="flex gap-2">
         <input type="email" 
                wire:model.live="newEmail" 
                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
@@ -26,7 +26,7 @@
         </button>
     </form>
 
-    @error('email') 
+    @error('newEmail') 
         <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
     @enderror
 

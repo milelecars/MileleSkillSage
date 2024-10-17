@@ -26,7 +26,7 @@ Route::get('/', function () {
 Route::get('/welcome', function () {
     return view('welcome');
 })->name('welcome');
-
+ 
 
 // Guest routes
 Route::middleware('guest')->group(function () {

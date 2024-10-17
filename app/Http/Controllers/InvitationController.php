@@ -6,8 +6,10 @@ use App\Models\Test;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
 use App\Models\TestInvitation;
+use App\Services\PHPMailerService;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Auth;
+use App\Services\EmailTemplateService;
 use App\Http\Requests\Auth\ValidateInvitationEmailRequest;
 
 class InvitationController extends Controller
@@ -91,4 +93,5 @@ class InvitationController extends Controller
     {
         return view('invitation.expired');
     }
+
 }

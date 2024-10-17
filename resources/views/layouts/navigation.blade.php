@@ -15,12 +15,12 @@
                     @if(Auth::guard('web')->check())
                         <!-- Admin user -->
                         <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                            {{ __('Admin Dashboard') }}
+                            {{ __('Dashboard') }}
                         </x-nav-link>
                     @elseif(Auth::guard('candidate')->check())
                         <!-- Candidate user -->
                         <x-nav-link :href="route('candidate.dashboard')" :active="request()->routeIs('candidate.dashboard')">
-                            {{ __('Candidate Dashboard') }}
+                            {{ __('Dashboard') }}
                         </x-nav-link>
                     @endif
                 </div>
@@ -75,11 +75,11 @@
         <div class="pt-2 pb-3 space-y-1">
             @if(Auth::guard('web')->check()) 
                 <x-responsive-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                    {{ __('Admin Dashboard') }}
+                    {{ __('Dashboard') }}
                 </x-responsive-nav-link>
             @elseif(Auth::guard('candidate')->check())
                 <x-responsive-nav-link :href="route('candidate.dashboard')" :active="request()->routeIs('candidate.dashboard')">
-                    {{ __('Candidate Dashboard') }}
+                    {{ __('Dashboard') }}
                 </x-responsive-nav-link>
             @endif
         
