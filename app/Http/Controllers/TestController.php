@@ -162,6 +162,10 @@ class TestController extends Controller
             ->with('success', 'Test and all associated data deleted successfully!');
     }
 
+    public function invite($id){
+        return view('tests.invite', compact('id'));
+    }
+
 
     public function startTest(Request $request, $id)
     {

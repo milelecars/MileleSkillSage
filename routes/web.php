@@ -57,6 +57,7 @@ Route::middleware('auth:web')->group(function () {
     Route::put('/tests/{id}', [TestController::class, 'update'])->name('tests.update');
     Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
     Route::delete('/tests/{id}', [TestController::class, 'destroy'])->name('tests.destroy');
+    Route::get('/tests/{id}/invite', [TestController::class, 'invite'])->name('tests.invite');
 
 });
 

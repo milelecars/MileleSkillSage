@@ -4,7 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
-use App\Http\Livewire\InvitationGenerator;
+use App\Livewire\InvitationGenerator;
 
 class AppServiceProvider extends ServiceProvider
 {

@@ -28,6 +28,9 @@
                                 Delete
                             </button>
                         </form>
+                        <a href="{{ route('tests.invite', $test->id) }}" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+                            Invite
+                        </a>
                     </div>
 
                     {{-- test preview --}}
