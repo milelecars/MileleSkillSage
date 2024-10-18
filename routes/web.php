@@ -64,8 +64,12 @@ Route::middleware('auth:web')->group(function () {
 // Candidate authenticated routes
 Route::middleware('auth:candidate')->group(function () {
     Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
-    // Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    Route::get('/tests/{id}', 'TestController@show')->name('tests.show');
+    // Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{id}/start', [TestController::class, 'startTest'])->name('tests.start');
+    Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
+    Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
+    Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
 });
 
 // Logout route (accessible to both admins and candidates)

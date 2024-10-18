@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
-use Illuminate\Http\Request;
 use App\Models\TestInvitation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CandidateController extends Controller
@@ -23,7 +23,18 @@ class CandidateController extends Controller
             $test = $testId ? Test::find($testId) : null;
         }
 
-        return view('candidate.dashboard', compact('test'));
+        // Get the test status
+        $testStatus = null;
+        if ($test) {
+            $testStatus = $candidate->tests()
+                ->where('test_id', $test->id)
+                ->first();
+        }
+
+        // Get the invitation
+        $invitation = $this->validateSession();
+
+        return view('candidate.dashboard', compact('test', 'testStatus', 'invitation'));
     }
 
     private function validateSession()
@@ -32,14 +43,12 @@ class CandidateController extends Controller
         $candidateEmail = session('candidate_email');
 
         if (!$invitationLink || !$candidateEmail) {
-            return false;
+            return null;
         }
 
-        $invitation = TestInvitation::where('invitation_link', $invitationLink)
+        return TestInvitation::where('invitation_link', $invitationLink)
             ->where('expires_at', '>', now())
             ->first();
-
-        return $invitation;
     }
     
     public function startTest()
