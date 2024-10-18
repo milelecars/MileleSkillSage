@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionsImport;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+
 
 class TestController extends Controller
 {
@@ -69,7 +71,6 @@ class TestController extends Controller
     
         return redirect()->route('tests.show', $test->id)->with('success', 'Test updated successfully.');
     }
-
    
     public function store(Request $request)
     {
@@ -127,20 +128,6 @@ class TestController extends Controller
         return redirect()->back()->with('error', 'Invalid file upload.');
     }
 
-    public function show($id)
-    {
-        $test = Test::with('invitation')->findOrFail($id);
-        $questions = [];
-        
-        if ($test->questions_file_path) {
-            $filePath = storage_path('app/public/' . $test->questions_file_path);
-            $questions = Excel::toArray(new QuestionsImport($test), $filePath);
-            $questions = $questions[0] ?? []; // Assuming we're only interested in the first sheet
-        }
-        
-        return view('tests.show', compact('test', 'questions'));
-    }
-
     public function edit($id)
     {
         $test = Test::findOrFail($id);
@@ -166,21 +153,237 @@ class TestController extends Controller
         return view('tests.invite', compact('id'));
     }
 
+    protected function getQuestionsFromExcel($test)
+    {
+        $questions = [];
+        if ($test->questions_file_path) {
+            $filePath = storage_path('app/public/' . $test->questions_file_path);
+            $questions = Excel::toArray(new QuestionsImport($test), $filePath);
+            $questions = $questions[0] ?? [];
+        }
+        return $questions;
+    }
+
+    public function show($id)
+    {
+        $test = Test::with('invitation')->findOrFail($id);
+        $questions = $this->getQuestionsFromExcel($test);
+        $candidate = Auth::guard('candidate')->user();
+        
+        $isTestStarted = $candidate->tests()
+            ->wherePivot('test_id', $id)
+            ->wherePivotNotNull('started_at')
+            ->exists();
+
+        $isTestCompleted = $candidate->test_completed_at !== null || $candidate->tests()->wherePivot('test_id', $id)->wherePivot('completed_at', '!=', null)->exists();
+        
+        $isInvitationExpired = $test->invitation && $test->invitation->expires_at < now();
+        
+        $remainingTime = null;
+        
+        if ($isTestStarted) {
+            $startTime = Carbon::parse($testSession['start_time']);
+            $endTime = $startTime->copy()->addMinutes($test->duration);
+            $remainingTime = max(0, now()->diffInSeconds($endTime, false));
+        }
+        
+        return view('tests.show', compact('test', 'questions', 'isTestStarted', 'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
+    }
 
     public function startTest(Request $request, $id)
     {
-        
         if (!Auth::guard('candidate')->check()) {
-            return redirect()->route('invitation.candidate-auth')->with('error', 'Unauthorized access to the test.');
+            return redirect()->route('invitation.candidate-auth')
+                ->with('error', 'Unauthorized access to the test.');
         }
-        
-        // Find the test by ID
+
+        $candidate = Auth::guard('candidate')->user();
         $test = Test::findOrFail($id);
+
+        $isCompleted = $candidate->tests()
+            ->wherePivot('test_id', $id)
+            ->whereNotNull('test_candidate.completed_at')
+            ->exists();
+
+        if ($isCompleted) {
+            return redirect()->route('tests.result', ['id' => $id])
+                ->with('info', 'You have already completed this test.');
+        }
+
+        $testSession = session('test_session', []);
+
+        if (!isset($testSession['test_id']) || $testSession['test_id'] != $id) {
+            // New test session
+            $startTime = now();
+            $endTime = $startTime->copy()->addMinutes($test->duration);
+
+            $testSession = [
+                'test_id' => $test->id,
+                'start_time' => $startTime->toDateTimeString(),
+                'end_time' => $endTime->toDateTimeString(),
+                'current_question' => 0,
+                'answers' => []
+            ];
+
+            $candidate->test_started_at = $startTime;
+            $candidate->save();
+
+            $candidate->tests()->syncWithoutDetaching([
+                $id => ['started_at' => $startTime]
+            ]);
+        } else {
+            // Existing test session
+            $startTime = Carbon::parse($testSession['start_time']);
+            $endTime = $startTime->copy()->addMinutes($test->duration);
+
+            // Update end_time if it's not set or invalid
+            if (!isset($testSession['end_time']) || !Carbon::hasFormat($testSession['end_time'], 'Y-m-d H:i:s')) {
+                $testSession['end_time'] = $endTime->toDateTimeString();
+            } else {
+                $endTime = Carbon::parse($testSession['end_time']);
+            }
+        }
+
+        // Check if test has expired
+        if (now()->gt($endTime)) {
+            return $this->handleExpiredTest($test);
+        }
+
+        // Update session
+        session(['test_session' => $testSession]);
+
+        $questions = $this->getQuestionsFromExcel($test);
+        $currentQuestionIndex = $testSession['current_question'];
+
+        return view('tests.start', compact('test', 'questions', 'currentQuestionIndex'));
+    }
+
+    public function nextQuestion(Request $request, $id)
+    {
+        $test = Test::findOrFail($id);
+        $questions = $this->getQuestionsFromExcel($test);
+        
+        $request->validate([
+            'answer' => 'required|in:a,b,c,d',
+            'current_index' => 'required|numeric',
+        ]);
+
+        $testSession = session('test_session');
+        if (!$testSession || $testSession['test_id'] != $id) {
+            return redirect()->route('tests.start', ['id' => $id])
+                ->with('error', 'Invalid test session.');
+        }
+
+        $endTime = Carbon::parse($testSession['end_time']);
+        if (now()->gt($endTime)) {
+            return $this->handleExpiredTest($test);
+        }
+
+        $currentIndex = $request->input('current_index');
+        $answers = $testSession['answers'];
+        $answers[$currentIndex] = $request->input('answer');
+        
+        $nextIndex = $currentIndex + 1;
+        
+        if ($nextIndex >= count($questions)) {
+            return $this->submitTest($request, $id);
+        }
+
+        session()->put('test_session.answers', $answers);
+        session()->put('test_session.current_question', $nextIndex);
+
+        return redirect()->route('tests.start', ['id' => $id]);
+    }
     
-        // Store the test ID in the session (only if needed)
-        $request->session()->put('test_id', $test->id);
+    public function submitTest(Request $request, $id)
+    {
+        $candidate = Auth::guard('candidate')->user();
+        $test = Test::findOrFail($id);
+        $testSession = session('test_session');
+
+        if (!$testSession || $testSession['test_id'] != $id) {
+            return redirect()->route('tests.start', ['id' => $id])
+                ->with('error', 'Invalid test session.');
+        }
+
+        $endTime = Carbon::parse($testSession['end_time']);
+        if (now()->gt($endTime)) {
+            return $this->handleExpiredTest($test);
+        }
+
+        $answers = $testSession['answers'];
+        $questions = $this->getQuestionsFromExcel($test);
+        $score = $this->calculateScore($questions, $answers);
+
+        $candidate->update([
+            'test_completed_at' => now(),
+            'test_score' => $score,
+            'test_name' => $test->name
+        ]);
+
+        $candidate->tests()->updateExistingPivot($id, [
+            'completed_at' => now(),
+            'score' => $score
+        ]);
+
+        session()->forget('test_session');
+
+        return redirect()->route('tests.result', ['id' => $id])
+            ->with('success', 'Test completed successfully!');
+    }
+
+    private function handleExpiredTest($test)
+    {
+        $testSession = session('test_session');
+        $answers = $testSession['answers'] ?? [];
+        $questions = $this->getQuestionsFromExcel($test);
+        $candidate = Auth::guard('candidate')->user();
+
+        $score = $this->calculateScore($questions, $answers);
+
+        $candidate->update([
+            'test_completed_at' => now(),
+            'test_score' => $score,
+            'test_name' => $test->name
+        ]);
+
+        $candidate->tests()->updateExistingPivot($test->id, [
+            'completed_at' => now(),
+            'score' => $score
+        ]);
+
+        session()->forget('test_session');
+
+        return redirect()->route('tests.result', ['id' => $test->id])
+            ->with('warning', 'Test time has expired. Your answers have been submitted automatically.');
+    }
     
-        // Display the test for the candidate
-        return view('tests.start', compact('test'));
-    }    
+
+    private function calculateScore($questions, $answers)
+    {
+        $score = 0;
+        foreach ($answers as $index => $answer) {
+            if (isset($questions[$index]) &&
+                strtolower($answer) === strtolower($questions[$index]['answer'])) {
+                $score++;
+            }
+        }
+        return $score;
+    }
+
+    public function showResult($id)
+    {
+        $test = Test::findOrFail($id);
+        $candidate = Auth::guard('candidate')->user();
+
+        $testStatus = $candidate->tests()->where('test_id', $id)->first();
+
+        // Set session data
+        session([
+            'current_test_id' => $id,
+            'test' => $test
+        ]);
+
+        return view('tests.result', compact('test', 'candidate', 'testStatus'));
+    }
 }

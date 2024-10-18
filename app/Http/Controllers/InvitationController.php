@@ -6,92 +6,124 @@ use App\Models\Test;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
 use App\Models\TestInvitation;
-use App\Services\PHPMailerService;
-use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use App\Services\EmailTemplateService;
-use App\Http\Requests\Auth\ValidateInvitationEmailRequest;
 
 class InvitationController extends Controller
 {
-    public function show(Request $request, $invitationLink)
+    public function show($invitationLink)
     {
-        $fullUrl = URL::route('invitation.show', ['invitationLink' => $invitationLink]);
-        $invitation = TestInvitation::where('invitation_link', $fullUrl)->firstOrFail();
+        $fullUrl = url('invitation/' . $invitationLink);
+
+        $invitation = TestInvitation::with('test')
+            ->where('invitation_link', $fullUrl)
+            ->firstOrFail();
+
+        session([
+            'invitation_token' => $invitation->invitation_token,
+            'invitation_link' => $fullUrl,
+            'test_id' => $invitation->test_id
+        ]);
 
         if ($invitation->isExpired()) {
             return redirect()->route('invitation.expired');
         }
+
+        $testStatus = null;
         if (Auth::guard('candidate')->check()) {
-            // If the candidate is authenticated, show the invitation details
-            return view('candidate.dashboard', compact('invitation'));
-        }
+            $candidate = Auth::guard('candidate')->user();
     
-
-        return view('invitation.candidate-auth', [
-            'invitation' => $invitation,
-            'invitation_token' => $invitation->invitation_token,
-        ]);
+            $testStatus = $candidate->tests()
+                ->where('test_id', $invitation->test_id)
+                ->first();
+            
+            if ($testStatus) {
+                $this->setCandidateSession($candidate, $invitation->test_id);
+            } 
+    
+            return view('candidate.dashboard', [
+                'invitation' => $invitation,
+                'test' => $invitation->test,
+                'testStatus' => $testStatus
+            ]);
+    
+        }
     }
-
+    
     public function validateEmail(Request $request, $invitationLink)
     {
-        // Step 1: Validate input data
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
         ]);
+
         $invitationToken = $request->input('invitation_token');
+        
+        // Retrieve invitation with test relationship
+        $invitation = TestInvitation::with('test')
+            ->where('invitation_token', $invitationToken)
+            ->firstOrFail();
 
-        // Step 2: Retrieve the invitation using the token
-        $invitation = TestInvitation::where('invitation_token', $invitationToken)->firstOrFail();
-
-        // Use the email_list directly
-        $emailList = $invitation->email_list;
-
-        // Step 3: Check if the email exists in the invitation's email list
-        if (!in_array($validatedData['email'], $emailList)) {
+        if (!in_array($validatedData['email'], $invitation->email_list)) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
 
-        // Step 4: Check if the candidate already exists
-        $candidate = Candidate::where('email', $validatedData['email'])->first();
+        // Get or create candidate
+        $candidate = Candidate::firstOrCreate(
+            ['email' => $validatedData['email']],
+            ['name' => $validatedData['name']]
+        );
 
-        // Step 5: If the candidate exists, log them in
-        if ($candidate) {
-            Auth::guard('candidate')->login($candidate);
-        } else {
-            // Step 6: Create a new candidate if they don't exist
-            $candidate = Candidate::create([
-                'name' => $validatedData['name'],
-                'email' => $validatedData['email'],
-            ]);
-            // Log in the newly created candidate
-            Auth::guard('candidate')->login($candidate);
-        }
+        // Log in the candidate
+        Auth::guard('candidate')->login($candidate);
 
-        // Step 7: Set session data for both new and existing candidates
+        // Set up the session
         $this->setCandidateSession($candidate, $invitation->test_id);
 
-        // Step 8: Redirect to candidate dashboard
+        // Attach test to candidate if not already attached
+        if (!$candidate->tests()->where('test_id', $invitation->test_id)->exists()) {
+            $candidate->tests()->attach($invitation->test_id, [
+                'invitation_id' => $invitation->id,
+                'created_at' => now()
+            ]);
+        }
+
         return redirect()->route('candidate.dashboard');
     }
 
     private function setCandidateSession($candidate, $testId)
     {
-        $test = Test::findOrFail($testId);
-        session([
+        $test = Test::with('invitation')->findOrFail($testId);
+
+        // Get existing test session if any
+        $testSession = $candidate->tests()
+            ->where('test_id', $testId)
+            ->first();
+
+        $sessionData = [
             'candidate_name' => $candidate->name,
             'candidate_email' => $candidate->email,
             'current_test_id' => $testId,
             'test' => $test,
-            'invitation_link' => request()->url(), // Store the current URL as the invitation link
-        ]);
+            'invitation_link' => session('invitation_link'),
+            'test_session' => null
+        ];
+
+        // If test was already started, restore the session
+        if ($testSession && $testSession->pivot->started_at) {
+            $sessionData['test_session'] = [
+                'test_id' => $testId,
+                'start_time' => $testSession->pivot->started_at,
+                'current_question' => session('test_session.current_question', 0),
+                'answers' => session('test_session.answers', [])
+            ];
+        }
+
+        session($sessionData);
     }
 
     public function expired()
     {
         return view('invitation.expired');
     }
-
 }
