@@ -39,7 +39,6 @@ Route::middleware('guest')->group(function () {
     // Invitation handling for guests
     Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
     Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
-    Route::get('/invitation/candidate-auth', [InvitationController::class, 'show'])->name('invitation.candidate-auth');
     Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 });
 
@@ -53,9 +52,10 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
+    Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{id}/edit', [TestController::class, 'edit'])->name('tests.edit');
     Route::put('/tests/{id}', [TestController::class, 'update'])->name('tests.update');
-    Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    // Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
     Route::delete('/tests/{id}', [TestController::class, 'destroy'])->name('tests.destroy');
     Route::get('/tests/{id}/invite', [TestController::class, 'invite'])->name('tests.invite');
 
@@ -64,8 +64,8 @@ Route::middleware('auth:web')->group(function () {
 // Candidate authenticated routes
 Route::middleware('auth:candidate')->group(function () {
     Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
-    Route::get('/tests/{id}', 'TestController@show')->name('tests.show');
-    // Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
+    Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{id}/start', [TestController::class, 'startTest'])->name('tests.start');
     Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
     Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');

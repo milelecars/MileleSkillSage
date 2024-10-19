@@ -13,12 +13,12 @@
                         <div>
                             <h2 class="text-xl font-semibold mb-3">Test Information</h2>
                             <ul class="space-y-2">
-                                {{-- <li><strong>Test Name:</strong> {{ $candidate->test_name }}</li>
+                                <li><strong>Test Name:</strong> {{ $candidate->test_name }}</li>
                                 <li><strong>Started At:</strong> {{ $candidate->test_started_at->format('M d, Y H:i:s') }}</li>
                                 <li><strong>Completed At:</strong> {{ $candidate->test_completed_at->format('M d, Y H:i:s') }}</li>
                                 <li><strong>Duration:</strong> 
                                     {{ $candidate->test_started_at->diffInMinutes($candidate->test_completed_at) }} minutes
-                                </li> --}}
+                                </li>
                             </ul>
                         </div>
                         
@@ -26,16 +26,16 @@
                             <h2 class="text-xl font-semibold mb-3">Score Summary</h2>
                             <div class="bg-gray-100 p-4 rounded-lg">
                                 <div class="text-4xl font-bold text-center text-blue-600">
-                                    {{-- {{ $candidate->test_score }} / {{ $test->questions->count() }} --}}
+                                    {{ $candidate->test_score }} / {{ count($questions) }}
                                 </div>
                                 <p class="text-center text-gray-600 mt-2">Correct Answers</p>
                             </div>
                             <div class="mt-4">
                                 <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                    {{-- <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ ($candidate->test_score / $test->questions->count()) * 100 }}%"></div> --}}
+                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ ($candidate->test_score / count($questions) * 100) }}%"></div>
                                 </div>
                                 <p class="text-center text-gray-600 mt-2">
-                                    {{-- {{ number_format(($candidate->test_score / $test->questions->count()) * 100, 1) }}% Score --}}
+                                    {{ number_format(($candidate->test_score / count($questions)) * 100, 1) }}% Score
                                 </p>
                             </div>
                         </div>
@@ -44,13 +44,13 @@
                     <div class="mt-10">
                         <h2 class="text-xl font-semibold mb-3">Performance Feedback</h2>
                         <p class="text-gray-700">
-                            {{-- @if(($candidate->test_score / $test->questions->count()) >= 0.8)
+                            @if(($candidate->test_score / count($questions)) >= 0.8)
                                 Excellent work! Your high score demonstrates a strong understanding of the subject matter.
-                            @elseif(($candidate->test_score / $test->questions->count()) >= 0.6)
+                            @elseif(($candidate->test_score / count($questions)) >= 0.6)
                                 Good job! You've shown a solid grasp of many key concepts, but there's still room for improvement.
                             @else
                                 Thank you for completing the test. We recommend further study to improve your understanding of the material.
-                            @endif --}}
+                            @endif
                         </p>
                     </div>
 

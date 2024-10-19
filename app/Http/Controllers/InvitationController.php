@@ -14,80 +14,83 @@ class InvitationController extends Controller
     public function show($invitationLink)
     {
         $fullUrl = url('invitation/' . $invitationLink);
-
         $invitation = TestInvitation::with('test')
             ->where('invitation_link', $fullUrl)
             ->firstOrFail();
-
+        
+        Log::info("invitation", [$invitation]);
+        
         session([
             'invitation_token' => $invitation->invitation_token,
             'invitation_link' => $fullUrl,
-            'test_id' => $invitation->test_id
+            'test_id' => $invitation->test_id,
         ]);
-
-        if ($invitation->isExpired()) {
+        
+        if ($invitation->expires_at && $invitation->expires_at->isPast()) {
             return redirect()->route('invitation.expired');
         }
-
-        $testStatus = null;
+        
         if (Auth::guard('candidate')->check()) {
             $candidate = Auth::guard('candidate')->user();
-    
             $testStatus = $candidate->tests()
                 ->where('test_id', $invitation->test_id)
                 ->first();
             
             if ($testStatus) {
                 $this->setCandidateSession($candidate, $invitation->test_id);
-            } 
-    
+            }
+            
             return view('candidate.dashboard', [
                 'invitation' => $invitation,
                 'test' => $invitation->test,
-                'testStatus' => $testStatus
+                'testStatus' => $testStatus,
             ]);
-    
+        } else {
+            // If the candidate is not authenticated, show the candidate-auth view
+            Log::info("Rendering candidate-auth view");
+            
+            return view('invitation.candidate-auth', [
+                'invitation' => $invitation, 
+                'test' => $invitation->test,
+                'invitation_token' => $invitation->invitation_token, // Add this line
+            ]);
         }
     }
-    
+
     public function validateEmail(Request $request, $invitationLink)
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
         ]);
-
-        $invitationToken = $request->input('invitation_token');
-        
-        // Retrieve invitation with test relationship
+    
         $invitation = TestInvitation::with('test')
-            ->where('invitation_token', $invitationToken)
+            ->where('invitation_link', url('invitation/' . $invitationLink))
             ->firstOrFail();
-
+    
         if (!in_array($validatedData['email'], $invitation->email_list)) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
-
+    
         // Get or create candidate
         $candidate = Candidate::firstOrCreate(
             ['email' => $validatedData['email']],
             ['name' => $validatedData['name']]
         );
-
+    
         // Log in the candidate
         Auth::guard('candidate')->login($candidate);
-
+    
         // Set up the session
         $this->setCandidateSession($candidate, $invitation->test_id);
-
+    
         // Attach test to candidate if not already attached
         if (!$candidate->tests()->where('test_id', $invitation->test_id)->exists()) {
             $candidate->tests()->attach($invitation->test_id, [
-                'invitation_id' => $invitation->id,
                 'created_at' => now()
             ]);
         }
-
+    
         return redirect()->route('candidate.dashboard');
     }
 

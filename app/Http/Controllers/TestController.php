@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionsImport;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 
 class TestController extends Controller
@@ -166,28 +167,39 @@ class TestController extends Controller
 
     public function show($id)
     {
-        $test = Test::with('invitation')->findOrFail($id);
-        $questions = $this->getQuestionsFromExcel($test);
-        $candidate = Auth::guard('candidate')->user();
-        
-        $isTestStarted = $candidate->tests()
-            ->wherePivot('test_id', $id)
-            ->wherePivotNotNull('started_at')
-            ->exists();
+        // Log::info("web ", Auth::guard('web')->check());
+        // if (Auth::guard('web')->check()) {
+        //     $test = Test::with('invitation')->findOrFail($id);
+        //     $questions = $this->getQuestionsFromExcel($test);
+        //     Log::info("Candidate ", [$test, $questions]);
+        //     return view('tests.show', compact('test', 'questions'));
+        // }else{
+            Log::info("Candidate ");
+            $test = Test::with('invitation')->findOrFail($id);
+            $questions = $this->getQuestionsFromExcel($test);
+            $candidate = Auth::guard('candidate')->user();
+            
+            $isTestStarted = $candidate->tests()
+                ->wherePivot('test_id', $id)
+                ->wherePivotNotNull('started_at')
+                ->exists();
+    
+            $isTestCompleted = $candidate->test_completed_at !== null || $candidate->tests()->wherePivot('test_id', $id)->wherePivot('completed_at', '!=', null)->exists();
+            
+            $isInvitationExpired = $test->invitation && $test->invitation->expires_at < now();
+            
+            $remainingTime = null;
+            
+            if ($isTestStarted) {
+                $startTime = Carbon::parse($testSession['start_time']);
+                $endTime = $startTime->copy()->addMinutes($test->duration);
+                $remainingTime = max(0, now()->diffInSeconds($endTime, false));
+            }
+            
+            return view('tests.show', compact('test', 'questions', 'isTestStarted', 'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
 
-        $isTestCompleted = $candidate->test_completed_at !== null || $candidate->tests()->wherePivot('test_id', $id)->wherePivot('completed_at', '!=', null)->exists();
-        
-        $isInvitationExpired = $test->invitation && $test->invitation->expires_at < now();
-        
-        $remainingTime = null;
-        
-        if ($isTestStarted) {
-            $startTime = Carbon::parse($testSession['start_time']);
-            $endTime = $startTime->copy()->addMinutes($test->duration);
-            $remainingTime = max(0, now()->diffInSeconds($endTime, false));
-        }
-        
-        return view('tests.show', compact('test', 'questions', 'isTestStarted', 'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
+        // }
+
     }
 
     public function startTest(Request $request, $id)
@@ -375,7 +387,8 @@ class TestController extends Controller
     {
         $test = Test::findOrFail($id);
         $candidate = Auth::guard('candidate')->user();
-
+        $questions = $this->getQuestionsFromExcel($test);
+        
         $testStatus = $candidate->tests()->where('test_id', $id)->first();
 
         // Set session data
@@ -384,6 +397,6 @@ class TestController extends Controller
             'test' => $test
         ]);
 
-        return view('tests.result', compact('test', 'candidate', 'testStatus'));
+        return view('tests.result', compact('test', 'questions', 'candidate', 'testStatus'));
     }
 }
