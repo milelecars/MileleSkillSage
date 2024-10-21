@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\Attributes\LivewireComponent;
 use App\Models\Test;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Redirect;
 
 #[LivewireComponent]
 class TestTimer extends Component
@@ -36,9 +37,16 @@ class TestTimer extends Component
         if ($this->endTime) {
             $this->timeLeft = max(0, now()->diffInSeconds($this->endTime, false));
             if ($this->timeLeft <= 0) {
-                $this->dispatch('timeUp');
+                $this->redirectToResults();
             }
         }
+    }
+
+    public function redirectToResults()
+    {
+        session()->forget('test_session');
+        
+        return Redirect::route('tests.result', ['id' => $this->testId]);
     }
 
     public function render()

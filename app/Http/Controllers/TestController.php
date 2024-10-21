@@ -271,41 +271,45 @@ class TestController extends Controller
     }
 
     public function nextQuestion(Request $request, $id)
-    {
-        $test = Test::findOrFail($id);
-        $questions = $this->getQuestionsFromExcel($test);
-        
-        $request->validate([
-            'answer' => 'required|in:a,b,c,d',
-            'current_index' => 'required|numeric',
-        ]);
-
-        $testSession = session('test_session');
-        if (!$testSession || $testSession['test_id'] != $id) {
-            return redirect()->route('tests.start', ['id' => $id])
-                ->with('error', 'Invalid test session.');
-        }
-
-        $endTime = Carbon::parse($testSession['end_time']);
-        if (now()->gt($endTime)) {
-            return $this->handleExpiredTest($test);
-        }
-
-        $currentIndex = $request->input('current_index');
-        $answers = $testSession['answers'];
-        $answers[$currentIndex] = $request->input('answer');
-        
-        $nextIndex = $currentIndex + 1;
-        
-        if ($nextIndex >= count($questions)) {
-            return $this->submitTest($request, $id);
-        }
-
-        session()->put('test_session.answers', $answers);
-        session()->put('test_session.current_question', $nextIndex);
-
-        return redirect()->route('tests.start', ['id' => $id]);
+{
+    if ($this->checkTimeUp()) {
+        return redirect()->route('tests.result', ['id' => $id]);
     }
+    
+    $test = Test::findOrFail($id);
+    $questions = $this->getQuestionsFromExcel($test);
+    
+    $request->validate([
+        'answer' => 'required|in:a,b,c,d',
+        'current_index' => 'required|numeric',
+    ]);
+
+    $testSession = session('test_session');
+    if (!$testSession || $testSession['test_id'] != $id) {
+        return redirect()->route('tests.start', ['id' => $id])
+            ->with('error', 'Invalid test session.');
+    }
+
+    $endTime = Carbon::parse($testSession['end_time']);
+    if (now()->gt($endTime)) {
+        return $this->handleExpiredTest($test);
+    }
+
+    $currentIndex = $request->input('current_index');
+    $answer = $request->input('answer');
+    $testSession['answers'][$currentIndex] = $answer;
+    
+    $nextIndex = $currentIndex + 1;
+    
+    if ($nextIndex >= count($questions)) {
+        return $this->submitTest($request, $id);
+    }
+
+    session()->put('test_session', $testSession);
+    session()->put('test_session.current_question', $nextIndex);
+
+    return redirect()->route('tests.start', ['id' => $id]);
+}
     
     public function submitTest(Request $request, $id)
     {
@@ -321,6 +325,13 @@ class TestController extends Controller
         $endTime = Carbon::parse($testSession['end_time']);
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
+        }
+
+        // Capture the final answer
+        $currentIndex = $request->input('current_index');
+        $finalAnswer = $request->input('answer');
+        if ($finalAnswer) {
+            $testSession['answers'][$currentIndex] = $finalAnswer;
         }
 
         $answers = $testSession['answers'];
@@ -398,5 +409,18 @@ class TestController extends Controller
         ]);
 
         return view('tests.result', compact('test', 'questions', 'candidate', 'testStatus'));
+    }
+
+    private function checkTimeUp()
+    {
+        $testSession = session('test_session');
+        if ($testSession) {
+            $endTime = Carbon::parse($testSession['end_time']);
+            if (now()->gt($endTime)) {
+                session()->forget('test_session');
+                return true;
+            }
+        }
+        return false;
     }
 }

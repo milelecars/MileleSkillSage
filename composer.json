@@ -10,7 +10,8 @@
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.5",
         "maatwebsite/excel": "^3.1",
-        "phpmailer/phpmailer": "^6.9"
+        "phpmailer/phpmailer": "^6.9",
+        "torann/geoip": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -27,7 +28,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/TimeHelper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

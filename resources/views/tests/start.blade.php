@@ -3,16 +3,13 @@
         <!-- Fixed Timer Bar -->
         <div class="w-full flex flex-col gap-3 items-center justify-center my-8">
             <livewire:test-timer :testId="$test->id" />
-            <!-- Progress Bar -->
-            <div class="h-1 bg-blue-100 w-[25%]">
-                <div class="h-full bg-blue-600 rounded-full" style="width: {{ ($currentQuestionIndex + 1) / count($questions) * 100 }}%"></div>
             </div>
-        </div>
-
+            
+            
         <!-- Main Content -->
         <div class="py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden w-full">
                     <div class="md:flex">
                         <!-- Question Section -->
                         <div class="md:w-2/3 p-6 border-r">
@@ -55,6 +52,10 @@
                             </form>
                         </div>
                     </div>
+                </div>
+                <!-- Progress Bar -->
+                <div class="h-1.5 bg-blue-100 w-[25%] mt-5">
+                    <div class="h-full bg-blue-600 rounded-full" style="width: {{ ($currentQuestionIndex + 1) / count($questions) * 100 }}%"></div>
                 </div>
             </div>
         </div>
