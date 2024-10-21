@@ -4,21 +4,25 @@
             <h1 class="text-2xl font-bold mb-6">Create a New Test</h1>
             <form action="{{ route('tests.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="grid grid-cols-2 gap-6 bg-white shadow-md rounded p-8">
+                <div class="grid grid-cols-3 gap-6 bg-white shadow-md rounded p-8">
                     <div class="mr-4">
                         <label for="name" class="block text-gray-700 text-md font-bold mb-2">Test Name</label>
                         <input type="text" name="name" id="name" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test name" value="{{ old('name') }}">
+                    </div>
+                    <div class="mr-4">
+                        <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Duration</label>
+                        <input type="text" name="duration" id="duration" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the duration" value="{{ old('duration') }}">
                     </div>
                     <div class="ml-4" wire:ignore.self>
                         <label for="invitation_link" class="block text-gray-700 text-md font-bold mb-2">Invitation Link</label>
                        
                         @livewire('invitation-generator')
                     </div>
-                    <div class="col-span-2">
+                    <div class="col-span-3">
                         <label for="description" class="block text-gray-700 text-md font-bold mb-2">Description</label>
                         <textarea name="description" id="description" rows="4" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter a description for the test">{{ old('description') }}</textarea>
                     </div>
-                    <div class="col-span-2">
+                    <div class="col-span-3">
                         <label for="file" class="block text-gray-700 text-md font-bold mb-2">Import Questions</label>
                         <input type="file" name="file" accept=".xlsx,.csv" required>
                     </div>
