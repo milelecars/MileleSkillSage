@@ -9,5 +9,11 @@
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
+  },
+  "resources/js/webcam.js": {
+    "file": "assets/app-DI6-W-r-.js",
+    "name": "app",
+    "src": "resources/js/webcam.js",
+    "isEntry": true
   }
 }

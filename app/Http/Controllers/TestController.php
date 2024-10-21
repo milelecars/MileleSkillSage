@@ -34,6 +34,7 @@ class TestController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'duration',
             'file' => 'sometimes|file|mimes:xlsx,csv,json',
         ]);
     
@@ -41,6 +42,7 @@ class TestController extends Controller
         $test->update([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'],
+            'duration' => $validatedData['duration'],
         ]);
         
         // Handle the file upload
@@ -78,6 +80,7 @@ class TestController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
+            'duration' => 'required',
             'invitation_link' => 'required|string|url',
             'file' => 'required|file|mimes:xlsx,csv,json',
         ]);
@@ -90,6 +93,7 @@ class TestController extends Controller
         $test = Test::create([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'],
+            'duration' => $validatedData['duration'],
         ]);
 
         // Create test invitation with the token and link it to the test
@@ -271,45 +275,45 @@ class TestController extends Controller
     }
 
     public function nextQuestion(Request $request, $id)
-{
-    if ($this->checkTimeUp()) {
-        return redirect()->route('tests.result', ['id' => $id]);
+    {
+        if ($this->checkTimeUp()) {
+            return redirect()->route('tests.result', ['id' => $id]);
+        }
+        
+        $test = Test::findOrFail($id);
+        $questions = $this->getQuestionsFromExcel($test);
+        
+        $request->validate([
+            'answer' => 'required|in:a,b,c,d',
+            'current_index' => 'required|numeric',
+        ]);
+
+        $testSession = session('test_session');
+        if (!$testSession || $testSession['test_id'] != $id) {
+            return redirect()->route('tests.start', ['id' => $id])
+                ->with('error', 'Invalid test session.');
+        }
+
+        $endTime = Carbon::parse($testSession['end_time']);
+        if (now()->gt($endTime)) {
+            return $this->handleExpiredTest($test);
+        }
+
+        $currentIndex = $request->input('current_index');
+        $answer = $request->input('answer');
+        $testSession['answers'][$currentIndex] = $answer;
+        
+        $nextIndex = $currentIndex + 1;
+        
+        if ($nextIndex >= count($questions)) {
+            return $this->submitTest($request, $id);
+        }
+
+        session()->put('test_session', $testSession);
+        session()->put('test_session.current_question', $nextIndex);
+
+        return redirect()->route('tests.start', ['id' => $id]);
     }
-    
-    $test = Test::findOrFail($id);
-    $questions = $this->getQuestionsFromExcel($test);
-    
-    $request->validate([
-        'answer' => 'required|in:a,b,c,d',
-        'current_index' => 'required|numeric',
-    ]);
-
-    $testSession = session('test_session');
-    if (!$testSession || $testSession['test_id'] != $id) {
-        return redirect()->route('tests.start', ['id' => $id])
-            ->with('error', 'Invalid test session.');
-    }
-
-    $endTime = Carbon::parse($testSession['end_time']);
-    if (now()->gt($endTime)) {
-        return $this->handleExpiredTest($test);
-    }
-
-    $currentIndex = $request->input('current_index');
-    $answer = $request->input('answer');
-    $testSession['answers'][$currentIndex] = $answer;
-    
-    $nextIndex = $currentIndex + 1;
-    
-    if ($nextIndex >= count($questions)) {
-        return $this->submitTest($request, $id);
-    }
-
-    session()->put('test_session', $testSession);
-    session()->put('test_session.current_question', $nextIndex);
-
-    return redirect()->route('tests.start', ['id' => $id]);
-}
     
     public function submitTest(Request $request, $id)
     {

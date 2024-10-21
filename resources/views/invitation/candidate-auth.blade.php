@@ -20,7 +20,7 @@
 
             <input type="hidden" name="invitation_token" value="{{ $invitation_token }}">
 
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-center mt-5">
                 <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     Submit
                 </button>

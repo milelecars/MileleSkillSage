@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FlagController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CandidateController;
@@ -27,6 +28,8 @@ Route::get('/welcome', function () {
     return view('welcome');
 })->name('welcome');
  
+Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
+
 
 // Guest routes
 Route::middleware('guest')->group(function () {
