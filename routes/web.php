@@ -64,7 +64,7 @@ Route::middleware('auth:web')->group(function () {
 // Candidate authenticated routes
 Route::middleware('auth:candidate')->group(function () {
     Route::get('/candidate/dashboard', [CandidateController::class, 'dashboard'])->name('candidate.dashboard');
-    Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
+    // Route::get('/tests/{id}', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
     Route::get('/tests/{id}/start', [TestController::class, 'startTest'])->name('tests.start');
     Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
