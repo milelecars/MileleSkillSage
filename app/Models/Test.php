@@ -12,7 +12,7 @@ class Test extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'duration', 'description', 'questions_file_path'];
+    protected $fillable = ['name', 'duration', 'description',  'questions_file_path'];
 
     public function invitation()
     {

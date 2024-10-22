@@ -35,9 +35,12 @@ class TestController extends Controller
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
+
             'description' => 'nullable|string',
             'duration',
             'file' => 'nullable|file|mimes:xlsx,csv,json|max:2048'
+
+
         ]);
     
         // Update the test attributes
@@ -318,6 +321,7 @@ class TestController extends Controller
 
         session()->put('test_session', $testSession);
         session()->put('test_session.current_question', $nextIndex);
+
 
         return redirect()->route('tests.start', ['id' => $id]);
     }

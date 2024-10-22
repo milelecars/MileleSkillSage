@@ -16,8 +16,14 @@
                                 <li><strong>Test Name:</strong> {{ $candidate->test_name }}</li>
                                 <li><strong>Started At:</strong> {{ $candidate->test_started_at->format('M d, Y H:i:s') }}</li>
                                 <li><strong>Completed At:</strong> {{ $candidate->test_completed_at->format('M d, Y H:i:s') }}</li>
-                                <li><strong>Duration:</strong> 
-                                    {{ round($candidate->test_started_at->diffInMinutes($candidate->test_completed_at)) }} minutes
+                                <li>
+                                    <strong>Duration:</strong>
+                                    @php
+                                        $duration = $candidate->test_started_at->diff($candidate->test_completed_at);
+                                        $minutes = $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
+                                        $seconds = $duration->s;
+                                    @endphp
+                                    {{ $minutes }} {{ Str::plural('minute', $minutes) }} and {{ $seconds }} {{ Str::plural('second', $seconds) }}
                                 </li>
                             </ul>
                         </div>
