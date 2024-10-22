@@ -19,7 +19,9 @@ class TestController extends Controller
     public function index()
     {
         $tests = Test::all();
+        Log::info("web ", Auth::guard('web')->check()===TRUE? ["t"]:["f"]);
         return view('tests.index', compact('tests'));
+
     }
 
     public function create()
@@ -33,9 +35,9 @@ class TestController extends Controller
 
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'duration',
-            'file' => 'sometimes|file|mimes:xlsx,csv,json',
+            'description' => 'nullable|string',
+            'duration' => 'required|integer|min:1', // Added validation for duration
+            'file' => 'nullable|file|mimes:xlsx,csv,json|max:2048'
         ]);
     
         // Update the test attributes
@@ -171,13 +173,18 @@ class TestController extends Controller
 
     public function show($id)
     {
-        // Log::info("web ", Auth::guard('web')->check());
-        // if (Auth::guard('web')->check()) {
-        //     $test = Test::with('invitation')->findOrFail($id);
-        //     $questions = $this->getQuestionsFromExcel($test);
-        //     Log::info("Candidate ", [$test, $questions]);
-        //     return view('tests.show', compact('test', 'questions'));
-        // }else{
+        if (Auth::guard('web')->check()) {
+            Log::info("web ");
+            $test = Test::with('invitation')->findOrFail($id);
+            $questions = [];
+            if ($test->questions_file_path) {
+            $filePath = storage_path( 'app/public/' . $test->questions_file_path);
+            $questions = Excel:: toArray (new QuestionsImport ($test), $filePath);
+            $questions = $questions[0] ?? []; // Assuming we're only interested in the first sheet
+            }
+            return view('tests.show', compact( 'test', 'questions'));
+
+        }elseif (Auth::guard('candidate')->check()) {
             Log::info("Candidate ");
             $test = Test::with('invitation')->findOrFail($id);
             $questions = $this->getQuestionsFromExcel($test);
@@ -202,7 +209,7 @@ class TestController extends Controller
             
             return view('tests.show', compact('test', 'questions', 'isTestStarted', 'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
 
-        // }
+        } 
 
     }
 
