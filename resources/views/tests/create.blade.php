@@ -10,8 +10,8 @@
                         <input type="text" name="name" id="name" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test name" value="{{ old('name') }}">
                     </div>
                     <div class="mr-4">
-                        <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Test Duration</label>
-                        <input type="text" name="duration" id="duration" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test duration" value="{{ old('duration') }}">
+                        <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Duration</label>
+                        <input type="text" name="duration" id="duration" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the duration" value="{{ old('duration') }}">
                     </div>
                     <div class="ml-4" wire:ignore.self>
                         <label for="invitation_link" class="block text-gray-700 text-md font-bold mb-2">Invitation Link</label>

@@ -36,7 +36,7 @@ class TestController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'duration' => 'required|integer|min:1', // Added validation for duration
+            'duration',
             'file' => 'nullable|file|mimes:xlsx,csv,json|max:2048'
         ]);
     
