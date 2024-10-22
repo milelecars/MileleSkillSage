@@ -14,7 +14,7 @@ class TemporaryAuthController extends Controller
         $request->validate(['email' => 'required|email']);
 
         $token = Str::random(32);
-        $expiresAt = now()->addHours(24);
+        $expiresAt = now()->addDays(7);
 
         TemporaryToken::create([
             'email' => $request->email,
