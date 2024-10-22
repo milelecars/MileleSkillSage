@@ -9,7 +9,7 @@
 <body class="antialiased font-sans">
     <div class="min-h-screen bg-gray-100 flex flex-col justify-center items-center">
         <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.jpg') }}" />
-        <div class="relative min-h-screen flex flex-col items-center justify-center selection:bg-[#FF2D20] selection:text-white">
+        <div class="relative min-h-screen flex flex-col items-center justify-center selection:text-white">
             <a href="/" class="w-[30%] mx-auto my-2 mb-16 block object-contain">
                 <x-application-logo />
             </a>            

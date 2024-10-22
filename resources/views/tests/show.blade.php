@@ -3,7 +3,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-8">
-                    <h1 class="text-2xl font-extrabold mb-4 text-gray-900">{{$test->name}}!</h1>
+                    <h1 class="text-2xl font-extrabold mb-4 text-gray-900">{{$test->name}}</h1>
                     <p class="text-lg mb-8 text-gray-700 leading-relaxed">
                         {{$test->description}}
                     </p>

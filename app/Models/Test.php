@@ -36,7 +36,6 @@ class Test extends Model
         parent::boot();
         static::deleting(function ($test) {
             $test->invitation()->delete();
-            $test->users()->detach();
             $test->candidates()->detach();
         });
     }

@@ -3,7 +3,7 @@
         <!-- Fixed Timer Bar -->
         <div class="w-full flex flex-col gap-3 items-center justify-center my-8">
             <livewire:test-timer :testId="$test->id" />
-            </div>
+        </div>
             
             
         <!-- Main Content -->
@@ -44,8 +44,13 @@
                                         @endif
                                     @endforeach
                                 </div>
-                                <div class="mt-6">
-                                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+                                <div class="{{ $currentQuestionIndex === count($questions) - 1 
+                                    ? 'flex items-center justify-end' 
+                                    : 'flex items-center justify-center' }}">
+                                    <button type="submit" class="py-3 rounded-lg text-white 
+                                    {{ $currentQuestionIndex === count($questions) - 1 
+                                        ? 'bg-red-600 hover:bg-red-700' 
+                                        : 'bg-blue-600 hover:bg-blue-700' }}">
                                         {{ $currentQuestionIndex === count($questions) - 1 ? 'Submit Test' : 'Next Question' }}
                                     </button>
                                 </div>
@@ -60,4 +65,23 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            disableCopyPaste();
+        });
+    
+        function disableCopyPaste() {
+            document.addEventListener('copy', function(e) {
+                e.preventDefault();
+            });
+    
+            document.addEventListener('cut', function(e) {
+                e.preventDefault();
+            });
+    
+            document.addEventListener('paste', function(e) {
+                e.preventDefault();
+            });
+        }
+    </script>
 </x-app-layout>
