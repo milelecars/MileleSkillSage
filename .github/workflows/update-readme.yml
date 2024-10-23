@@ -1,0 +1,68 @@
+name: Update README
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyGithub
+
+    - name: Create/Update README
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cat > update_readme.py << 'EOL'
+        import os
+        from github import Github
+        
+        def generate_readme():
+            readme_content = """# AGCT-Software
+            
+## Project Overview
+This repository contains the AGCT Software implementation.
+
+## Repository Structure
+"""
+            # Add directory structure
+            os.system('tree -I "__pycache__|.git|.github" > tree.txt')
+            with open('tree.txt', 'r') as f:
+                readme_content += "\n```\n" + f.read() + "```\n"
+            
+            # Add recent changes
+            readme_content += "\n## Recent Changes\n"
+            
+            # Write to README.md
+            with open('README.md', 'w') as f:
+                f.write(readme_content)
+        
+        generate_readme()
+        EOL
+        
+        python update_readme.py
+
+    - name: Commit and push if changed
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "github-actions[bot]"
+        git add README.md
+        git diff --quiet && git diff --staged --quiet || git commit -m "Update README [automated]"
+        git push
