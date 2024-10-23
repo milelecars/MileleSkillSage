@@ -22,8 +22,8 @@ class TemporaryAuthController extends Controller
             'expires_at' => $expiresAt,
         ]);
 
-        // Here, you would typically send an email with the login link
-        // For now, we'll just return the token in the response
+        
+        
         return response()->json(['token' => $token]);
     }
 
@@ -34,14 +34,7 @@ class TemporaryAuthController extends Controller
         if (!$temporaryToken || !$temporaryToken->isValid()) {
             return redirect()->route('login')->withErrors(['token' => 'Invalid or expired token']);
         }
-
-        // Since only admins exist in the users table, we won't create a user for candidates.
-        // Instead, you may want to handle the candidate's session here or redirect them to the candidate dashboard directly.
         
-        // Here you can handle candidate login logic, for example:
-        // session(['candidate_email' => $temporaryToken->email]);
-
-        // After setting the candidate session, redirect to the candidate dashboard.
         return redirect()->route('candidate.dashboard')->with('success', 'Login successful.');
     }
 }

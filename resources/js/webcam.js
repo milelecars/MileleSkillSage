@@ -32,12 +32,12 @@ function initializeWebcam() {
             detectionStatus.innerHTML = "<p style='color: green;'>Webcam started successfully</p>";
             console.log("Webcam started");
 
-            // Load the COCO-SSD model
+            
             console.log("Loading COCO-SSD model...");
             model = await cocoSsd.load();
             console.log("COCO-SSD model loaded successfully");
 
-            // Start detection immediately
+            
             detectObjects();
         } catch (error) {
             console.error("Error in startWebcam:", error);
@@ -68,13 +68,13 @@ function initializeWebcam() {
 
             updateStatus(personCount, hasBook, hasCellPhone);
 
-            // Emit event for status update
+            
             const event = new CustomEvent('webcamStatusUpdate', {
                 detail: { personCount, hasBook, hasCellPhone }
             });
             document.dispatchEvent(event);
 
-            // Send alert if there's an issue
+            
             if (personCount !== 1 || hasBook || hasCellPhone) {
                 sendAlert(personCount, hasBook, hasCellPhone);
             }
@@ -82,7 +82,7 @@ function initializeWebcam() {
             console.error("Error during object detection:", error);
         }
 
-        // Continue detecting
+        
         requestAnimationFrame(detectObjects);
     }
 
@@ -131,6 +131,6 @@ function initializeWebcam() {
         .catch(error => console.error('Error sending alert:', error));
     }
 
-    // Start webcam
+    
     startWebcam();
 }

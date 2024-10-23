@@ -8,6 +8,6 @@ class DescriptionController extends Controller
 {
     public function showDescription()
     {
-        return view('description'); // Return the description view
+        return view('description'); 
     }
 }

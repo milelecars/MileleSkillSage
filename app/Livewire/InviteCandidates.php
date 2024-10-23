@@ -17,13 +17,13 @@ class InviteCandidates extends Component
     public array $emailList = [];
     public $testId;
 
-    // Add this line to enable real-time validation
+    
     protected $validationAttributes = ['newEmail' => 'email'];
 
     public function mount($testId)
     {
         $this->testId = $testId;
-        // Load emails from session if they exist
+        
         $this->emailList = session("test_{$testId}_emails", []);
     }
 
@@ -35,7 +35,7 @@ class InviteCandidates extends Component
 
         $email = $this->newEmail;
 
-        // Check if the email is already in the database
+        
         $existingInvitation = TestInvitation::where('test_id', $this->testId)
             ->whereJsonContains('email_list', $email)
             ->exists();
@@ -45,17 +45,17 @@ class InviteCandidates extends Component
             return;
         }
 
-        // Check if the email is already in the current session list
+        
         if (in_array($email, $this->emailList)) {
             $this->addError('newEmail', 'This email has already been added to the current list.');
             return;
         }
 
-        // If email is not in DB and not in current list, add it
+        
         $this->emailList[] = $email;
-        $this->newEmail = ''; // Clear the input
+        $this->newEmail = ''; 
 
-        // Store in session
+        
         session(["test_{$this->testId}_emails" => $this->emailList]);
 
         $this->dispatch('email-added', email: $email);
@@ -64,35 +64,35 @@ class InviteCandidates extends Component
     public function removeEmail($index)
     {
         unset($this->emailList[$index]);
-        $this->emailList = array_values($this->emailList); // Reindex array
+        $this->emailList = array_values($this->emailList); 
 
-        // Update session
+        
         session(["test_{$this->testId}_emails" => $this->emailList]);
     }
 
     public function submitInvitations()
     {
         try {
-            // Find the invitation record
+            
             $invitation = TestInvitation::where('test_id', $this->testId)->firstOrFail();
             
-            // Send invitation emails
+            
             $this->sendInvitationEmails($invitation);
             
-            // Update the email list
+            
             $invitation->update([
                 'email_list' => $this->emailList
             ]);
 
-            // Clear session
+            
             session()->forget("test_{$this->testId}_emails");
 
-            // Clear local array
+            
             $this->emailList = [];
 
             session()->flash('message', 'Invitations have been sent successfully!');
 
-            // Redirect to tests index or wherever appropriate
+            
             return redirect()->route('tests.index');
         } catch (\Exception $e) {
             $this->addError('submission', 'Failed to send invitations. Please try again.');
@@ -106,7 +106,7 @@ class InviteCandidates extends Component
         $mail = new PHPMailer(true);
 
         try {
-            // Server settings
+            
             $mail->isSMTP();
             $mail->Host = config('mail.mailers.smtp.host');
             $mail->SMTPAuth = true;
@@ -115,14 +115,14 @@ class InviteCandidates extends Component
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = config('mail.mailers.smtp.port');
 
-            // Sender
+            
             $mail->setFrom(config('mail.from.address'), config('mail.from.name'));
 
-            // Content
+            
             $mail->isHTML(true);
             $mail->Subject = 'Invitation to Take a Test for Milele Motors';
 
-            // Load the email template
+            
             $emailTemplate = view('emails.invitation-email-template', [
                 'invitationLink' => $invitation->invitation_link,
                 'testName' => $test->name

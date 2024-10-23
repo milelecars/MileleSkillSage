@@ -36,30 +36,30 @@ class TestController extends Controller
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'duration' => 'required|integer|min:1', // Added validation for duration
+            'duration' => 'required|integer|min:1', 
             'file' => 'nullable|file|mimes:xlsx,csv,json|max:2048'
         ]);
     
-        // Update the test attributes
+        
         $test->update([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'],
             'duration' => $validatedData['duration'],
         ]);
         
-        // Handle the file upload
+        
         if ($request->hasFile('file') && $request->file('file')->isValid()) {
-            // Delete the old file if it exists
+            
             if ($test->questions_file_path) {
                 Storage::disk('public')->delete($test->questions_file_path);
             }
     
             $filePath = $request->file('file')->store('questions', 'public');
             
-            // Save the new file path to the database
+            
             $test->update(['questions_file_path' => $filePath]);
     
-            // Process the file based on its type
+            
             $extension = $request->file('file')->getClientOriginalExtension();
             
             if (in_array($extension, ['xlsx', 'csv'])) {
@@ -67,8 +67,8 @@ class TestController extends Controller
             } elseif ($extension === 'json') {
                 $jsonContent = file_get_contents($request->file('file')->getRealPath());
                 $questions = json_decode($jsonContent, true);
-                // Here you might want to process and save the JSON data to your database
-                // This depends on how you want to store and use the data
+                
+                
             }
     
             return redirect()->route('tests.index')->with('success', 'Test updated and questions processed successfully.');
@@ -87,18 +87,18 @@ class TestController extends Controller
             'file' => 'required|file|mimes:xlsx,csv,json',
         ]);
 
-        // Extract the token from the invitation link
+        
         $urlParts = explode('/', $validatedData['invitation_link']);
-        $invitationToken = end($urlParts); // Get the last part of the URL
+        $invitationToken = end($urlParts); 
 
-        // Store the test first
+        
         $test = Test::create([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'],
             'duration' => $validatedData['duration'],
         ]);
 
-        // Create test invitation with the token and link it to the test
+        
         TestInvitation::create([
             'test_id' => $test->id,
             'invitation_link' => $validatedData['invitation_link'],
@@ -108,14 +108,14 @@ class TestController extends Controller
             'created_by' => auth()->id(),
         ]);
 
-        // Handle the file upload
+        
         if ($request->file('file')->isValid()) {
             $filePath = $request->file('file')->store('questions', 'public');
             
-            // Save the file path to the database
+            
             $test->update(['questions_file_path' => $filePath]);
 
-            // Process the file based on its type
+            
             $extension = $request->file('file')->getClientOriginalExtension();
             
             if (in_array($extension, ['xlsx', 'csv'])) {
@@ -123,11 +123,11 @@ class TestController extends Controller
             } elseif ($extension === 'json') {
                 $jsonContent = file_get_contents($request->file('file')->getRealPath());
                 $questions = json_decode($jsonContent, true);
-                // Here you might want to process and save the JSON data to your database
-                // This depends on how you want to store and use the data
+                
+                
             }
 
-            // return redirect()->route('tests.index')->with('success', 'Test created and questions processed successfully.');
+            
             return redirect()->route('tests.show', $test->id)
             ->with('success', 'Test created and invitation link generated successfully!');
         }
@@ -145,7 +145,7 @@ class TestController extends Controller
     {
         $test = Test::findOrFail($id);
         
-        // Delete the file if it exists
+        
         if ($test->questions_file_path) {
             Storage::disk('public')->delete($test->questions_file_path);
         }
@@ -237,7 +237,7 @@ class TestController extends Controller
         $testSession = session('test_session', []);
 
         if (!isset($testSession['test_id']) || $testSession['test_id'] != $id) {
-            // New test session
+            
             $startTime = now();
             $endTime = $startTime->copy()->addMinutes($test->duration);
 
@@ -256,11 +256,11 @@ class TestController extends Controller
                 $id => ['started_at' => $startTime]
             ]);
         } else {
-            // Existing test session
+            
             $startTime = Carbon::parse($testSession['start_time']);
             $endTime = $startTime->copy()->addMinutes($test->duration);
 
-            // Update end_time if it's not set or invalid
+            
             if (!isset($testSession['end_time']) || !Carbon::hasFormat($testSession['end_time'], 'Y-m-d H:i:s')) {
                 $testSession['end_time'] = $endTime->toDateTimeString();
             } else {
@@ -268,12 +268,12 @@ class TestController extends Controller
             }
         }
 
-        // Check if test has expired
+        
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
         }
 
-        // Update session
+        
         session(['test_session' => $testSession]);
 
         $questions = $this->getQuestionsFromExcel($test);
@@ -294,7 +294,7 @@ class TestController extends Controller
         $test = Test::findOrFail($id);
         $questions = $this->getQuestionsFromExcel($test);
 
-        // Make answer optional
+        
         $request->validate([
             'current_index' => 'required|numeric',
             'answer' => 'nullable|in:a,b,c,d'
@@ -307,7 +307,7 @@ class TestController extends Controller
         }
 
         $currentIndex = $request->input('current_index');
-        $answer = $request->input('answer', ''); // Default to empty string if no answer
+        $answer = $request->input('answer', ''); 
         $testSession['answers'][$currentIndex] = $answer;
 
         $nextIndex = $currentIndex + 1;
@@ -329,12 +329,12 @@ class TestController extends Controller
             'is_expired' => $request->boolean('expired'),
             'timestamp' => now()
         ]);
-
+    
         try {
             $candidate = Auth::guard('candidate')->user();
             $test = Test::findOrFail($id);
             $testSession = session('test_session');
-
+    
             if (!$testSession || $testSession['test_id'] != $id) {
                 Log::error('Invalid test session', [
                     'session' => $testSession,
@@ -342,62 +342,60 @@ class TestController extends Controller
                 ]);
                 throw new \Exception('Invalid test session');
             }
-
-            // Get answers and questions
+    
+            
             $answers = $testSession['answers'] ?? [];
+            
+            
+            $currentIndex = $request->input('current_index');
+            $finalAnswer = $request->input('answer', ''); 
+            $answers[$currentIndex] = $finalAnswer; 
+            
             $questions = $this->getQuestionsFromExcel($test);
             
-            // Fill empty answers
+            
             for ($i = 0; $i < count($questions); $i++) {
                 if (!isset($answers[$i])) {
                     $answers[$i] = "";
                 }
             }
-
-            // Calculate score and prepare data
-            $completedAt = now();
+    
+            
+            $now = now(); 
             $score = $this->calculateScore($questions, $answers);
-
-            \DB::beginTransaction();
-            try {
-                // Update pivot table
-                $candidate->tests()->updateExistingPivot($id, [
-                    'completed_at' => $completedAt,
-                    'answers' => $answers,
-                    'score' => $score,
-                    'is_expired' => $request->boolean('expired', false)
-                ]);
-
-                // Update candidate
-                $candidate->update([
-                    'test_completed_at' => $completedAt,
-                    'test_score' => $score,
-                    'test_name' => $test->name
-                ]);
-
-                \DB::commit();
-                Log::info('Test data saved successfully', [
-                    'test_id' => $id,
-                    'score' => $score
-                ]);
-            } catch (\Exception $e) {
-                \DB::rollBack();
-                Log::error('Failed to save test data', [
-                    'error' => $e->getMessage()
-                ]);
-                throw $e;
-            }
-
-            // Clear session after successful save
+    
+            
+            $candidate->tests()->updateExistingPivot($id, [
+                'completed_at' => $now,
+                'answers' => $answers,
+                'score' => $score,
+                'is_expired' => $request->boolean('expired', false)
+            ]);
+    
+            
+            $candidate->update([
+                'test_completed_at' => $now,
+                'test_score' => $score,
+                'test_name' => $test->name,
+                'test_answers'=> $answers
+            ]);
+    
+            Log::info('Test data saved successfully', [
+                'test_id' => $id,
+                'score' => $score,
+                'answers' => $answers
+            ]);
+    
+            
             session()->forget('test_session');
-
+    
             $message = $request->boolean('expired')
                 ? 'Test time has expired. Your answers have been submitted automatically.'
                 : 'Test completed successfully!';
             
             return redirect()->route('tests.result', ['id' => $id])
                 ->with($request->boolean('expired') ? 'warning' : 'success', $message);
-
+    
         } catch (\Exception $e) {
             Log::error('Exception in submitTest', [
                 'error' => $e->getMessage(),
@@ -425,10 +423,11 @@ class TestController extends Controller
         $questions = $this->getQuestionsFromExcel($test);
         $candidate = Auth::guard('candidate')->user();
 
-        // Calculate score
+        
         $score = $this->calculateScore($questions, $answers);
+        $now = $now;
 
-        // Fill missing answers
+        
         for ($i = 0; $i < count($questions); $i++) {
             if (!isset($answers[$i])) {
                 $answers[$i] = "";
@@ -436,19 +435,20 @@ class TestController extends Controller
             }
         }
 
-        // Update pivot table with is_expired flag
+        
         $candidate->tests()->updateExistingPivot($test->id, [
-            'completed_at' => now(),
+            'completed_at' => $now,
             'answers' => $answers,
             'score' => $score,
-            'is_expired' => true  // Add this line
+            'is_expired' => true  
         ]);
         
-        // Update candidate data
+        
         $candidate->update([
-            'test_completed_at' => now(),
+            'test_completed_at' => $now,
             'test_score' => $score,
-            'test_name' => $test->name
+            'test_name' => $test->name,
+            'test_answers'=> $answers
         ]);
 
 

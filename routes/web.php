@@ -27,7 +27,8 @@ Route::get('/', function () {
 Route::get('/welcome', function () {
     return view('welcome');
 })->name('welcome');
- 
+
+
 Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
 
 
@@ -47,10 +48,15 @@ Route::middleware('guest')->group(function () {
 
 // Admin authenticated routes
 Route::middleware('auth:web')->group(function () {
+    // Admin routes
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
-    
-    // Test routes for admins
+    Route::get('/admin/candidates', [AdminController::class, 'manageCandidates'])->name('manage-candidates');
+    Route::get('/admin/candidate-result/{candidate}', [AdminController::class, 'candidateResult'])->name('admin.candidate-result');
+    Route::put('/admin/approve/{candidate}', [AdminController::class, 'approveCandidate'])->name('candidate.approve');
+    Route::put('/admin/reject/{candidate}', [AdminController::class, 'rejectCandidate'])->name('candidate.reject');
+
+    // Test routes for admin
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');

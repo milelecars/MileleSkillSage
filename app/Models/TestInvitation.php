@@ -15,7 +15,7 @@ class TestInvitation extends Model
     protected $fillable = ['test_id', 'invitation_link', 'invitation_token', 'email_list', 'expires_at', 'created_by'];
 
     protected $casts = [
-        'email_list' => 'array',  // Automatically cast to array
+        'email_list' => 'array',  
         'expires_at' => 'datetime',
     ];
 
@@ -29,7 +29,7 @@ class TestInvitation extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Scope to get only valid (non-expired) invitations
+    
     public function scopeValid($query)
     {
         return $query->where('expires_at', '>', now());
@@ -37,11 +37,11 @@ class TestInvitation extends Model
 
     public function isExpired()
     {
-        // Assuming you have an 'expires_at' column in your database
+        
         return $this->expires_at && Carbon::parse($this->expires_at)->isPast();
     }
 
-    // Check if an email is in the email_list
+    
     public function hasEmail($email)
     {
         return in_array($email, $this->email_list);
