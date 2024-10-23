@@ -3,7 +3,7 @@
         <!-- Fixed Timer Bar -->
         <div class="w-full flex flex-col gap-3 items-center justify-center my-8">
             <livewire:test-timer :testId="$test->id" />
-            </div>
+        </div>
             
             
         <!-- Main Content -->
@@ -48,6 +48,7 @@
                                     <button type="submit" 
                                         class="w-full text-white py-3 px-6 rounded-lg 
                                         {{ $currentQuestionIndex === count($questions) - 1 ? 'bg-red-600 hover:bg-red-700 ' : 'bg-blue-600 hover:bg-blue-700 ' }}">
+
                                         {{ $currentQuestionIndex === count($questions) - 1 ? 'Submit Test' : 'Next Question' }}
                                     </button>
                                 </div>
@@ -62,4 +63,23 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            disableCopyPaste();
+        });
+    
+        function disableCopyPaste() {
+            document.addEventListener('copy', function(e) {
+                e.preventDefault();
+            });
+    
+            document.addEventListener('cut', function(e) {
+                e.preventDefault();
+            });
+    
+            document.addEventListener('paste', function(e) {
+                e.preventDefault();
+            });
+        }
+    </script>
 </x-app-layout>

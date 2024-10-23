@@ -26,7 +26,8 @@ class InvitationController extends Controller
             'test_id' => $invitation->test_id,
         ]);
         
-        if ($invitation->expires_at && $invitation->expires_at->isPast()) {
+        // Check for expired invitation first
+        if ($invitation->expires_at && now()->greaterThan($invitation->expires_at)) {
             return redirect()->route('invitation.expired');
         }
         
@@ -35,6 +36,11 @@ class InvitationController extends Controller
             $testStatus = $candidate->tests()
                 ->where('test_id', $invitation->test_id)
                 ->first();
+            
+            // Check if test is already completed
+            if ($testStatus && $testStatus->pivot->completed_at) {
+                return redirect()->route('candidate.test.completed');
+            }
             
             if ($testStatus) {
                 $this->setCandidateSession($candidate, $invitation->test_id);
@@ -45,16 +51,13 @@ class InvitationController extends Controller
                 'test' => $invitation->test,
                 'testStatus' => $testStatus,
             ]);
-        } else {
-            // If the candidate is not authenticated, show the candidate-auth view
-            Log::info("Rendering candidate-auth view");
-            
-            return view('invitation.candidate-auth', [
-                'invitation' => $invitation, 
-                'test' => $invitation->test,
-                'invitation_token' => $invitation->invitation_token, // Add this line
-            ]);
         }
+        
+        return view('invitation.candidate-auth', [
+            'invitation' => $invitation, 
+            'test' => $invitation->test,
+            'invitation_token' => $invitation->invitation_token,
+        ]);
     }
 
     public function validateEmail(Request $request, $invitationLink)
@@ -67,6 +70,11 @@ class InvitationController extends Controller
         $invitation = TestInvitation::with('test')
             ->where('invitation_link', url('invitation/' . $invitationLink))
             ->firstOrFail();
+            
+        // Check for expired invitation
+        if ($invitation->expires_at && now()->greaterThan($invitation->expires_at)) {
+            return redirect()->route('invitation.expired');
+        }
     
         if (!in_array($validatedData['email'], $invitation->email_list)) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
@@ -77,15 +85,20 @@ class InvitationController extends Controller
             ['email' => $validatedData['email']],
             ['name' => $validatedData['name']]
         );
+        
+        // Check if candidate has already completed this test
+        $existingTest = $candidate->tests()
+            ->where('test_id', $invitation->test_id)
+            ->first();
+            
+        if ($existingTest && $existingTest->pivot->completed_at) {
+            return redirect()->route('candidate.test.completed');
+        }
     
-        // Log in the candidate
         Auth::guard('candidate')->login($candidate);
-    
-        // Set up the session
         $this->setCandidateSession($candidate, $invitation->test_id);
     
-        // Attach test to candidate if not already attached
-        if (!$candidate->tests()->where('test_id', $invitation->test_id)->exists()) {
+        if (!$existingTest) {
             $candidate->tests()->attach($invitation->test_id, [
                 'created_at' => now()
             ]);
@@ -97,9 +110,7 @@ class InvitationController extends Controller
     private function setCandidateSession($candidate, $testId)
     {
         $test = Test::with('invitation')->findOrFail($testId);
-
-        // Get existing test session if any
-        $testSession = $candidate->tests()
+        $testStatus = $candidate->tests()
             ->where('test_id', $testId)
             ->first();
 
@@ -112,13 +123,13 @@ class InvitationController extends Controller
             'test_session' => null
         ];
 
-        // If test was already started, restore the session
-        if ($testSession && $testSession->pivot->started_at) {
+        if ($testStatus && $testStatus->pivot->started_at) {
             $sessionData['test_session'] = [
                 'test_id' => $testId,
-                'start_time' => $testSession->pivot->started_at,
+                'start_time' => $testStatus->pivot->started_at,
                 'current_question' => session('test_session.current_question', 0),
-                'answers' => session('test_session.answers', [])
+                'answers' => session('test_session.answers', []),
+                'score' => $testStatus->pivot->score
             ];
         }
 
