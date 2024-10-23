@@ -12,7 +12,7 @@ class Candidate extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'email_verified_at', 'test_started_at', 'test_completed_at', 'test_answers', 'test_score', 'test_name', 'monitoring_data'
+        'name', 'email', 'email_verified_at', 'test_started_at', 'test_completed_at', 'test_answers', 'test_score', 'test_name'
     ];
     
     protected $hidden = [

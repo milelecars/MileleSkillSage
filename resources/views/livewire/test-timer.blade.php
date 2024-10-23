@@ -1,10 +1,17 @@
 <div>
     @if($testStarted)
-
-        <div class="text-xl font-bold" wire:poll.1s>
-            Remaining Time: 
-            <p class="text-red-600 inline">{{ sprintf('%02d:%02d', $minutes, $seconds) }}</p>
-
+        <div class="flex flex-col items-center text-xl font-bold" wire:poll.1s>
+            <div>
+                Remaining Time:
+                <p class="inline {{ $timeLeft <= 60 ? 'text-red-600 animate-pulse' : '' }}">
+                    {{ sprintf('%02d:%02d', $minutes, $seconds) }}
+                </p>
+                
+            </div>
+            
+            @if($timeLeft <= 60)
+                <p class="text-sm text-red-600 mt-1">Warning: Less than a minute remaining!</p>
+            @endif
         </div>
     @else
         <div class="text-xl font-bold">

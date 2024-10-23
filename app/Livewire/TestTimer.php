@@ -6,7 +6,8 @@ use Livewire\Component;
 use Livewire\Attributes\LivewireComponent;
 use App\Models\Test;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\TestController;
 
 #[LivewireComponent]
 class TestTimer extends Component
@@ -15,6 +16,12 @@ class TestTimer extends Component
     public $timeLeft;
     public $endTime;
     public $testStarted = false;
+    private $testController;
+
+    public function boot()
+    {
+        $this->testController = new TestController();
+    }
 
     public function mount($testId)
     {
@@ -36,22 +43,40 @@ class TestTimer extends Component
     {
         if ($this->endTime) {
             $this->timeLeft = max(0, now()->diffInSeconds($this->endTime, false));
+            
             if ($this->timeLeft <= 0) {
-                $this->redirectToResults();
+                $this->handleTimeUp();
             }
         }
     }
 
-    public function redirectToResults()
+    public function handleTimeUp()
     {
-        session()->forget('test_session');
-        
-        return Redirect::route('tests.result', ['id' => $this->testId]);
+        Log::info('Test timer expired', [
+            'test_id' => $this->testId,
+            'end_time' => $this->endTime
+        ]);
+
+        try {
+            $test = Test::findOrFail($this->testId);
+            return $this->testController->handleExpiredTest($test);
+        } catch (\Exception $e) {
+            Log::error('Error handling expired test', [
+                'test_id' => $this->testId,
+                'error' => $e->getMessage()
+            ]);
+            
+            // Force redirect to results if there's an error
+            session()->forget('test_session');
+            return redirect()->route('tests.result', ['id' => $this->testId])
+                ->with('warning', 'Test time has expired.');
+        }
     }
 
     public function render()
     {
         $this->calculateRemainingTime();
+        
         return view('livewire.test-timer', [
             'minutes' => floor($this->timeLeft / 60),
             'seconds' => $this->timeLeft % 60

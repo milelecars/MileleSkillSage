@@ -28,7 +28,7 @@ class Test extends Model
     {
         return $this->belongsToMany(Candidate::class, 'test_candidate')
             ->withTimestamps()
-            ->withPivot(['started_at', 'completed_at', 'answers', 'score', 'monitoring_data']);
+            ->withPivot(['started_at', 'completed_at', 'answers', 'score']);
     }
 
     protected static function boot()

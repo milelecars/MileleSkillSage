@@ -178,13 +178,12 @@ class TestController extends Controller
             $test = Test::with('invitation')->findOrFail($id);
             $questions = [];
             if ($test->questions_file_path) {
-            $filePath = storage_path( 'app/public/' . $test->questions_file_path);
-            $questions = Excel:: toArray (new QuestionsImport ($test), $filePath);
-            $questions = $questions[0] ?? []; // Assuming we're only interested in the first sheet
+                $filePath = storage_path('app/public/' . $test->questions_file_path);
+                $questions = Excel::toArray(new QuestionsImport($test), $filePath);
+                $questions = $questions[0] ?? [];
             }
-            return view('tests.show', compact( 'test', 'questions'));
-
-        }elseif (Auth::guard('candidate')->check()) {
+            return view('tests.show', compact('test', 'questions'));
+        } elseif (Auth::guard('candidate')->check()) {
             Log::info("Candidate ");
             $test = Test::with('invitation')->findOrFail($id);
             $questions = $this->getQuestionsFromExcel($test);
@@ -195,22 +194,24 @@ class TestController extends Controller
                 ->wherePivotNotNull('started_at')
                 ->exists();
     
-            $isTestCompleted = $candidate->test_completed_at !== null || $candidate->tests()->wherePivot('test_id', $id)->wherePivot('completed_at', '!=', null)->exists();
+            $isTestCompleted = $candidate->tests()
+                ->wherePivot('test_id', $id)
+                ->wherePivotNotNull('completed_at')
+                ->exists();
             
             $isInvitationExpired = $test->invitation && $test->invitation->expires_at < now();
             
             $remainingTime = null;
+            $testSession = session('test_session');
             
-            if ($isTestStarted) {
-                $startTime = Carbon::parse($testSession['start_time']);
-                $endTime = $startTime->copy()->addMinutes($test->duration);
+            if ($isTestStarted && $testSession) {
+                $endTime = Carbon::parse($testSession['end_time']);
                 $remainingTime = max(0, now()->diffInSeconds($endTime, false));
             }
             
-            return view('tests.show', compact('test', 'questions', 'isTestStarted', 'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
-
-        } 
-
+            return view('tests.show', compact('test', 'questions', 'isTestStarted', 
+                'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
+        }
     }
 
     public function startTest(Request $request, $id)
@@ -283,16 +284,20 @@ class TestController extends Controller
 
     public function nextQuestion(Request $request, $id)
     {
-        if ($this->checkTimeUp()) {
-            return redirect()->route('tests.result', ['id' => $id]);
-        }
+        Log::info('Processing next question', ['test_id' => $id]);
         
+        if ($this->checkTimeUp()) {
+            Log::info('Time is up during next question', ['test_id' => $id]);
+            return $this->submitTest($request, $id);
+        }
+
         $test = Test::findOrFail($id);
         $questions = $this->getQuestionsFromExcel($test);
-        
+
+        // Make answer optional
         $request->validate([
-            'answer' => 'required|in:a,b,c,d',
             'current_index' => 'required|numeric',
+            'answer' => 'nullable|in:a,b,c,d'
         ]);
 
         $testSession = session('test_session');
@@ -301,15 +306,10 @@ class TestController extends Controller
                 ->with('error', 'Invalid test session.');
         }
 
-        $endTime = Carbon::parse($testSession['end_time']);
-        if (now()->gt($endTime)) {
-            return $this->handleExpiredTest($test);
-        }
-
         $currentIndex = $request->input('current_index');
-        $answer = $request->input('answer');
+        $answer = $request->input('answer', ''); // Default to empty string if no answer
         $testSession['answers'][$currentIndex] = $answer;
-        
+
         $nextIndex = $currentIndex + 1;
         
         if ($nextIndex >= count($questions)) {
@@ -319,72 +319,136 @@ class TestController extends Controller
         session()->put('test_session', $testSession);
         session()->put('test_session.current_question', $nextIndex);
 
-
         return redirect()->route('tests.start', ['id' => $id]);
     }
     
     public function submitTest(Request $request, $id)
     {
-        $candidate = Auth::guard('candidate')->user();
-        $test = Test::findOrFail($id);
-        $testSession = session('test_session');
-
-        if (!$testSession || $testSession['test_id'] != $id) {
-            return redirect()->route('tests.start', ['id' => $id])
-                ->with('error', 'Invalid test session.');
-        }
-
-        $endTime = Carbon::parse($testSession['end_time']);
-        if (now()->gt($endTime)) {
-            return $this->handleExpiredTest($test);
-        }
-
-        // Capture the final answer
-        $currentIndex = $request->input('current_index');
-        $finalAnswer = $request->input('answer');
-        if ($finalAnswer) {
-            $testSession['answers'][$currentIndex] = $finalAnswer;
-        }
-
-        $answers = $testSession['answers'];
-        $questions = $this->getQuestionsFromExcel($test);
-        $score = $this->calculateScore($questions, $answers);
-
-        $candidate->update([
-            'test_completed_at' => now(),
-            'test_score' => $score,
-            'test_name' => $test->name
+        Log::info('Starting test submission process', [
+            'test_id' => $id,
+            'is_expired' => $request->boolean('expired'),
+            'timestamp' => now()
         ]);
 
-        $candidate->tests()->updateExistingPivot($id, [
-            'completed_at' => now(),
-            'score' => $score
-        ]);
+        try {
+            $candidate = Auth::guard('candidate')->user();
+            $test = Test::findOrFail($id);
+            $testSession = session('test_session');
 
-        session()->forget('test_session');
+            if (!$testSession || $testSession['test_id'] != $id) {
+                Log::error('Invalid test session', [
+                    'session' => $testSession,
+                    'requested_test_id' => $id
+                ]);
+                throw new \Exception('Invalid test session');
+            }
 
-        return redirect()->route('tests.result', ['id' => $id])
-            ->with('success', 'Test completed successfully!');
+            // Get answers and questions
+            $answers = $testSession['answers'] ?? [];
+            $questions = $this->getQuestionsFromExcel($test);
+            
+            // Fill empty answers
+            for ($i = 0; $i < count($questions); $i++) {
+                if (!isset($answers[$i])) {
+                    $answers[$i] = "";
+                }
+            }
+
+            // Calculate score and prepare data
+            $completedAt = now();
+            $score = $this->calculateScore($questions, $answers);
+
+            \DB::beginTransaction();
+            try {
+                // Update pivot table
+                $candidate->tests()->updateExistingPivot($id, [
+                    'completed_at' => $completedAt,
+                    'answers' => $answers,
+                    'score' => $score,
+                    'is_expired' => $request->boolean('expired', false)
+                ]);
+
+                // Update candidate
+                $candidate->update([
+                    'test_completed_at' => $completedAt,
+                    'test_score' => $score,
+                    'test_name' => $test->name
+                ]);
+
+                \DB::commit();
+                Log::info('Test data saved successfully', [
+                    'test_id' => $id,
+                    'score' => $score
+                ]);
+            } catch (\Exception $e) {
+                \DB::rollBack();
+                Log::error('Failed to save test data', [
+                    'error' => $e->getMessage()
+                ]);
+                throw $e;
+            }
+
+            // Clear session after successful save
+            session()->forget('test_session');
+
+            $message = $request->boolean('expired')
+                ? 'Test time has expired. Your answers have been submitted automatically.'
+                : 'Test completed successfully!';
+            
+            return redirect()->route('tests.result', ['id' => $id])
+                ->with($request->boolean('expired') ? 'warning' : 'success', $message);
+
+        } catch (\Exception $e) {
+            Log::error('Exception in submitTest', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'error' => 'Failed to submit test',
+                    'message' => $e->getMessage()
+                ], 500);
+            }
+            
+            throw $e;
+        }
     }
 
-    private function handleExpiredTest($test)
+
+    public function handleExpiredTest($test)
     {
+        Log::info('Handling expired test', ['test_id' => $test->id]);
+        
         $testSession = session('test_session');
         $answers = $testSession['answers'] ?? [];
         $questions = $this->getQuestionsFromExcel($test);
         $candidate = Auth::guard('candidate')->user();
 
+        // Calculate score
         $score = $this->calculateScore($questions, $answers);
 
+        // Fill missing answers
+        for ($i = 0; $i < count($questions); $i++) {
+            if (!isset($answers[$i])) {
+                $answers[$i] = "";
+                Log::debug("Empty answer filled for question $i in expired test");
+            }
+        }
+
+        // Update candidate data
         $candidate->update([
             'test_completed_at' => now(),
             'test_score' => $score,
             'test_name' => $test->name
         ]);
 
+        // Update pivot table with is_expired flag
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => now(),
-            'score' => $score
+            'answers' => $answers,
+            'score' => $score,
+            'is_expired' => true  // Add this line
         ]);
 
         session()->forget('test_session');
@@ -392,7 +456,6 @@ class TestController extends Controller
         return redirect()->route('tests.result', ['id' => $test->id])
             ->with('warning', 'Test time has expired. Your answers have been submitted automatically.');
     }
-    
 
     private function calculateScore($questions, $answers)
     {
@@ -408,19 +471,27 @@ class TestController extends Controller
 
     public function showResult($id)
     {
-        $test = Test::findOrFail($id);
         $candidate = Auth::guard('candidate')->user();
+        $test = Test::findOrFail($id);
+        
+        $testAttempt = $candidate->tests()
+            ->where('test_id', $id)
+            ->first();
+            
+        if (!$testAttempt) {
+            return redirect()->route('candidate.dashboard')
+                ->with('error', 'No test attempt found.');
+        }
+
         $questions = $this->getQuestionsFromExcel($test);
         
-        $testStatus = $candidate->tests()->where('test_id', $id)->first();
-
-        // Set session data
-        session([
-            'current_test_id' => $id,
-            'test' => $test
+        return view('tests.result', [
+            'test' => $test,
+            'candidate' => $candidate,
+            'testStatus' => $testAttempt,
+            'questions' => $questions,
+            'isExpired' => $testAttempt->pivot->is_expired ?? false
         ]);
-
-        return view('tests.result', compact('test', 'questions', 'candidate', 'testStatus'));
     }
 
     private function checkTimeUp()
@@ -429,7 +500,10 @@ class TestController extends Controller
         if ($testSession) {
             $endTime = Carbon::parse($testSession['end_time']);
             if (now()->gt($endTime)) {
-                session()->forget('test_session');
+                Log::info('Test time is up', [
+                    'test_id' => $testSession['test_id'],
+                    'end_time' => $endTime
+                ]);
                 return true;
             }
         }
