@@ -1,114 +1,190 @@
-<p align="center">
-  <a href="" rel="noopener">
- <img width=200px height=200px src="https://i.imgur.com/6wj0hh6.jpg" alt="Project logo"></a>
-</p>
+# AGCT-Software: Advanced Test Management System
 
-<h3 align="center">undefined</h3>
+## 📋 Overview
+AGCT-Software is a secure, feature-rich online test management system built with Laravel 11. It provides a comprehensive platform for creating, conducting, and monitoring online assessments with advanced anti-cheating capabilities and real-time candidate tracking.
 
-<div align="center">
+## 🌟 Key Features
 
-[![Status](https://img.shields.io/badge/status-active-success.svg)]()
-[![GitHub Issues](https://img.shields.io/github/issues/kylelobo/The-Documentation-Compendium.svg)](https://github.com/kylelobo/The-Documentation-Compendium/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/kylelobo/The-Documentation-Compendium.svg)](https://github.com/kylelobo/The-Documentation-Compendium/pulls)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](/LICENSE)
+### 🔐 Authentication & Security
+- Dual authentication system for administrators and candidates
+- Secure session management
+- Token-based test invitations
+- Protected file storage for test materials
 
-</div>
+### 📝 Test Management
+- Excel/CSV-based question import
+- Customizable test duration
+- Invitation system with email notifications
+- Real-time test monitoring
+- Automatic test submission
 
----
+### 🎯 Anti-Cheating Measures
+- Tab switching detection
+- Window blur monitoring
+- TensorFlow.js integration for enhanced security
+- Activity flagging system
+- Test session tracking
 
-<p align="center"> Few lines describing your project.
-    <br> 
-</p>
+### 📊 Results & Analytics
+- Detailed performance metrics
+- Score calculation and analysis
+- Test completion status tracking
+- Time-based analytics
+- Individual candidate performance reports
 
-## 📝 Table of Contents
+## 🛠 Technology Stack
 
-- [About](#about)
-- [Getting Started](#getting_started)
-- [Deployment](#deployment)
-- [Usage](#usage)
-- [Built Using](#built_using)
-- [TODO](../TODO.md)
-- [Contributing](../CONTRIBUTING.md)
-- [Authors](#authors)
-- [Acknowledgments](#acknowledgement)
+### Backend
+- PHP 8.2
+- Laravel 11
+- PostgreSQL Database
+- Livewire 3.5
 
-## 🧐 About <a name = "about"></a>
+### Frontend
+- Tailwind CSS
+- Alpine.js
+- TensorFlow.js
+- Vite
 
-Write about 1-2 paragraphs describing the purpose of your project.
+### Packages
+- Laravel Excel (maatwebsite/excel)
+- PHPMailer
+- GeoIP
 
-## 🏁 Getting Started <a name = "getting_started"></a>
+## ⚙️ Installation
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See [deployment](#deployment) for notes on how to deploy the project on a live system.
-
-### Prerequisites
-
-What things you need to install the software and how to install them.
-
-```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running.
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
+1. Clone the repository
+```bash
+git clone https://github.com/heli-ih/AGCT-Software.git
+cd AGCT-Software
 ```
 
-End with an example of getting some data out of the system or using it for a little demo.
-
-## 🔧 Running the tests <a name = "tests"></a>
-
-Explain how to run the automated tests for this system.
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
+2. Install PHP dependencies
+```bash
+composer install
 ```
 
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
+3. Install Node dependencies
+```bash
+npm install
 ```
 
-## 🎈 Usage <a name="usage"></a>
+4. Configure environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-Add notes about how to use the system.
+5. Configure database in `.env`
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=your_database
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
 
-## 🚀 Deployment <a name = "deployment"></a>
+6. Run migrations
+```bash
+php artisan migrate
+```
 
-Add additional notes about how to deploy this on a live system.
+7. Create storage link
+```bash
+php artisan storage:link
+```
 
-## ⛏️ Built Using <a name = "built_using"></a>
+8. Build assets
+```bash
+npm run build
+```
 
-- [MongoDB](https://www.mongodb.com/) - Database
-- [Express](https://expressjs.com/) - Server Framework
-- [VueJs](https://vuejs.org/) - Web Framework
-- [NodeJs](https://nodejs.org/en/) - Server Environment
+## 🏗 System Architecture
 
-## ✍️ Authors <a name = "authors"></a>
+### Database Structure
+- Users (Administrators)
+- Candidates
+- Tests
+- Test Invitations
+- Questions
+- Test Results
+- Monitoring Data
 
-- [@kylelobo](https://github.com/kylelobo) - Idea & Initial work
+### File Storage
+- Secure question file storage
+- Protected test materials
+- Public storage for non-sensitive assets
 
-See also the list of [contributors](https://github.com/kylelobo/The-Documentation-Compendium/contributors) who participated in this project.
+## 👥 User Roles
 
-## 🎉 Acknowledgements <a name = "acknowledgement"></a>
+### Administrator
+- Create and manage tests
+- Import questions
+- Generate test invitations
+- Monitor test sessions
+- Review results
+- Manage candidates
 
-- Hat tip to anyone whose code was used
-- Inspiration
-- References
+### Candidate
+- Access tests via invitation
+- Take tests within time limits
+- View test results
+- Track progress
+
+## 🔒 Security Features
+
+### Test Protection
+- Secure file storage for test materials
+- Encrypted test sessions
+- Anti-tampering measures
+
+### Monitoring
+- Real-time activity tracking
+- Suspicious behavior detection
+- Session management
+- Time tracking
+
+## 📈 Test Features
+
+### Creation
+- Excel/CSV question import
+- Test duration settings
+- Invitation management
+- Email notifications
+
+### Execution
+- Real-time progress tracking
+- Auto-save functionality
+- Time management
+- Anti-cheating measures
+
+### Results
+- Automatic scoring
+- Detailed analytics
+- Performance metrics
+- Time analysis
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit changes
+4. Push to the branch
+5. Open a pull request
+
+## 📝 License
+[MIT License](LICENSE)
+
+## 👨‍💻 Author
+[Helia Haghighi](https://github.com/heli-ih)
+
+## ⚠️ Requirements
+- PHP >= 8.2
+- PostgreSQL
+- Node.js
+- Composer
+- NPM/Yarn
+
+## 📞 Support
+For support, please create an issue in the GitHub repository or contact the repository owner.
