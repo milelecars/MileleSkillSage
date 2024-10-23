@@ -436,13 +436,6 @@ class TestController extends Controller
             }
         }
 
-        // Update candidate data
-        $candidate->update([
-            'test_completed_at' => now(),
-            'test_score' => $score,
-            'test_name' => $test->name
-        ]);
-
         // Update pivot table with is_expired flag
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => now(),
@@ -450,6 +443,14 @@ class TestController extends Controller
             'score' => $score,
             'is_expired' => true  // Add this line
         ]);
+        
+        // Update candidate data
+        $candidate->update([
+            'test_completed_at' => now(),
+            'test_score' => $score,
+            'test_name' => $test->name
+        ]);
+
 
         session()->forget('test_session');
 
