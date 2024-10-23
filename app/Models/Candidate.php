@@ -12,7 +12,7 @@ class Candidate extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'name', 'email', 'email_verified_at', 'test_started_at', 'test_completed_at', 'test_score', 'test_name'
+        'name', 'email', 'email_verified_at', 'test_started_at', 'test_completed_at', 'test_answers', 'test_score', 'test_name', 'monitoring_data'
     ];
     
     protected $hidden = [
@@ -23,13 +23,14 @@ class Candidate extends Authenticatable
         'email_verified_at' => 'datetime',
         'test_started_at' => 'datetime',
         'test_completed_at' => 'datetime',
+        'test_answers' => 'array',
     ];
 
     public function tests()
     {
         return $this->belongsToMany(Test::class, 'test_candidate')
             ->withTimestamps()
-            ->withPivot(['started_at', 'completed_at']);
+            ->withPivot(['started_at', 'completed_at', 'answers']);
     }
     
 

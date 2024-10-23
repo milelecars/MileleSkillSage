@@ -15,7 +15,7 @@ class RenameCsvFilePathToQuestionsFilePathInTestsTable extends Migration
     {
         Schema::table('tests', function (Blueprint $table) {
             // Rename the column from 'questions_file' to 'questions_file_path'
-            $table->renameColumn('questions_file', 'questions_file_path');
+            $table->renameColumn('csv_file_path', 'questions_file_path');
         });
     }
 
@@ -28,7 +28,7 @@ class RenameCsvFilePathToQuestionsFilePathInTestsTable extends Migration
     {
         Schema::table('tests', function (Blueprint $table) {
             // Revert the column name change
-            $table->renameColumn('questions_file_path', 'questions_file');
+            $table->renameColumn('questions_file_path', 'csv_file_path');
         });
     }
 }

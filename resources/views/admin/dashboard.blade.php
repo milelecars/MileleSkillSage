@@ -21,12 +21,12 @@
                             <p class="text-blue-600 mt-2">View, create, and edit assessment tests</p>
                         </a>
                         <a href="#" class="block p-6 bg-green-100 hover:bg-green-200 rounded-lg transition duration-300">
-                            <h3 class="text-lg font-semibold text-green-700">Candidate Management</h3>
-                            <p class="text-green-600 mt-2">Manage candidates and their test results</p>
+                            <h3 class="text-lg font-semibold text-green-700">Manage Candidates</h3>
+                            <p class="text-green-600 mt-2">View test results, approve/reject candidates</p>
                         </a>
                         <a href="#" class="block p-6 bg-purple-100 hover:bg-purple-200 rounded-lg transition duration-300">
                             <h3 class="text-lg font-semibold text-purple-700">Reports</h3>
-                            <p class="text-purple-600 mt-2">Generate and view assessment reports</p>
+                            <p class="text-purple-600 mt-2">Generate and manage reports</p>
                         </a>
                     </div>
                 </div>

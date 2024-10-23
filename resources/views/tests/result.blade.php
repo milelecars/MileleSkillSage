@@ -14,25 +14,40 @@
                             <h2 class="text-xl font-semibold mb-3">Test Information</h2>
                             <ul class="space-y-2">
                                 <li><strong>Test Name:</strong> {{ $candidate->test_name }}</li>
-                                <li><strong>Started At:</strong> {{ $candidate->test_started_at->format('M d, Y H:i:s') }}</li>
-                                <li><strong>Completed At:</strong> {{ $candidate->test_completed_at->format('M d, Y H:i:s') }}</li>
+                                <li><strong>Started At:</strong> {{ $candidate->test_started_at ? $candidate->test_started_at->format('M d, Y H:i:s') : 'N/A' }}</li>
+                                <li><strong>Completed At:</strong> {{ $candidate->test_completed_at ? $candidate->test_completed_at->format('M d, Y H:i:s') : 'N/A' }}</li>
                                 <li>
                                     <strong>Duration:</strong>
-                                    @php
-                                        $duration = $candidate->test_started_at->diff($candidate->test_completed_at);
-                                        $minutes = $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
-                                        $seconds = $duration->s;
-                                    @endphp
-                                    {{ $minutes }} {{ Str::plural('minute', $minutes) }} and {{ $seconds }} {{ Str::plural('second', $seconds) }}
+                                    @if($candidate->test_started_at && $candidate->test_completed_at)
+                                        @php
+                                            $duration = $candidate->test_started_at->diff($candidate->test_completed_at);
+                                            $minutes = $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
+                                            $seconds = $duration->s;
+                                        @endphp
+                                        {{ $minutes }} {{ Str::plural('minute', $minutes) }} and {{ $seconds }} {{ Str::plural('second', $seconds) }}
+                                    @else
+                                        N/A
+                                    @endif
                                 </li>
                             </ul>
+                            @if(isset($monitoringData) && isset($monitoringData['metrics']))
+                                <div class="mt-4">
+                                    <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
+                                    <ul class="mt-2">
+                                        <li>Tab Switches: {{ $monitoringData['metrics']['tabSwitches'] }}</li>
+                                        <li>Window Blurs: {{ $monitoringData['metrics']['windowBlurs'] }}</li>
+                                        <li>Warning Count: {{ $monitoringData['metrics']['warningCount'] }}</li>
+                                        <li>Test Flagged: {{ $monitoringData['isFlagged'] ? 'Yes' : 'No' }}</li>
+                                    </ul>
+                                </div>
+                            @endif
                         </div>
                         
                         <div>
                             <h2 class="text-xl font-semibold mb-3">Score Summary</h2>
                             <div class="bg-gray-100 p-4 rounded-lg">
                                 <div class="text-4xl font-bold text-center text-blue-600">
-                                    {{ $candidate->test_score }} / {{ count($questions) }}
+                                    {{ $candidate->test_score }} / {{ count($questions ?? []) }}
                                 </div>
                                 <p class="text-center text-gray-600 mt-2">Correct Answers</p>
                             </div>

@@ -45,7 +45,9 @@
                                     @endforeach
                                 </div>
                                 <div class="mt-6">
-                                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+                                    <button type="submit" 
+                                        class="w-full text-white py-3 px-6 rounded-lg 
+                                        {{ $currentQuestionIndex === count($questions) - 1 ? 'bg-red-600 hover:bg-red-700 ' : 'bg-blue-600 hover:bg-blue-700 ' }}">
                                         {{ $currentQuestionIndex === count($questions) - 1 ? 'Submit Test' : 'Next Question' }}
                                     </button>
                                 </div>

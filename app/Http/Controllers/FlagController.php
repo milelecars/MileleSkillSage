@@ -25,10 +25,10 @@ class FlagController extends Controller
         $logMessage .= "Book detected: " . ($data['hasBook'] ? 'Yes' : 'No') . ", ";
         $logMessage .= "Cell phone detected: " . ($data['hasCellPhone'] ? 'Yes' : 'No');
 
-        Log::warning($logMessage, [
-            'user_id' => $user ? $user->id : null,
-            'timestamp' => $data['timestamp']
-        ]);
+        // Log::warning($logMessage, [
+        //     'user_id' => $user ? $user->id : null,
+        //     'timestamp' => $data['timestamp']
+        // ]);
 
         // Store the alert in the database
         // Alert::create([
