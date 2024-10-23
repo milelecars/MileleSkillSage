@@ -1,7 +1,7 @@
-# AGCT-Software: Advanced Test Management System
+# AGCT-Software: Test Management System
 
 ## 📋 Overview
-AGCT-Software is a secure, feature-rich online test management system built with Laravel 11. It provides a comprehensive platform for creating, conducting, and monitoring online assessments with advanced anti-cheating capabilities and real-time candidate tracking.
+AGCT-Software is a secure, feature-rich online test management system built with Laravel 11. It provides a comprehensive platform for creating, conducting, and monitoring online assessments with advanced anti-cheating capabilities.
 
 ## 🌟 Key Features
 
@@ -122,15 +122,14 @@ npm run build
 - Create and manage tests
 - Import questions
 - Generate test invitations
-- Monitor test sessions
 - Review results
 - Manage candidates
 
 ### Candidate
 - Access tests via invitation
+- Passwordless authentication
 - Take tests within time limits
-- View test results
-- Track progress
+- View results I'm performance 
 
 ## 🔒 Security Features
 
@@ -148,22 +147,15 @@ npm run build
 ## 📈 Test Features
 
 ### Creation
-- Excel/CSV question import
+- Excel/CSV bulk question import
 - Test duration settings
-- Invitation management
-- Email notifications
+- Invitation email
 
 ### Execution
 - Real-time progress tracking
 - Auto-save functionality
 - Time management
 - Anti-cheating measures
-
-### Results
-- Automatic scoring
-- Detailed analytics
-- Performance metrics
-- Time analysis
 
 ## 🤝 Contributing
 
@@ -173,12 +165,6 @@ npm run build
 4. Push to the branch
 5. Open a pull request
 
-## 📝 License
-[MIT License](LICENSE)
-
-## 👨‍💻 Author
-[Helia Haghighi](https://github.com/heli-ih)
-
 ## ⚠️ Requirements
 - PHP >= 8.2
 - PostgreSQL
@@ -186,5 +172,3 @@ npm run build
 - Composer
 - NPM/Yarn
 
-## 📞 Support
-For support, please create an issue in the GitHub repository or contact the repository owner.
