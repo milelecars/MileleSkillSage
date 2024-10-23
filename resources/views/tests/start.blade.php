@@ -1,4 +1,11 @@
 <x-app-layout>
+    <style>
+        .prevent-select {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10 and IE 11 */
+            user-select: none; /* Standard syntax */
+        }
+    </style>
     <div class="min-h-screen bg-gray-100">
         <!-- Fixed Timer Bar -->
         <div class="w-full flex flex-col gap-3 items-center justify-center my-8">
@@ -66,6 +73,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             disableCopyPaste();
+            disableRightClick();
+            disableKeyboardShortcuts();
         });
     
         function disableCopyPaste() {
@@ -79,6 +88,41 @@
     
             document.addEventListener('paste', function(e) {
                 e.preventDefault();
+            });
+        }
+
+        function disableRightClick() {
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+        }
+
+        function disableKeyboardShortcuts() {
+            document.addEventListener('keydown', function(e) {
+                // Prevent Ctrl+C, Ctrl+V, Ctrl+X
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+                    e.preventDefault();
+                }
+                
+                // Prevent F12 key (Developer Tools)
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                }
+
+                // Prevent Ctrl+Shift+I (Developer Tools)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'i') {
+                    e.preventDefault();
+                }
+
+                // Prevent Ctrl+Shift+C (Developer Tools Element Inspector)
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'c') {
+                    e.preventDefault();
+                }
+
+                // Prevent Alt+Text Selection
+                if (e.altKey) {
+                    e.preventDefault();
+                }
             });
         }
     </script>
