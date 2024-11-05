@@ -91,9 +91,6 @@ class InvitationController extends Controller
             ->where('test_id', $invitation->test_id)
             ->first();
             
-        if ($existingTest && $existingTest->pivot->completed_at) {
-            return redirect()->route('candidate.test.completed');
-        }
     
         Auth::guard('candidate')->login($candidate);
         $this->setCandidateSession($candidate, $invitation->test_id);
