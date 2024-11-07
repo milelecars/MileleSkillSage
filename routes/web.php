@@ -7,6 +7,7 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\CandidateController;
+use App\Http\Controllers\ReportPDFController;
 use App\Http\Controllers\CreateTestController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DescriptionController;
@@ -78,6 +79,7 @@ Route::middleware('auth:candidate')->group(function () {
     Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
     Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
     Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
+    Route::get('/reports/v1', [ReportPDFController::class, 'generateSimplePDF'])->name('reports.v1');
 });
 
 // Logout route (accessible to both admins and candidates)

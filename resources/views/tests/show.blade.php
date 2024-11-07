@@ -85,6 +85,9 @@
                                 <a href="{{ route('tests.start', ['id' => $test->id]) }}" class="font-bold underline">Continue Test</a>
                             </div>
                         @else
+                            <a href="{{ route('reports.v1') }}" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+                                report
+                            </a>
                             <div class="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg text-yellow-700 p-4 mb-6" role="alert">
                                 <p>You have {{ $test->duration }} minutes to complete this test once you start.</p>
                             </div>
