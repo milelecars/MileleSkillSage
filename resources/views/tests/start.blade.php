@@ -6,6 +6,7 @@
             user-select: none; /* Standard syntax */
         }
     </style>
+    
     <div class="min-h-screen bg-gray-100">
         <!-- Fixed Timer Bar -->
         <div class="w-full flex flex-col gap-3 items-center justify-center my-8">

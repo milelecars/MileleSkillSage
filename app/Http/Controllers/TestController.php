@@ -425,7 +425,7 @@ class TestController extends Controller
 
         
         $score = $this->calculateScore($questions, $answers);
-        $now = $now;
+        $now = now();
 
         
         for ($i = 0; $i < count($questions); $i++) {

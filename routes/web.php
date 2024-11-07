@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FlagController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CameraController;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\CreateTestController;
 use App\Http\Controllers\InvitationController;
@@ -30,7 +31,8 @@ Route::get('/welcome', function () {
 
 
 Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
-
+Route::post('/camera-permission', [CameraController::class, 'updatePermission'])->name('camera.update');
+Route::get('/camera-permission', [CameraController::class, 'checkPermission'])->name('camera.check');
 
 // Guest routes
 Route::middleware('guest')->group(function () {
