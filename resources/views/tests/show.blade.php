@@ -3,6 +3,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-8">
+                    {{-- Camera Section --}}
+                    <div class="rounded-lg overflow-hidden bg-gray-50 p-4">
+                        <video id="video" class="w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
+                        <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
+                    </div>
+
                     <h1 class="text-2xl font-extrabold mb-4 text-gray-900">{{$test->name}}</h1>
                     <p class="text-lg mb-8 text-gray-700 leading-relaxed">
                         {{$test->description}}
@@ -111,4 +117,5 @@
             </div>
         </div>
     </div>
+    <script src="{{ asset('js/webcam.js') }}"></script>
 </x-app-layout>
