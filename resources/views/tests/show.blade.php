@@ -4,7 +4,7 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-8">
                     {{-- Camera Section --}}
-                    <div class="rounded-lg overflow-hidden bg-gray-50 p-4">
+                    <div class="rounded-lg overflow-hidden bg-gray-50 p-4 hidden">
                         <video id="video" class="w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
                         <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
@@ -85,9 +85,6 @@
                                 <a href="{{ route('tests.start', ['id' => $test->id]) }}" class="font-bold underline">Continue Test</a>
                             </div>
                         @else
-                            <a href="{{ route('reports.v1') }}" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
-                                report
-                            </a>
                             <div class="bg-yellow-100 border-l-4 border-yellow-500 rounded-lg text-yellow-700 p-4 mb-6" role="alert">
                                 <p>You have {{ $test->duration }} minutes to complete this test once you start.</p>
                             </div>

@@ -30,6 +30,11 @@
                                     @endif
                                 </li>
                             </ul>
+                            <div class="mt-8">
+                                <a href="{{ route('reports.v1') }}" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+                                    report
+                                </a>
+                            </div>
                             @if(isset($monitoringData) && isset($monitoringData['metrics']))
                                 <div class="mt-4">
                                     <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
