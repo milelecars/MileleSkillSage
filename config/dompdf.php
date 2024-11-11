@@ -297,4 +297,16 @@ return [
         'enable_html5_parser' => true,
     ],
 
+    'fontDir' => storage_path('fonts/'),
+    'fontCache' => storage_path('fonts/'),
+    'font_family' => 'Figtree',
+    'fonts' => [
+        'Figtree' => [
+            'normal'  => 'Figtree-Regular.ttf',
+            'bold'    => 'Figtree-Bold.ttf',
+            'medium'  => 'Figtree-Medium.ttf',
+            'light'   => 'Figtree-Light.ttf'
+        ],
+    ],
+
 ];

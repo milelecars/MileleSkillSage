@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('candidates', function (Blueprint $table) {
-            $table->string('test_name')->nullable()->after('invitation_link'); // Add the test_name column
+            $table->string('test_name')->nullable();
         });
     }
 
