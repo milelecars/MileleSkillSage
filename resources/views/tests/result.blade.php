@@ -15,16 +15,38 @@
                             <ul class="space-y-2">
                                 <li><strong>Test Name:</strong> {{ $candidate->test_name }}</li>
                                 <li><strong>Started At:</strong> {{ $candidate->test_started_at ? $candidate->test_started_at->format('M d, Y H:i:s') : 'N/A' }}</li>
-                                <li><strong>Completed At:</strong> {{ $candidate->test_completed_at ? $candidate->test_completed_at->format('M d, Y H:i:s') : 'N/A' }}</li>
+                                <li><strong>Completed At:</strong>
+                                    @if($candidate->test_completed_at && $candidate->test_started_at)
+                                        @php
+                                            $expected_end_time = $candidate->test_started_at->copy()->addMinutes($test->duration);
+                                        @endphp
+                                        @if($candidate->test_completed_at->gt($expected_end_time))
+                                            {{ $expected_end_time->format('M d, Y H:i:s') }}
+                                        @else  
+                                        {{ $candidate->test_completed_at->format('M d, Y H:i:s') }}
+                                        @endif
+                                    @else
+                                        N/A
+                                    @endif
+                                </li>
                                 <li>
                                     <strong>Duration:</strong>
                                     @if($candidate->test_started_at && $candidate->test_completed_at)
                                         @php
                                             $duration = $candidate->test_started_at->diff($candidate->test_completed_at);
-                                            $minutes = $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
-                                            $seconds = $duration->s;
+                                            $duration_in_minutes= $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
+                                            $duration_in_seconds= $duration->s;
                                         @endphp
-                                        {{ $minutes }} {{ Str::plural('minute', $minutes) }} and {{ $seconds }} {{ Str::plural('second', $seconds) }}
+                                        @if($duration_in_minutes > $test->duration)
+                                            @php
+                                                $expected_duration = $test->duration;
+                                                $minutes = $expected_duration->days * 24 * 60 + $expected_duration->h * 60 + $expected_duration->i;
+                                                $seconds = $expected_duration->s;
+                                            @endphp
+                                            {{ $minutes }} {{ Str::plural('minute', $minutes) }} and {{ $seconds }} {{ Str::plural('second', $seconds) }}
+                                        @else
+                                            {{ $duration_in_minutes }} {{ Str::plural('minute', $duration_in_minutes) }} and {{ $duration_in_seconds }} {{ Str::plural('second', $duration_in_seconds) }}
+                                        @endif
                                     @else
                                         N/A
                                     @endif
@@ -35,17 +57,6 @@
                                     report
                                 </a>
                             </div>
-                            @if(isset($monitoringData) && isset($monitoringData['metrics']))
-                                <div class="mt-4">
-                                    <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
-                                    <ul class="mt-2">
-                                        <li>Tab Switches: {{ $monitoringData['metrics']['tabSwitches'] }}</li>
-                                        <li>Window Blurs: {{ $monitoringData['metrics']['windowBlurs'] }}</li>
-                                        <li>Warning Count: {{ $monitoringData['metrics']['warningCount'] }}</li>
-                                        <li>Test Flagged: {{ $monitoringData['isFlagged'] ? 'Yes' : 'No' }}</li>
-                                    </ul>
-                                </div>
-                            @endif
                         </div>
                         
                         <div>
@@ -61,7 +72,7 @@
                                     <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ ($candidate->test_score / count($questions) * 100) }}%"></div>
                                 </div>
                                 <p class="text-center text-gray-600 mt-2">
-                                    {{ number_format(($candidate->test_score / count($questions)) * 100, 1) }}% Score
+                                    {{ rtrim(number_format(($candidate->test_score / count($questions)) * 100, 1), '.0') }}% Score
                                 </p>
                             </div>
                         </div>
