@@ -1,0 +1,142 @@
+@startuml "Milele SkillSage"
+
+entity "Candidates" {
+  * id : int
+  --
+  * name : varchar
+  * email : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Tests" {
+  * id : int
+  --
+  * title : varchar
+  * description : text
+  * duration : int (minutes)
+  * invitation_link : varchar
+  * admin_id : int
+  * overall_results_pdf_path : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Candidate Test" {
+  * candidate_id : int
+  * test_id : int
+  --
+  * started_at : datetime
+  * completed_at : datetime
+  * score : int
+}
+
+entity "Questions" {
+  * id : int
+  --
+  * test_id : int
+  * question_text : text
+  * question_type : varchar (e.g., 'mcq', 'short_answer')
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Question Choices" {
+  * id : int
+  --
+  * question_id : int
+  * choice_text : text
+  * is_correct : boolean
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Question Media" {
+  * id : int
+  --
+  * question_id : int
+  * media_type : varchar (e.g., 'image', 'diagram')
+  * file_path : varchar
+  * description : text
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Answers" {
+  * id : int
+  --
+  * candidate_id : int
+  * question_id : int
+  * answer_text : text
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Admins" {
+  * id : int
+  --
+  * name : varchar
+  * email : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Flag Types" {
+  * id : int
+  --
+  * name : varchar
+  * description : text
+  * threshold : int
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Candidate Flags" {
+  * id : int
+  --
+  * candidate_id : int
+  * test_id : int
+  * flag_type_id : int
+  * occurrences : int
+  * is_flagged : boolean
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Invitations" {
+  * id : int
+  --
+  * test_id : int
+  * invited_emails : JSON
+  * expiration_date : datetime
+  * invitation_token : varchar
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+entity "Reports" {
+  * id : int
+  --
+  * candidate_id : int
+  * test_id : int
+  * score : int
+  * pdf_path: varchar
+  * completion_status : varchar
+  * date_completed : datetime
+  * created_at : datetime
+  * updated_at : datetime
+}
+
+' Relationships
+"Candidates" ||--|{ "Reports" : has many
+"Candidates" ||--|{ "Answers" : has many
+"Candidates" ||--|{ "Candidate Flags" : has many
+"Candidates" ||--|{ "Candidate Test" : takes many tests
+"Tests" ||--|{ "Questions" : has many
+"Tests" ||--o| "Invitations" : has one
+"Questions" ||--|{ "Question Choices" : has many
+"Questions" ||--|{ "Question Media" : has many
+"Flag Types" ||--|{ "Candidate Flags" : many types used by
+"Admins" ||--|{ "Tests" : manages many
+
+@enduml
