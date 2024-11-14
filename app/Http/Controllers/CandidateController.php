@@ -47,7 +47,7 @@ class CandidateController extends Controller
         }
 
         return TestInvitation::where('invitation_link', $invitationLink)
-            ->where('expires_at', '>', now())
+            ->where('expiration_date', '>', now())
             ->first();
     }
     

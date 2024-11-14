@@ -103,8 +103,8 @@ class TestController extends Controller
             'test_id' => $test->id,
             'invitation_link' => $validatedData['invitation_link'],
             'invitation_token' => $invitationToken,
-            'email_list' => [],
-            'expires_at' => now()->addDays(7),
+            'invited_emails' => [],
+            'expiration_date' => now()->addDays(7),
             'created_by' => auth()->id(),
         ]);
 
@@ -199,7 +199,7 @@ class TestController extends Controller
                 ->wherePivotNotNull('completed_at')
                 ->exists();
             
-            $isInvitationExpired = $test->invitation && $test->invitation->expires_at < now();
+            $isInvitationExpired = $test->invitation && $test->invitation->expiration_date < now();
             
             $remainingTime = null;
             $testSession = session('test_session');

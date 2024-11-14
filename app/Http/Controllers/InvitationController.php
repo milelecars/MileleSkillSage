@@ -27,7 +27,7 @@ class InvitationController extends Controller
         ]);
         
         // Check for expired invitation first
-        if ($invitation->expires_at && now()->greaterThan($invitation->expires_at)) {
+        if ($invitation->expiration_date && now()->greaterThan($invitation->expiration_date)) {
             return redirect()->route('invitation.expired');
         }
         
@@ -72,11 +72,11 @@ class InvitationController extends Controller
             ->firstOrFail();
             
         // Check for expired invitation
-        if ($invitation->expires_at && now()->greaterThan($invitation->expires_at)) {
+        if ($invitation->expiration_date && now()->greaterThan($invitation->expiration_date)) {
             return redirect()->route('invitation.expired');
         }
     
-        if (!in_array($validatedData['email'], $invitation->email_list)) {
+        if (!in_array($validatedData['email'], $invitation->invited_emails)) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
     

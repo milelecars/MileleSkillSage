@@ -72,11 +72,12 @@ entity "Answers" {
   * updated_at : datetime
 }
 
-entity "Admins" {
+entity "Users(Admins)" {
   * id : int
   --
   * name : varchar
   * email : varchar
+  * password : varchar  
   * created_at : datetime
   * updated_at : datetime
 }
@@ -137,6 +138,6 @@ entity "Reports" {
 "Questions" ||--|{ "Question Choices" : has many
 "Questions" ||--|{ "Question Media" : has many
 "Flag Types" ||--|{ "Candidate Flags" : many types used by
-"Admins" ||--|{ "Tests" : manages many
+"Users(Admins)" ||--|{ "Tests" : manages many
 
 @enduml

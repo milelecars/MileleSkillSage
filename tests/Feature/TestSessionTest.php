@@ -51,8 +51,8 @@ class TestSessionTest extends TestCase
             'test_id' => $this->existingTest->id,
             'invitation_token' => $this->invitationToken,
             'invitation_link' => "http://127.0.0.1:8000/invitation/{$this->invitationToken}",
-            'email_list' => $this->invitedEmails,
-            'expires_at' => now()->addDays(7),
+            'invited_emails' => $this->invitedEmails,
+            'expiration_date' => now()->addDays(7),
             'created_by' => $this->admin->id
         ]);
     }
@@ -178,7 +178,7 @@ class TestSessionTest extends TestCase
     {
         // Set invitation as expired
         $this->testInvitation->update([
-            'expires_at' => now()->subDay()
+            'expiration_date' => now()->subDay()
         ]);
 
         // Try to access expired invitation
