@@ -58,7 +58,7 @@ class Invitation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'test_id', 'invited_emails', 'expiration_date', 'invitation_token'
+        'test_id', 'invited_emails', 'expiration_date', 'invitation_token', 'invitation_link'
     ];
 
     // Invitation belongs to a Test
@@ -69,7 +69,7 @@ class Invitation extends Model
 
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(Admin::class, 'created_by');
     }
 
     

@@ -57,22 +57,24 @@ class Test extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'description', 'duration', 'invitation_link', 'admin_id', 'overall_results_pdf_path'
+        'title', 'description', 'duration', 'admin_id', 'overall_results_pdf_path'
     ];
 
-    // Test has many Questions
     public function questions()
     {
         return $this->hasMany(Question::class);
     }
 
-    // Test has one Invitation
-    public function invitation()
+    public function questionChoices()
     {
-        return $this->hasOne(Invitation::class);
+        return $this->hasManyThrough(QuestionChoice::class, Question::class);
     }
 
-    // Test has many Candidates through a pivot table
+    public function questionMedia()
+    {
+        return $this->hasManyThrough(QuestionMedia::class, Question::class);
+    }
+
     public function candidates()
     {
         return $this->belongsToMany(Candidate::class, 'candidate_test')
@@ -80,9 +82,9 @@ class Test extends Model
             ->withTimestamps();
     }
 
-    // Test belongs to an Admin (the admin who created it)
     public function admin()
     {
         return $this->belongsTo(Admin::class, 'admin_id');
     }
+
 }

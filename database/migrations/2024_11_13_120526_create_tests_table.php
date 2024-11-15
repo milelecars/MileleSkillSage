@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('title');
             $table->text('description');
             $table->integer('duration');
-            $table->string('invitation_link');
             $table->foreignId('admin_id')->constrained('admins')->onDelete('cascade');
             $table->string('overall_results_pdf_path')->nullable();
             $table->timestamps();

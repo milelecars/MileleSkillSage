@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div>
-        <form action="{{ route('invitation.validate', ['invitationLink' => $invitation_token]) }}" method="POST">            @csrf
+        <form action="{{ route('invitation.validate', ['token' => $invitation_token]) }}" method="POST">            @csrf
 
             <div class="mb-4">
                 <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name</label>

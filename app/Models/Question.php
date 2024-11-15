@@ -61,4 +61,10 @@ class Question extends Model
     {
         return $this->belongsTo(Test::class);
     }
+
+    // One question can have many answers 
+    public function answers()
+    {
+        return $this->hasMany(Answer::class);
+    }
 }

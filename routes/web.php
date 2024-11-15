@@ -45,8 +45,8 @@ Route::middleware('guest')->group(function () {
     
     // Invitation handling for guests
     Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
-    Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
-    Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
+    Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::post('/invitation/{token}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 });
 
 // Admin authenticated routes

@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('question_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
-            $table->string('media_type');
             $table->string('file_path');
             $table->text('description')->nullable();
             $table->timestamps();

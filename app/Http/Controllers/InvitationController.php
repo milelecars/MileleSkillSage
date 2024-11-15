@@ -11,130 +11,112 @@ use Illuminate\Support\Facades\Auth;
 
 class InvitationController extends Controller
 {
-    public function show($invitationLink)
-    {
-        $fullUrl = url('invitation/' . $invitationLink);
-        $invitation = TestInvitation::with('test')
-            ->where('invitation_link', $fullUrl)
-            ->firstOrFail();
-        
-        Log::info("invitation", [$invitation]);
-        
-        session([
-            'invitation_token' => $invitation->invitation_token,
-            'invitation_link' => $fullUrl,
-            'test_id' => $invitation->test_id,
-        ]);
-        
-        // Check for expired invitation first
-        if ($invitation->expiration_date && now()->greaterThan($invitation->expiration_date)) {
-            return redirect()->route('invitation.expired');
-        }
-        
-        if (Auth::guard('candidate')->check()) {
-            $candidate = Auth::guard('candidate')->user();
-            $testStatus = $candidate->tests()
-                ->where('test_id', $invitation->test_id)
-                ->first();
-            
-            // Check if test is already completed
-            if ($testStatus && $testStatus->pivot->completed_at) {
-                return redirect()->route('candidate.test.completed');
-            }
-            
-            if ($testStatus) {
-                $this->setCandidateSession($candidate, $invitation->test_id);
-            }
-            
-            return view('candidate.dashboard', [
-                'invitation' => $invitation,
-                'test' => $invitation->test,
-                'testStatus' => $testStatus,
-            ]);
-        }
-        
-        return view('invitation.candidate-auth', [
-            'invitation' => $invitation, 
-            'test' => $invitation->test,
-            'invitation_token' => $invitation->invitation_token,
-        ]);
-    }
+   public function show($token)
+   {
+       $invitation = Invitation::with('test')
+           ->where('invitation_token', $token)
+           ->firstOrFail();
+       
+       session([
+           'invitation_token' => $invitation->invitation_token,
+           'test_id' => $invitation->test_id,
+       ]);
+       
+       if (now()->greaterThan($invitation->expiration_date)) {
+           return redirect()->route('invitation.expired');
+       }
+       
+       if (Auth::guard('candidate')->check()) {
+           $candidate = Auth::guard('candidate')->user();
+           $testAttempt = $candidate->tests()
+               ->where('test_id', $invitation->test_id)
+               ->first();
+           
+           if ($testAttempt && $testAttempt->pivot->completed_at) {
+               return redirect()->route('candidate.test.completed');
+           }
+           
+           if ($testAttempt) {
+               $this->setCandidateSession($candidate, $invitation->test_id);
+           }
+           
+           return view('candidate.dashboard', [
+               'invitation' => $invitation,
+               'test' => $invitation->test,
+               'testAttempt' => $testAttempt,
+           ]);
+       }
+       
+       return view('invitation.candidate-auth', [
+           'invitation' => $invitation, 
+           'test' => $invitation->test
+       ]);
+   }
 
-    public function validateEmail(Request $request, $invitationLink)
-    {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email',
-        ]);
-    
-        $invitation = TestInvitation::with('test')
-            ->where('invitation_link', url('invitation/' . $invitationLink))
-            ->firstOrFail();
-            
-        // Check for expired invitation
-        if ($invitation->expiration_date && now()->greaterThan($invitation->expiration_date)) {
-            return redirect()->route('invitation.expired');
-        }
-    
-        if (!in_array($validatedData['email'], $invitation->invited_emails)) {
-            return back()->withErrors(['email' => 'The email does not match the invitation.']);
-        }
-    
-        // Get or create candidate
-        $candidate = Candidate::firstOrCreate(
-            ['email' => $validatedData['email']],
-            ['name' => $validatedData['name']]
-        );
-        
-        // Check if candidate has already completed this test
-        $existingTest = $candidate->tests()
-            ->where('test_id', $invitation->test_id)
-            ->first();
-            
-    
-        Auth::guard('candidate')->login($candidate);
-        $this->setCandidateSession($candidate, $invitation->test_id);
-    
-        if (!$existingTest) {
-            $candidate->tests()->attach($invitation->test_id, [
-                'created_at' => now()
-            ]);
-        }
-    
-        return redirect()->route('candidate.dashboard');
-    }
+   public function validateEmail(Request $request, $token)
+   {
+       $validatedData = $request->validate([
+           'name' => 'required|string|max:255',
+           'email' => 'required|email',
+       ]);
+   
+       $invitation = Invitation::with('test')
+           ->where('invitation_token', $token)
+           ->firstOrFail();
+           
+       if (now()->greaterThan($invitation->expiration_date)) {
+           return redirect()->route('invitation.expired');
+       }
+   
+       $invitedEmails = json_decode($invitation->invited_emails, true);
+       if (!in_array($validatedData['email'], $invitedEmails)) {
+           return back()->withErrors(['email' => 'The email does not match the invitation.']);
+       }
+   
+       $candidate = Candidate::firstOrCreate(
+           ['email' => $validatedData['email']],
+           ['name' => $validatedData['name']]
+       );
+       
+       $existingAttempt = $candidate->tests()
+           ->where('test_id', $invitation->test_id)
+           ->first();
+   
+       Auth::guard('candidate')->login($candidate);
+       
+       if (!$existingAttempt) {
+           $candidate->tests()->attach($invitation->test_id);
+       }
+   
+       return redirect()->route('candidate.dashboard');
+   }
 
-    private function setCandidateSession($candidate, $testId)
-    {
-        $test = Test::with('invitation')->findOrFail($testId);
-        $testStatus = $candidate->tests()
-            ->where('test_id', $testId)
-            ->first();
+   private function setCandidateSession($candidate, $testId)
+   {
+       $test = Test::findOrFail($testId);
+       $testAttempt = $candidate->tests()
+           ->where('test_id', $testId)
+           ->first();
 
-        $sessionData = [
-            'candidate_name' => $candidate->name,
-            'candidate_email' => $candidate->email,
-            'current_test_id' => $testId,
-            'test' => $test,
-            'invitation_link' => session('invitation_link'),
-            'test_session' => null
-        ];
+       $sessionData = [
+           'candidate_id' => $candidate->id,
+           'test_id' => $testId,
+       ];
 
-        if ($testStatus && $testStatus->pivot->started_at) {
-            $sessionData['test_session'] = [
-                'test_id' => $testId,
-                'start_time' => $testStatus->pivot->started_at,
-                'current_question' => session('test_session.current_question', 0),
-                'answers' => session('test_session.answers', []),
-                'score' => $testStatus->pivot->score
-            ];
-        }
+       if ($testAttempt && $testAttempt->pivot->started_at) {
+           $sessionData['test_session'] = [
+               'test_id' => $testId,
+               'start_time' => $testAttempt->pivot->started_at,
+               'current_question' => session('test_session.current_question', 0),
+               'answers' => session('test_session.answers', []),
+           ];
+       }
 
-        session($sessionData);
-    }
+       session($sessionData);
+   }
 
-    public function expired()
-    {
-        return view('invitation.expired');
-    }
+   public function expired()
+   {
+       return view('invitation.expired');
+   }
 }

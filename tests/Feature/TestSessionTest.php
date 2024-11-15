@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Test;
-use App\Models\User;
+use App\Models\Admin;
 use App\Models\Candidate;
 use App\Models\TestInvitation;
 use Carbon\Carbon;
@@ -27,7 +27,7 @@ class TestSessionTest extends TestCase
         parent::setUp();
         
         // Create admin user
-        $this->admin = User::create([
+        $this->admin = Admin::create([
             'email' => 'heliaa.haghighi@gmail.com',
             'name' => 'Admin User',
             'password' => bcrypt('password12')

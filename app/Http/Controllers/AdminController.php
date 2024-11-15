@@ -23,74 +23,117 @@ class AdminController extends Controller
 
     private function getQuestions($test)
     {
-        $questions = [];
-        if ($test->questions_file_path) {
-            $filePath = storage_path('app/public/' . $test->questions_file_path);
-            $questions = Excel::toArray(new QuestionsImport($test), $filePath);
-            $questions = $questions[0] ?? [];
-        }
-        return $questions;
-    }
+        $test = Test::with([
+            'questions.choices',
+            'questions.media',
+            'questions.answers' => function($query) use ($candidate) {
+                $query->where('candidate_id', $candidate->id);
+            }
+        ])->findOrFail($id);
+        $questions = $test->questions;
 
-    private function getQuestionsCount($test)
-    {
-        return count($this->getQuestions($test));
+        return $questions;
     }
 
     public function manageCandidates()
     {
-        $candidates = Candidate::with(['tests' => function($query) {
-            $query->select('tests.id', 'name', 'questions_file_path');
-        }])
-        ->select('id', 'name', 'email', 'test_name', 'test_started_at', 
-                'test_completed_at', 'test_score')
-        ->latest('test_completed_at')
-        ->paginate(10);
-
         
-        foreach ($candidates as $candidate) {
-            if ($test = $candidate->tests->first()) {
-                $candidate->total_questions = $this->getQuestionsCount($test);
-            }
-        }
-
-        $stats = [
-            'totalCandidates' => Candidate::count(),
-            'completedTests' => Candidate::whereNotNull('test_completed_at')->count(),
-            'activeTests' => Test::count()
-        ];
-
-        return view('admin.manage-candidates', array_merge(compact('candidates'), $stats));
+        // TODO:understand this
+       $candidates = Candidate::with([
+           'tests' => function($query) {
+               $query->select('tests.id', 'title', 'description')
+                    ->withPivot('started_at', 'completed_at', 'score');
+           },
+           'tests.questions',
+           'reports'
+       ])
+       ->select('id', 'name', 'email')
+       ->latest()
+       ->paginate(10);
+    
+       foreach ($candidates as $candidate) {
+           if ($test = $candidate->tests->first()) {
+               $candidate->total_questions = $test->questions->count();
+               
+               $candidate->test_started_at = $test->pivot->started_at;
+               $candidate->test_completed_at = $test->pivot->completed_at;
+               $candidate->test_score = $test->pivot->score;
+           }
+       }
+    
+       $stats = [
+           'totalCandidates' => Candidate::count(),
+           'completedTests' => DB::table('candidate_test')
+               ->whereNotNull('completed_at')
+               ->distinct('candidate_id')
+               ->count(),
+           'activeTests' => Test::count(),
+           'totalReports' => Report::count()
+       ];
+    
+       return view('admin.manage-candidates', array_merge(compact('candidates'), $stats));
     }
 
     public function candidateResult(Candidate $candidate)
     {
-        $test = $candidate->tests()->first();
-        if (!$test) {
-            return redirect()->back()->with('error', 'No test found for this candidate.');
-        }
+    $test = $candidate->tests()->with(['questions.choices', 'questions.media'])->first();
+    
+    if (!$test) {
+        return redirect()->back()->with('error', 'No test found for this candidate.');
+    }
 
-        $questions = $this->getQuestions($test);
-        $totalQuestions = count($questions);
+    $answers = Answer::where('candidate_id', $candidate->id)
+        ->whereHas('question', function($query) use ($test) {
+            $query->where('test_id', $test->id);
+        })->get();
 
-        return view('admin.candidate-result', [
-            'candidate' => $candidate,
-            'test' => $test,
-            'testAttempt' => $test->pivot,
-            'totalQuestions' => $totalQuestions,
-            'percentage' => $totalQuestions > 0 ? ($candidate->test_score / $totalQuestions * 100) : 0
-        ]);
+    $report = Report::where('candidate_id', $candidate->id)
+        ->where('test_id', $test->id)
+        ->first();
+
+    return view('admin.candidate-result', [
+        'candidate' => $candidate,
+        'test' => $test,
+        'testAttempt' => $test->pivot,
+        'answers' => $answers,
+        'report' => $report,
+        'totalQuestions' => $test->questions->count(),
+        'percentage' => $test->questions->count() > 0 ? 
+            ($test->pivot->score / $test->questions->count() * 100) : 0
+    ]);
     }
 
     public function approveCandidate(Candidate $candidate)
     {
-        $candidate->update(['status' => 'approved']);
-        return redirect()->back()->with('success', 'Candidate approved successfully');
+    $testAttempt = $candidate->tests()->latest()->first();
+    
+    if ($testAttempt) {
+        Report::create([
+            'candidate_id' => $candidate->id,
+            'test_id' => $testAttempt->id,
+            'score' => $testAttempt->pivot->score,
+            'completion_status' => 'approved',
+            'date_completed' => $testAttempt->pivot->completed_at
+        ]);
+    }
+
+    return redirect()->back()->with('success', 'Candidate approved successfully');
     }
 
     public function rejectCandidate(Candidate $candidate)
     {
-        $candidate->update(['status' => 'rejected']);
-        return redirect()->back()->with('success', 'Candidate rejected successfully');
+    $testAttempt = $candidate->tests()->latest()->first();
+    
+    if ($testAttempt) {
+        Report::create([
+            'candidate_id' => $candidate->id,
+            'test_id' => $testAttempt->id,
+            'score' => $testAttempt->pivot->score,
+            'completion_status' => 'rejected',
+            'date_completed' => $testAttempt->pivot->completed_at
+        ]);
+    }
+
+    return redirect()->back()->with('success', 'Candidate rejected successfully');
     }
 }

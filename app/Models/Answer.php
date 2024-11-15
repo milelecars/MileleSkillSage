@@ -14,4 +14,14 @@ class Answer extends Model
         'question_id', 
         'answer_text'
     ];
+
+    public function candidate()
+    {
+        return $this->belongsTo(Candidate::class);
+    }
+
+    public function question()
+    {
+        return $this->belongsTo(Question::class);
+    }
 }

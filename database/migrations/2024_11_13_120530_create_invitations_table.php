@@ -17,6 +17,7 @@ return new class extends Migration
             $table->json('invited_emails');
             $table->datetime('expiration_date');
             $table->string('invitation_token')->unique();
+            $table->string('invitation_link')->unique();
             $table->timestamps();
         });
     }
