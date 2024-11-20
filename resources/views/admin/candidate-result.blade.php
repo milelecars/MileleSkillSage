@@ -14,11 +14,24 @@
                         <div class="bg-gray-50 rounded-lg p-4">
                             <h2 class="font-semibold text-lg mb-2">Test Details</h2>
                             <ul class="space-y-2">
-                                <li><span class="font-medium">Test Name:</span> {{ $test->name }}</li>
-                                <li><span class="font-medium">Started:</span> {{ $candidate->test_started_at->format('M d, Y H:i') }}</li>
-                                <li><span class="font-medium">Completed:</span> {{ $candidate->test_completed_at->format('M d, Y H:i') }}</li>
-                                <li><span class="font-medium">Duration:</span> 
-                                    {{ $candidate->test_started_at->diff($candidate->test_completed_at)->format('%H:%I:%S') }}
+                                <li><span class="font-medium">Test Title:</span> {{ $test->title }}</li>
+                                <li>
+                                    <span class="font-medium">Started:</span> 
+                                    {{ \Carbon\Carbon::parse($testAttempt['started_at'])->format('M d, Y H:i') ?? '-' }}
+                                </li>
+                                <li>
+                                    <span class="font-medium">Completed:</span> 
+                                    {{ \Carbon\Carbon::parse($testAttempt['completed_at'])->format('M d, Y H:i') ?? '-' }}
+                                </li>
+                                <li>
+                                    <span class="font-medium">Duration:</span>
+                                    @if($testAttempt['started_at'] && $testAttempt['completed_at'])
+                                        {{ \Carbon\Carbon::parse($testAttempt['started_at'])
+                                            ->diff(\Carbon\Carbon::parse($testAttempt['completed_at']))
+                                            ->format('%H:%I:%S') }}
+                                    @else
+                                        N/A
+                                    @endif
                                 </li>
                             </ul>
                         </div>
@@ -28,15 +41,14 @@
                             <ul class="space-y-4">
                                 <li>
                                     <span class="font-medium">Score:</span> 
-                                    <span class="text-gray-900">{{ $candidate->test_score }} / {{ $totalQuestions }} points</span>
+                                    <span class="text-gray-900">{{ $testAttempt['score'] }} / {{ $totalQuestions }} points</span>
                                 </li>
-                                
+
                                 <li>
                                     <div class="mt-1">
                                         <div class="w-full bg-gray-200 rounded-full h-2">
                                             <div class="bg-blue-600 h-2 rounded-full" 
-                                                 style="width: {{ $percentage }}%">
-                                            </div>
+                                                 style="width: {{ $percentage }}%"></div>
                                         </div>
                                         <div class="text-sm text-gray-600 mt-1">
                                             {{ number_format($percentage, 1) }}% Correct
@@ -46,10 +58,10 @@
 
                                 <li>
                                     <span class="font-medium">Status:</span>
-                                    @if($testAttempt->is_expired)
-                                        <span class="text-yellow-600">Submitted (Time Expired)</span>
-                                    @else
+                                    @if($testAttempt['completed_at'])
                                         <span class="text-green-600">Completed</span>
+                                    @else
+                                        <span class="text-yellow-600">In Progress</span>
                                     @endif
                                 </li>
                             </ul>

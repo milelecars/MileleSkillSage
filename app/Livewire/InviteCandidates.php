@@ -37,7 +37,7 @@ class InviteCandidates extends Component
 
         
         $existingInvitation = TestInvitation::where('test_id', $this->testId)
-            ->whereJsonContains('email_list', $email)
+            ->whereJsonContains('invited_emails', $email)
             ->exists();
 
         if ($existingInvitation) {
@@ -81,7 +81,7 @@ class InviteCandidates extends Component
             
             
             $invitation->update([
-                'email_list' => $this->emailList
+                'invited_emails' => $this->emailList
             ]);
 
             
@@ -125,7 +125,7 @@ class InviteCandidates extends Component
             
             $emailTemplate = view('emails.invitation-email-template', [
                 'invitationLink' => $invitation->invitation_link,
-                'testName' => $test->name
+                'testName' => $test->title
             ])->render();
 
             $mail->Body = $emailTemplate;

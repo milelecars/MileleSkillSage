@@ -22,7 +22,7 @@
                                         
                                         {{-- info --}}
                                         <a href="{{ route('tests.show', ['id' => $test->id]) }}">
-                                            <h3 class="text-lg font-semibold text-blue-700">{{ $test->name }}</h3>
+                                            <h3 class="text-lg font-semibold text-blue-700">{{ $test->title }}</h3>
                                             <p class="text-sm text-gray-600 mt-2">{{ Str::limit($test->description, 100) }}</p>
                                         </a>
                                         
