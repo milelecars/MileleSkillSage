@@ -125,7 +125,7 @@ class InviteCandidates extends Component
             
             $emailTemplate = view('emails.invitation-email-template', [
                 'invitationLink' => $invitation->invitation_link,
-                'testName' => $test->name
+                'testName' => $test->title
             ])->render();
 
             $mail->Body = $emailTemplate;

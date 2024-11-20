@@ -54,7 +54,7 @@ entity "Question Media" {
   * id : int
   --
   * question_id : int
-  * file_path : varchar
+  * image_url : varchar
   * description : text
   * created_at : datetime
   * updated_at : datetime
@@ -135,7 +135,7 @@ entity "Reports" {
 "Tests" ||--|{ "Questions" : has many
 "Tests" ||--o| "Invitations" : has one
 "Questions" ||--|{ "Question Choices" : has many
-"Questions" ||--|{ "Question Media" : has many
+"Questions" ||--o| "Question Media" : has one
 "Questions" ||--|{ "Answers" : has many  
 "Flag Types" ||--|{ "Candidate Flags" : many types used by
 "Users(Admins)" ||--|{ "Tests" : manages many

@@ -44,22 +44,28 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
-    protected $fillable = ['name', 'email', 'password'];
+    protected $table = 'admins';
 
-    protected function setPasswordAttribute($value){
-        $this->attributes['password'] = bcrypt($value);
-    }
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+    ];
 
-    // Admin has many Tests
-    public function tests()
-    {
-        return $this->hasMany(Test::class);
-    }
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
 }

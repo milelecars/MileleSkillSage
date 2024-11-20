@@ -6,6 +6,8 @@ use App\Models\Test;
 use App\Models\TestInvitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
 
 class CandidateController extends Controller
 {
@@ -16,26 +18,25 @@ class CandidateController extends Controller
             return redirect()->route('invitation.candidate-auth');
         }
 
+        // Retrieve test from session
         $test = session('test');
         if (!$test) {
-            // If test is not in session, try to get it from the session test_id
-            $testId = session('current_test_id');
+            $testId = session('test_id');
             $test = $testId ? Test::find($testId) : null;
         }
 
-        // Get the test status
-        $testStatus = null;
-        if ($test) {
-            $testStatus = $candidate->tests()
-                ->where('test_id', $test->id)
-                ->first();
-        }
-
-        // Get the invitation
+        // Validate session and fetch invitation
         $invitation = $this->validateSession();
 
-        return view('candidate.dashboard', compact('test', 'testStatus', 'invitation'));
+        // Fetch test attempt
+        $testAttempt = $candidate->tests()->where('test_id', $test->id)->first();
+        if (!$testAttempt) {
+            return redirect()->route('dashboard')->withErrors('No test attempt found.');
+        }
+
+        return view('candidate.dashboard', compact('test', 'testAttempt', 'invitation'));
     }
+
 
     private function validateSession()
     {

@@ -6,8 +6,8 @@
                 @csrf
                 <div class="grid grid-cols-3 gap-6 bg-white shadow-md rounded p-8">
                     <div class="mr-4">
-                        <label for="name" class="block text-gray-700 text-md font-bold mb-2">Test Name</label>
-                        <input type="text" name="name" id="name" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test name" value="{{ old('name') }}">
+                        <label for="title" class="block text-gray-700 text-md font-bold mb-2">Test Title</label>
+                        <input type="text" name="title" id="title" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test title" value="{{ old('title') }}">
                     </div>
                     <div class="mr-4">
                         <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Duration</label>

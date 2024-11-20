@@ -1,10 +1,28 @@
 <x-guest-layout>
-    <div>
-        <form action="{{ route('invitation.validate', ['token' => $invitation_token]) }}" method="POST">            @csrf
+    <div class="max-w-md mx-auto my-8 px-4">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Test Invitation</h2>
+            <p class="text-gray-600 mt-2">Please enter your details to access the test.</p>
+        </div>
+
+        @if (session('error'))
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <span class="block sm:inline">{{ session('error') }}</span>
+            </div>
+        @endif
+
+        <form action="{{ route('invitation.validate', ['token' => $invitation->invitation_token]) }}" method="POST">
+            @csrf
 
             <div class="mb-4">
                 <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Name</label>
-                <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('name') border-red-500 @enderror">
+                <input id="name" 
+                       type="text" 
+                       name="name" 
+                       value="{{ old('name') }}" 
+                       required 
+                       autofocus 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('name') border-red-500 @enderror">
                 @error('name')
                     <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
                 @enderror
@@ -12,17 +30,23 @@
             
             <div class="mb-4">
                 <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('email') border-red-500 @enderror">
+                <input id="email" 
+                       type="email" 
+                       name="email" 
+                       value="{{ old('email') }}" 
+                       required 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('email') border-red-500 @enderror">
                 @error('email')
                     <p class="text-red-500 text-xs italic mt-2">{{ $message }}</p>
                 @enderror
             </div>
 
-            <input type="hidden" name="invitation_token" value="{{ $invitation_token }}">
+            <input type="hidden" name="invitation_token" value="{{ $invitation->invitation_token }}">
 
-            <div class="flex items-center justify-center mt-5">
-                <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                    Submit
+            <div class="flex items-center justify-center mt-6">
+                <button type="submit" 
+                        class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
+                    Start Test
                 </button>
             </div>
         </form>

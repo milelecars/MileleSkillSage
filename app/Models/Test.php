@@ -12,7 +12,7 @@
 // {
 //     use HasFactory;
 
-//     protected $fillable = ['name', 'duration', 'description',  'questions_file_path'];
+//     protected $fillable = ['name', 'duration', 'description',  'questions_image_url'];
 
 //     public function invitation()
 //     {
@@ -85,6 +85,11 @@ class Test extends Model
     public function admin()
     {
         return $this->belongsTo(Admin::class, 'admin_id');
+    }
+
+    public function invitation()
+    {
+        return $this->hasOne(Invitation::class);
     }
 
 }

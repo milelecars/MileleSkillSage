@@ -7,23 +7,27 @@
 
                     @if(session('success'))
                         <div class="bg-amber-50 border-l-4 border-amber-200 text-amber-800 p-4 mb-4 rounded-lg">
-                            {{ session('success') }}.
+                            {{ session('success') }}
                         </div>
                     @endif
 
-                    <!-- Basic Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div class="bg-blue-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-blue-700">Total Candidates</h3>
-                            <p class="text-2xl font-bold text-blue-900">{{ $totalCandidates ?? 0 }}</p>
+                            <p class="text-2xl font-bold text-blue-900">{{ $totalCandidates }}</p>
                         </div>
                         <div class="bg-green-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-green-700">Completed Tests</h3>
-                            <p class="text-2xl font-bold text-green-900">{{ $completedTests ?? 0 }}</p>
+                            <p class="text-2xl font-bold text-green-900">{{ $completedTests }}</p>
                         </div>
                         <div class="bg-purple-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-purple-700">Active Tests</h3>
-                            <p class="text-2xl font-bold text-purple-900">{{ $activeTests ?? 0 }}</p>
+                            <p class="text-2xl font-bold text-purple-900">{{ $activeTests }}</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-700">Total Reports</h3>
+                            <p class="text-2xl font-bold text-gray-900">{{ $totalReports }}</p>
                         </div>
                     </div>
 
@@ -32,128 +36,66 @@
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/5 border-r border-gray-200">
-                                        Candidate
-                                    </th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/7 border-r border-gray-200">
-                                        Test Name
-                                    </th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/8 border-r border-gray-200">
-                                        Status
-                                    </th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/7 border-r border-gray-200">
-                                        Started At
-                                    </th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/7 border-r border-gray-200">
-                                        Completed At
-                                    </th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/8 border-r border-gray-200">
-                                        Score
-                                    </th>
-                                    <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap w-1/4">
-                                        Actions
-                                    </th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Candidate</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Test</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Started At</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Completed At</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Score</th>
+                                    <th class="px-4 py-3 text-xs font-medium text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($candidates as $candidate)
-                                <tr>
-                                    <td class="px-4 py-4 border-r border-gray-200">
-                                        <div class="flex flex-col items-center">
-                                            <div class="text-sm font-medium text-gray-900">{{ $candidate->name }}</div>
+                                    <tr>
+                                        <td class="px-4 py-4">
+                                            <div>{{ $candidate->name }}</div>
                                             <div class="text-sm text-gray-500">{{ $candidate->email }}</div>
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-4 text-center border-r border-gray-200">
-                                        <div class="text-sm text-gray-900">{{ $candidate->test_name ?? 'No test' }}</div>
-                                    </td>
-                                    <td class="px-4 py-4 border-r border-gray-200">
-                                        <div class="flex flex-col items-center gap-1">
+                                        </td>
+                                        <td class="px-4 py-4">{{ $candidate->tests->first()?->title ?? 'No Test Assigned' }}</td>
+                                        <td class="px-4 py-4">
                                             @if($candidate->test_completed_at)
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                    Completed
-                                                </span>
-                                                @if($candidate->tests->first()?->pivot?->is_expired)
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                        Time Expired
-                                                    </span>
-                                                @endif
+                                                <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Completed</span>
                                             @elseif($candidate->test_started_at)
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                    In Progress
-                                                </span>
+                                                <span class="text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">In Progress</span>
                                             @else
-                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                                    Not Started
-                                                </span>
+                                                <span class="text-gray-800 bg-gray-100 px-2 py-1 rounded-full">Not Started</span>
                                             @endif
-                                        </div>
-                                    </td>
-                                    <td class="px-4 py-4 text-sm text-gray-500 text-center border-r border-gray-200">
-                                        {{ $candidate->test_started_at ? $candidate->test_started_at->format('M d, Y H:i') : '-' }}
-                                    </td>
-                                    <td class="px-4 py-4 text-sm text-gray-500 text-center border-r border-gray-200">
-                                        {{ $candidate->test_completed_at ? $candidate->test_completed_at->format('M d, Y H:i') : '-' }}
-                                    </td><td class="px-5 py-4 text-center border-r border-gray-200">
-                                        @if($candidate->test_completed_at)
-                                            @if($test = $candidate->tests->first())
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ $test->pivot->score ?? $candidate->test_score }}
-                                                    <span class="text-gray-500">/ {{ $candidate->total_questions }}</span>
-                                                </div>
-                                                @if($candidate->total_questions > 0)
-                                                    <div class="mt-1">
-                                                        <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                                            <div class="bg-blue-600 h-1.5 rounded-full" 
-                                                                 style="width: {{ ($candidate->test_score / $candidate->total_questions * 100) }}%">
-                                                            </div>
-                                                        </div>
-                                                        <div class="text-xs text-gray-500 mt-1">
-                                                            {{ number_format(($candidate->test_score / $candidate->total_questions * 100), 1) }}%
-                                                        </div>
-                                                    </div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            {{ \Carbon\Carbon::parse($candidate->test_started_at)->format('M d, Y H:i') ?? '-'  }}
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            {{ \Carbon\Carbon::parse($candidate->test_completed_at)->format('M d, Y H:i') ?? '-'  }}
+                                        </td>
+
+                                        <td class="px-4 py-4">
+                                            @if($candidate->test_completed_at)
+                                                <div>{{ $candidate->test_score }} / {{ $candidate->total_questions }}</div>
+                                            @else
+                                                <span>-</span>
+                                            @endif
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex space-x-2">
+                                                @if($candidate->test_completed_at)
+                                                    <a href="{{ route('admin.candidate-result', $candidate->id) }}" class="text-blue-600">View Results</a>
                                                 @endif
-                                            @else
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ $candidate->test_score }}
-                                                    <span class="text-gray-500">points</span>
-                                                </div>
-                                            @endif
-                                        @else
-                                            <span class="text-gray-500">-</span>
-                                        @endif
-                                    </td>
-                                    <td class="px-4 py-4">
-                                        <div class="flex justify-center space-x-4">
-                                            @if($candidate->test_completed_at && $candidate->tests->first())
-                                                <a href="{{ route('admin.candidate-result', $candidate->id) }}" 
-                                                class="text-blue-600 hover:text-blue-900">
-                                                    View Results
-                                                </a>
-                                            @endif
-                                            <form action="{{ route('candidate.approve', $candidate->id) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <button type="submit" class="text-green-600 hover:text-green-900">
-                                                    Approve
-                                                </button>
-                                            </form>
-                                            <form action="{{ route('candidate.reject', $candidate->id) }}" method="POST" class="inline">
-                                                @csrf
-                                                @method('PUT')
-                                                <button type="submit" class="text-red-600 hover:text-red-900">
-                                                    Reject
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
+                                                <form action="{{ route('candidate.approve', $candidate->id) }}" method="POST">
+                                                    @csrf @method('PUT')
+                                                    <button type="submit" class="text-green-600">Approve</button>
+                                                </form>
+                                                <form action="{{ route('candidate.reject', $candidate->id) }}" method="POST">
+                                                    @csrf @method('PUT')
+                                                    <button type="submit" class="text-red-600">Reject</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                                        No candidates found
-                                    </td>
-                                </tr>
+                                    <tr>
+                                        <td colspan="7" class="text-center">No candidates found.</td>
+                                    </tr>
                                 @endforelse
                             </tbody>
                         </table>

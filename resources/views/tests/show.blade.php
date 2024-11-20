@@ -4,12 +4,14 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-8">
                     {{-- Camera Section --}}
-                    <div class="rounded-lg overflow-hidden bg-gray-50 p-4 hidden">
-                        <video id="video" class="w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
-                        <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
-                    </div>
+                    @if(Auth::guard('candidate')->check())
+                        <div class="rounded-lg overflow-hidden bg-gray-50 p-4 hidden">
+                            <video id="video" class="w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
+                            <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
+                        </div>
+                    @endif
 
-                    <h1 class="text-2xl font-extrabold mb-4 text-gray-900">{{$test->name}}</h1>
+                    <h1 class="text-2xl font-extrabold mb-4 text-gray-900">{{$test->title}}</h1>
                     <p class="text-lg mb-8 text-gray-700 leading-relaxed">
                         {{$test->description}}
                     </p>
@@ -32,40 +34,70 @@
                             </a>
                         </div>
                 
+                    
                         {{-- test preview for admin users --}}
-                        @if(!empty($questions))
+                        @if($questions->count() > 0)
                             <div class="mt-8 space-y-8">
                                 <h2 class="text-2xl font-bold text-gray-800 mb-4">Test Preview</h2>
-                                @foreach (array_slice($questions, 0, 10) as $question)
+                                @foreach ($questions->take(10) as $index => $question)
                                     <div class="bg-gray-50 p-6 rounded-lg shadow">
                                         <p class="text-lg mb-4 font-medium text-gray-800">
-                                            {{ $question['question'] ?? 'No question available' }}
+                                            {{$index + 1}}. {{ $question->question_text }}
                                         </p>
-                                        
-                                        @if(isset($question['image_url']) && $question['image_url'])
-                                            <img src="{{ $question['image_url'] }}" alt="Question Image" class="mb-4 max-w-full h-auto rounded">
+
+                                        @if($question->media && $question->media instanceof \Illuminate\Database\Eloquent\Collection)
+                                            @foreach($question->media as $media)
+                                                @if($media->image_url)
+                                                    <img src="{{ $media->image_url }}" 
+                                                        alt="{{ $media->description ?? 'Question Image' }}" 
+                                                        class="mb-4 max-w-full h-auto rounded">
+                                                @endif
+                                            @endforeach
+                                        @elseif($question->media && isset($question->media->image_url))
+                                            <img src="{{ $question->media->image_url }}" 
+                                                alt="{{ $question->media->description ?? 'Question Image' }}" 
+                                                class="mb-4 max-w-full h-auto rounded">
                                         @endif
                                         
                                         <div class="space-y-2 ml-4 mb-4">
-                                            @foreach(['a', 'b', 'c', 'd'] as $choice)
-                                                @if(isset($question['choice_'.$choice]))
-                                                    <label class="flex items-center space-x-3">
-                                                        <input type="radio" name="option_{{ $loop->parent->index }}" value="{{ $question['choice_'.$choice] }}" class="form-radio text-blue-600">
-                                                        <span class="text-gray-700">{{ ucfirst($choice) }}. {{ $question['choice_'.$choice] }}</span>
-                                                    </label>
-                                                @endif
+                                            @foreach($question->choices as $choice)
+                                                <label class="flex items-center space-x-3">
+                                                    <input type="radio" 
+                                                        name="option_{{ $loop->parent->index }}" 
+                                                        value="{{ $choice->choice_text }}" 
+                                                        class="form-radio text-blue-600"
+                                                        {{ $choice->is_correct ? 'data-correct="true"' : '' }}>
+                                                    <span class="text-gray-700">
+                                                        {{ chr(65 + $loop->index) }}. {{ $choice->choice_text }}
+                                                    </span>
+                                                </label>
                                             @endforeach
                                         </div>
                                         
-                                        @if(isset($question['answer']))
-                                            <p class="mt-4 font-semibold text-green-600">Answer: {{ $question['answer'] }}</p>
+                                        @if(Auth::guard('web')->check())
+                                            @php
+                                                $correctChoice = $question->choices->firstWhere('is_correct', true);
+                                                $correctIndex = $correctChoice ? $question->choices->search($correctChoice) : null;
+                                            @endphp
+                                            @if($correctIndex !== null)
+                                                <p class="mt-4 font-semibold text-green-600">
+                                                    Answer: {{ chr(65 + $correctIndex) }}
+                                                </p>
+                                            @endif
                                         @endif
                                     </div>
                                 @endforeach
+
+                                @if($questions->count() > 10)
+                                    <p class="text-gray-600 italic mt-4">
+                                        Showing 10 out of {{ $questions->count() }} questions...
+                                    </p>
+                                @endif
                             </div>
                         @else
                             <p class="text-gray-600 italic">No questions available for this test.</p>
                         @endif
+                        
                     @endif
                 
                     {{-- content for candidates --}}

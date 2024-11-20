@@ -21,7 +21,7 @@
         <!-- Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
-        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js'])
         @livewireStyles
 
     </head>

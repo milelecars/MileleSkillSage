@@ -30,15 +30,16 @@ class TestSessionTest extends TestCase
         $this->admin = Admin::create([
             'email' => 'heliaa.haghighi@gmail.com',
             'name' => 'Admin User',
-            'password' => bcrypt('password12')
+            'password' => Hash::make($request->password),
+
         ]);
 
         // Create a test with all required fields
         $this->existingTest = Test::create([
-            'name' => 'Sample Test',
+            'title' => 'Sample Test',
             'description' => 'Test Description',
             'duration' => 60,
-            'questions_file_path' => 'questions/sample.xlsx'
+            'questions_image_url' => 'questions/sample.xlsx'
         ]);
 
         $this->invitedEmails = [
@@ -150,7 +151,7 @@ class TestSessionTest extends TestCase
 
         // Set up session for the test
         Session::put([
-            'current_test_id' => $this->existingTest->id,
+            'test_id' => $this->existingTest->id,
             'test_session' => [
                 'test_id' => $this->existingTest->id,
                 'start_time' => now()->subMinutes(5)->toDateTimeString(),

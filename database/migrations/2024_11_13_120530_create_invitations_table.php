@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('invitations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('test_id')->constrained('tests')->onDelete('cascade');
-            $table->json('invited_emails');
+            $table->json('invited_emails')->nullable();
             $table->datetime('expiration_date');
             $table->string('invitation_token')->unique();
             $table->string('invitation_link')->unique();

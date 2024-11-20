@@ -53,7 +53,7 @@ class Question extends Model
     // Question has many Media items
     public function media()
     {
-        return $this->hasMany(QuestionMedia::class);
+        return $this->hasOne(QuestionMedia::class);
     }
 
     // Question belongs to a Test

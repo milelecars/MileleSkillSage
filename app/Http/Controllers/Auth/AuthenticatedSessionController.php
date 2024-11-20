@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -23,7 +24,14 @@ class AuthenticatedSessionController extends Controller
             'password' => 'required',
         ]);
 
-        // First check if admin exists
+        Log::info('Login credentials check', [
+            'email' => $credentials['email'],
+            'provided_password' => $credentials['password'],
+            'guard' => Auth::getDefaultDriver(),
+            'provider' => config('auth.guards.web.provider')
+        ]);
+
+        // Find admin
         $admin = Admin::where('email', $credentials['email'])->first();
 
         if (!$admin) {
@@ -32,28 +40,40 @@ class AuthenticatedSessionController extends Controller
                 ->with('error', 'No admin account found with this email address.');
         }
 
-        // Now attempt authentication
-        if (Auth::guard('web')->attempt($credentials)) {
+        // Debug password check
+        Log::info('Password check details', [
+            'provided_password' => $credentials['password'],
+            'stored_hash' => $admin->password,
+            'hash_check_result' => Hash::check($credentials['password'], $admin->password) ? 'true' : 'false'
+        ]);
+
+        
+        // Try both direct hash check and Auth attempt
+        $hashCheck = Hash::check($credentials['password'], $admin->password);
+        $authAttempt = Auth::guard('web')->attempt($credentials);
+
+        Log::info('Authentication attempts', [
+            'hash_check' => $hashCheck ? 'passed' : 'failed',
+            'auth_attempt' => $authAttempt ? 'passed' : 'failed'
+        ]);
+
+        if ($hashCheck) {
+            Auth::guard('web')->login($admin);
             $request->session()->regenerate();
             
-            // Check if admin account is active
-            if (!$admin->is_active) {
-                Auth::guard('web')->logout();
-                return back()
-                    ->withInput($request->only('email'))
-                    ->with('error', 'Your account is currently inactive. Please contact the super admin.');
-            }
-
-            // Log login attempt
-            \Log::info('Admin login successful', ['admin_id' => $admin->id, 'email' => $admin->email]);
+            Log::info('Admin login successful', [
+                'admin_id' => $admin->id, 
+                'email' => $admin->email
+            ]);
             
             return redirect()
                 ->intended(route('admin.dashboard'))
                 ->with('success', 'Welcome back, ' . $admin->name);
         }
 
-        // If the authentication attempt fails
-        \Log::warning('Failed admin login attempt', ['email' => $request->email]);
+        Log::warning('Failed admin login attempt - password mismatch', [
+            'email' => $request->email
+        ]);
         
         return back()
             ->withInput($request->only('email'))
@@ -66,7 +86,7 @@ class AuthenticatedSessionController extends Controller
     {
         if (Auth::guard('web')->check()) {
             $admin = Auth::guard('web')->user();
-            \Log::info('Admin logged out', ['admin_id' => $admin->id]);
+            Log::info('Admin logged out', ['admin_id' => $admin->id]);
             Auth::guard('web')->logout();
         }
 

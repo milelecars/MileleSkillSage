@@ -5,53 +5,55 @@ namespace App\Http\Controllers;
 use App\Models\Test;
 use App\Models\Candidate;
 use Illuminate\Http\Request;
-use App\Models\TestInvitation;
+use App\Models\Invitation;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class InvitationController extends Controller
 {
-   public function show($token)
-   {
-       $invitation = Invitation::with('test')
-           ->where('invitation_token', $token)
-           ->firstOrFail();
-       
-       session([
-           'invitation_token' => $invitation->invitation_token,
-           'test_id' => $invitation->test_id,
-       ]);
-       
-       if (now()->greaterThan($invitation->expiration_date)) {
-           return redirect()->route('invitation.expired');
-       }
-       
-       if (Auth::guard('candidate')->check()) {
-           $candidate = Auth::guard('candidate')->user();
-           $testAttempt = $candidate->tests()
-               ->where('test_id', $invitation->test_id)
-               ->first();
-           
-           if ($testAttempt && $testAttempt->pivot->completed_at) {
-               return redirect()->route('candidate.test.completed');
-           }
-           
-           if ($testAttempt) {
-               $this->setCandidateSession($candidate, $invitation->test_id);
-           }
-           
-           return view('candidate.dashboard', [
-               'invitation' => $invitation,
-               'test' => $invitation->test,
-               'testAttempt' => $testAttempt,
-           ]);
-       }
-       
-       return view('invitation.candidate-auth', [
-           'invitation' => $invitation, 
-           'test' => $invitation->test
-       ]);
-   }
+    public function show($token)
+    {
+        $invitation = Invitation::with('test')
+            ->where('invitation_token', $token)
+            ->firstOrFail();
+    
+        session([
+            'invitation_token' => $invitation->invitation_token,
+            'test_id' => $invitation->test_id,
+            'test' => $invitation->test, 
+        ]);
+    
+        if (now()->greaterThan($invitation->expiration_date)) {
+            return redirect()->route('invitation.expired');
+        }
+    
+        if (Auth::guard('candidate')->check()) {
+            $candidate = Auth::guard('candidate')->user();
+            $testAttempt = $candidate->tests()
+                ->where('test_id', $invitation->test_id)
+                ->first();
+    
+            if ($testAttempt && $testAttempt->pivot->completed_at) {
+                return redirect()->route('candidate.test.completed');
+            }
+    
+            if ($testAttempt) {
+                $this->setCandidateSession($candidate, $invitation->test_id);
+            }
+    
+            return view('candidate.dashboard', [
+                'invitation' => $invitation,
+                'test' => $invitation->test,
+                'testAttempt' => $testAttempt,
+            ]);
+        }
+    
+        return view('invitation.candidate-auth', [
+            'invitation' => $invitation,
+            'test' => $invitation->test,
+        ]);
+    }
+    
 
    public function validateEmail(Request $request, $token)
    {
@@ -68,7 +70,8 @@ class InvitationController extends Controller
            return redirect()->route('invitation.expired');
        }
    
-       $invitedEmails = json_decode($invitation->invited_emails, true);
+       $invitedEmails = $invitation->invited_emails;
+       Log::info('hellooo {{ $invitedEmails}}');
        if (!in_array($validatedData['email'], $invitedEmails)) {
            return back()->withErrors(['email' => 'The email does not match the invitation.']);
        }
@@ -84,10 +87,6 @@ class InvitationController extends Controller
    
        Auth::guard('candidate')->login($candidate);
        
-       if (!$existingAttempt) {
-           $candidate->tests()->attach($invitation->test_id);
-       }
-   
        return redirect()->route('candidate.dashboard');
    }
 

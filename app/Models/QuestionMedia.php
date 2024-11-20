@@ -10,7 +10,7 @@ class QuestionMedia extends Model
     use HasFactory;
 
     protected $fillable = [
-        'question_id', 'file_path', 'description'
+        'question_id', 'image_url', 'description'
     ];
 
     // Media belongs to a Question

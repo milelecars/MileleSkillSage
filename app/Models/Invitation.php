@@ -61,6 +61,11 @@ class Invitation extends Model
         'test_id', 'invited_emails', 'expiration_date', 'invitation_token', 'invitation_link'
     ];
 
+    protected $casts = [
+        'invited_emails' => 'array',  
+        'expiration_date' => 'datetime',
+    ];
+
     // Invitation belongs to a Test
     public function test()
     {
