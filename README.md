@@ -116,7 +116,7 @@ npm run build
 - Protected test materials
 - Public storage for non-sensitive assets
 
-## 👥 User Roles
+## 👥 Admin Roles
 
 ### Administrator
 - Create and manage tests

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Test;
-use App\Models\User;
+use App\Models\Admin;
 use App\Models\Candidate;
 use App\Models\TestInvitation;
 use Carbon\Carbon;
@@ -27,18 +27,19 @@ class TestSessionTest extends TestCase
         parent::setUp();
         
         // Create admin user
-        $this->admin = User::create([
+        $this->admin = Admin::create([
             'email' => 'heliaa.haghighi@gmail.com',
             'name' => 'Admin User',
-            'password' => bcrypt('password12')
+            'password' => Hash::make($request->password),
+
         ]);
 
         // Create a test with all required fields
         $this->existingTest = Test::create([
-            'name' => 'Sample Test',
+            'title' => 'Sample Test',
             'description' => 'Test Description',
             'duration' => 60,
-            'questions_file_path' => 'questions/sample.xlsx'
+            'questions_image_url' => 'questions/sample.xlsx'
         ]);
 
         $this->invitedEmails = [
@@ -51,8 +52,8 @@ class TestSessionTest extends TestCase
             'test_id' => $this->existingTest->id,
             'invitation_token' => $this->invitationToken,
             'invitation_link' => "http://127.0.0.1:8000/invitation/{$this->invitationToken}",
-            'email_list' => $this->invitedEmails,
-            'expires_at' => now()->addDays(7),
+            'invited_emails' => $this->invitedEmails,
+            'expiration_date' => now()->addDays(7),
             'created_by' => $this->admin->id
         ]);
     }
@@ -150,7 +151,7 @@ class TestSessionTest extends TestCase
 
         // Set up session for the test
         Session::put([
-            'current_test_id' => $this->existingTest->id,
+            'test_id' => $this->existingTest->id,
             'test_session' => [
                 'test_id' => $this->existingTest->id,
                 'start_time' => now()->subMinutes(5)->toDateTimeString(),
@@ -178,7 +179,7 @@ class TestSessionTest extends TestCase
     {
         // Set invitation as expired
         $this->testInvitation->update([
-            'expires_at' => now()->subDay()
+            'expiration_date' => now()->subDay()
         ]);
 
         // Try to access expired invitation

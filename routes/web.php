@@ -11,7 +11,7 @@ use App\Http\Controllers\ReportPDFController;
 use App\Http\Controllers\CreateTestController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DescriptionController;
-use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\RegisteredAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 // Root route
@@ -38,15 +38,15 @@ Route::get('/camera-permission', [CameraController::class, 'checkPermission'])->
 // Guest routes
 Route::middleware('guest')->group(function () {
     // Admin registration and login routes
-    Route::get('admin/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('admin/register', [RegisteredUserController::class, 'store']);
+    Route::get('admin/register', [RegisteredAdminController::class, 'create'])->name('register');
+    Route::post('admin/register', [RegisteredAdminController::class, 'store']);
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
     
     // Invitation handling for guests
     Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
-    Route::get('/invitation/{invitationLink}', [InvitationController::class, 'show'])->name('invitation.show');
-    Route::post('/invitation/{invitationLink}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
+    Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
+    Route::post('/invitation/{token}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 });
 
 // Admin authenticated routes

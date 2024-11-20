@@ -15,7 +15,6 @@ entity "Tests" {
   * title : varchar
   * description : text
   * duration : int (minutes)
-  * invitation_link : varchar
   * admin_id : int
   * overall_results_pdf_path : varchar
   * created_at : datetime
@@ -55,8 +54,7 @@ entity "Question Media" {
   * id : int
   --
   * question_id : int
-  * media_type : varchar (e.g., 'image', 'diagram')
-  * file_path : varchar
+  * image_url : varchar
   * description : text
   * created_at : datetime
   * updated_at : datetime
@@ -72,11 +70,12 @@ entity "Answers" {
   * updated_at : datetime
 }
 
-entity "Admins" {
+entity "Users(Admins)" {
   * id : int
   --
   * name : varchar
   * email : varchar
+  * password : varchar  
   * created_at : datetime
   * updated_at : datetime
 }
@@ -110,6 +109,7 @@ entity "Invitations" {
   * invited_emails : JSON
   * expiration_date : datetime
   * invitation_token : varchar
+  * invitation_link : varchar
   * created_at : datetime
   * updated_at : datetime
 }
@@ -135,8 +135,9 @@ entity "Reports" {
 "Tests" ||--|{ "Questions" : has many
 "Tests" ||--o| "Invitations" : has one
 "Questions" ||--|{ "Question Choices" : has many
-"Questions" ||--|{ "Question Media" : has many
+"Questions" ||--o| "Question Media" : has one
+"Questions" ||--|{ "Answers" : has many  
 "Flag Types" ||--|{ "Candidate Flags" : many types used by
-"Admins" ||--|{ "Tests" : manages many
+"Users(Admins)" ||--|{ "Tests" : manages many
 
 @enduml

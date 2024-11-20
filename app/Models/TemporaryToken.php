@@ -1,17 +1,17 @@
-<?php
 
-namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+// namespace App\Models;
 
-class TemporaryToken extends Model
-{
-    protected $fillable = ['email', 'token', 'expires_at'];
+// use Illuminate\Database\Eloquent\Model;
 
-    protected $dates = ['expires_at'];
+// class TemporaryToken extends Model
+// {
+//     protected $fillable = ['email', 'token', 'expires_at'];
 
-    public function isValid()
-    {
-        return $this->expires_at->isFuture();
-    }
-}
+//     protected $dates = ['expires_at'];
+
+//     public function isValid()
+//     {
+//         return $this->expires_at->isFuture();
+//     }
+// }
