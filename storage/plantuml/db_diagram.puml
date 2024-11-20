@@ -114,21 +114,21 @@ entity "Invitations" {
   * updated_at : datetime
 }
 
-entity "Reports" {
-  * id : int
-  --
-  * candidate_id : int
-  * test_id : int
-  * score : int
-  * pdf_path: varchar
-  * completion_status : varchar
-  * date_completed : datetime
-  * created_at : datetime
-  * updated_at : datetime
-}
+' entity "Reports" {
+'   * id : int
+'   --
+'   * candidate_id : int
+'   * test_id : int
+'   * score : int
+'   * pdf_path: varchar
+'   * completion_status : varchar
+'   * date_completed : datetime
+'   * created_at : datetime
+'   * updated_at : datetime
+' }
 
 ' Relationships
-"Candidates" ||--|{ "Reports" : has many
+' "Candidates" ||--|{ "Reports" : has many
 "Candidates" ||--|{ "Answers" : has many
 "Candidates" ||--|{ "Candidate Flags" : has many
 "Candidates" ||--|{ "Candidate Test" : takes many tests

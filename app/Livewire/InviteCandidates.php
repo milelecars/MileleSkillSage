@@ -5,7 +5,7 @@ namespace App\Livewire;
 use App\Models\Test;
 use Livewire\Component;
 use App\Mail\InvitationEmail;
-use App\Models\TestInvitation;
+use App\Models\Invitation;
 use Illuminate\Support\Facades\Validator;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -36,7 +36,7 @@ class InviteCandidates extends Component
         $email = $this->newEmail;
 
         
-        $existingInvitation = TestInvitation::where('test_id', $this->testId)
+        $existingInvitation = Invitation::where('test_id', $this->testId)
             ->whereJsonContains('invited_emails', $email)
             ->exists();
 
@@ -74,7 +74,7 @@ class InviteCandidates extends Component
     {
         try {
             
-            $invitation = TestInvitation::where('test_id', $this->testId)->firstOrFail();
+            $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
             
             
             $this->sendInvitationEmails($invitation);
@@ -99,7 +99,7 @@ class InviteCandidates extends Component
         }
     }
 
-    private function sendInvitationEmails(TestInvitation $invitation)
+    private function sendInvitationEmails(Invitation $invitation)
     {
         $test = Test::findOrFail($this->testId);
         

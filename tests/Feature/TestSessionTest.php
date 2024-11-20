@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\Models\Test;
 use App\Models\Admin;
 use App\Models\Candidate;
-use App\Models\TestInvitation;
+use App\Models\Invitation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +17,7 @@ class TestSessionTest extends TestCase
     use WithFaker, RefreshDatabase;
 
     protected $existingTest;
-    protected $testInvitation;
+    protected $Invitation;
     protected $invitedEmails;
     protected $admin;
     protected $invitationToken = 'TFT8mnftxu1xv5nFkhfHqiCQw78Fv0B';
@@ -48,7 +48,7 @@ class TestSessionTest extends TestCase
         ];
 
         // Create invitation
-        $this->testInvitation = TestInvitation::create([
+        $this->Invitation = Invitation::create([
             'test_id' => $this->existingTest->id,
             'invitation_token' => $this->invitationToken,
             'invitation_link' => "http://127.0.0.1:8000/invitation/{$this->invitationToken}",
@@ -178,7 +178,7 @@ class TestSessionTest extends TestCase
     public function expired_invitation_prevents_access()
     {
         // Set invitation as expired
-        $this->testInvitation->update([
+        $this->Invitation->update([
             'expiration_date' => now()->subDay()
         ]);
 
@@ -187,6 +187,6 @@ class TestSessionTest extends TestCase
             ->get("/invitation/{$this->invitationToken}");
 
         $response->assertRedirect(route('invitation.expired'));
-        $this->assertTrue($this->testInvitation->fresh()->isExpired());
+        $this->assertTrue($this->Invitation->fresh()->isExpired());
     }
 }

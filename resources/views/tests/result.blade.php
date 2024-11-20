@@ -57,9 +57,10 @@
 
                             </ul>
                             <div class="mt-8">
-                                <a href="{{ route('reports.v1') }}" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
-                                    report
-                                </a>
+                            <a href="{{ route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id]) }}" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+                                Report
+                            </a>
+
                             </div>
                         </div>
                         

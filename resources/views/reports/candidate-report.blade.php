@@ -149,6 +149,12 @@
             font-size: 15px;
         }
 
+        .badge-value {
+            padding: 4px 20px;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+
         /* Test Sections */
         .score-detail {
             font-size: 13px;
@@ -179,7 +185,7 @@
             display: inline-block;
             text-align: right;
             width: 55%;
-            height: 28%;
+            height: 7.7%;
             justify-content:center;
         }
 
@@ -188,7 +194,7 @@
             font-weight: 500;
             color: #1a1a1a;
         }
-
+        
         .score-detail {
             font-size: 13px;
             color: #666666;
@@ -432,7 +438,7 @@
                     @if($check['value'] === 'Yes')
                     <span class="yes-badge">Yes</span>
                     @else
-                    {{ $check['value'] }}
+                    <span class="badge-value">{{ $check['value'] }}</span>
                     @endif
                 </td>
             </tr>

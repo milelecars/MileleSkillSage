@@ -986,7 +986,7 @@ class TestController extends Controller
             return null;
         }
 
-        return TestInvitation::where('invitation_link', $invitationLink)
+        return Invitation::where('invitation_link', $invitationLink)
             ->where('expiration_date', '>', now())
             ->first();
     }

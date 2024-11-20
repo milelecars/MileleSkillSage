@@ -4,7 +4,7 @@
 
 // use App\Models\User;
 // use App\Models\Candidate;
-// use App\Models\TestInvitation;
+// use App\Models\Invitation;
 // use Illuminate\Database\Eloquent\Model;
 // use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -16,7 +16,7 @@
 
 //     public function invitation()
 //     {
-//         return $this->hasOne(TestInvitation::class);
+//         return $this->hasOne(Invitation::class);
 //     }
 
 //     public function users()
