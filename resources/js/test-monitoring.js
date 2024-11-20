@@ -1,33 +1,78 @@
 class TestMonitoring {
-    constructor() {
-        console.log('TestMonitoring initialized')
-        this.metrics = {
-            tabSwitches: 0,
-            windowBlurs: 0,
-            warningCount: 0,
-            mouseExits: 0,
-            copyCutAttempts: 0,
-            rightClicks: 0,
-            keyboardShortcuts: 0
-        };
-
-        this.flags = {
-            tabSwitches: false,
-            windowBlurs: false,
-            warningCount: false,
-            mouseExits: false,
-            copyCutAttempts: false,
-            rightClicks: false,
-            keyboardShortcuts: false
-        };
-
+    constructor(testId, candidateId) {
+        this.testId = testId;
+        this.candidateId = candidateId;
+        console.log('TestMonitoring initialized');
+        this.metrics = {};
+        this.flags = {};
+    
+        // Dynamically create metrics and flags based on flag types
+        const flagTypeNames = [
+            'Tab Switches', 
+            'Window Blurs', 
+            'Mouse Exits', 
+            'Copy/Cut Attempts', 
+            'Right Clicks', 
+            'Keyboard Shortcuts',
+            'More than One Person',
+            'Book',
+            'Cellphone'
+        ];
+    
+        flagTypeNames.forEach(flagType => {
+            const camelCaseName = flagType.replace(/\s+/g, '');
+            this.metrics[camelCaseName] = 0;
+            this.flags[camelCaseName] = false;
+        });
+    
         window.monitoringData = {
             metrics: this.metrics,
             flags: this.flags
         };
-
+    
         this.setupEventListeners();
         this.startPeriodicSync();
+    }
+
+    async sendFlagData() {
+        const flagTypes = [
+            'Tab Switches', 
+            'Window Blurs', 
+            'Mouse Exits', 
+            'Copy/Cut Attempts', 
+            'Right Clicks', 
+            'Keyboard Shortcuts',
+            'More than One Person',
+            'Book',
+            'Cellphone'
+        ];
+
+        for (const flagType of flagTypes) {
+            if (this.metrics[flagType.replace(/\s+/g, '')] > this.getThreshold(flagType.replace(/\s+/g, ''))) {
+                try {
+                    const response = await fetch('/candidate-flags', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            candidateId: this.candidateId,
+                            testId: this.testId,
+                            flagType: flagType,
+                            occurrences: this.metrics[flagType.replace(/\s+/g, '')],
+                            isFlagged: true
+                        })
+                    });
+    
+                    if (!response.ok) {
+                        throw new Error('Failed to send flag data');
+                    }
+                } catch (error) {
+                    console.error('Error sending flag data:', error);
+                }
+            }
+        }
     }
 
     setupEventListeners() {
@@ -140,6 +185,8 @@ class TestMonitoring {
             this.flags[metric] = isThisMetricFlagged;
             if (isThisMetricFlagged) {
                 anyFlagged = true;
+                // Send flag data when a metric exceeds threshold
+                this.sendFlagData();
             }
         }
         
@@ -186,6 +233,8 @@ class TestMonitoring {
 
 // Initialize monitoring
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded'); // Debug log
-    window.testMonitoring = new TestMonitoring();
+    console.log('DOM Content Loaded');
+    const testId = document.getElementById('test-id').value;
+    const candidateId = document.getElementById('candidate-id').value;
+    window.testMonitoring = new TestMonitoring(testId, candidateId);
 });

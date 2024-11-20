@@ -129,50 +129,24 @@
                     <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
                     <div class="mt-2 grid grid-cols-2 gap-4">
                         <div>
-                            <p class="font-medium">
-                                Tab Switches: 
-                                <span data-metric="tabSwitches" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="tabSwitches" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Window Blurs: 
-                                <span data-metric="windowBlurs" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="windowBlurs" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Mouse Exits: 
-                                <span data-metric="mouseExits" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="mouseExits" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Copy/Cut Attempts: 
-                                <span data-metric="copyCutAttempts" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="copyCutAttempts" class="text-green-600">No</span></small>
-                            </p>
+                            @foreach($flagTypes->slice(0, 4) as $flagType)
+                                <p class="font-medium">
+                                    {{ $flagType->name }}: 
+                                    <span data-metric="{{ Str::camel($flagType->name) }}" class="text-gray-600">0</span>
+                                    <br/>
+                                    <small>Flagged: <span data-metric-flag="{{ Str::camel($flagType->name) }}" class="text-green-600">No</span></small>
+                                </p>
+                            @endforeach
                         </div>
                         <div>
-                            <p class="font-medium">
-                                Right Clicks: 
-                                <span data-metric="rightClicks" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="rightClicks" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Keyboard Shortcuts: 
-                                <span data-metric="keyboardShortcuts" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="keyboardShortcuts" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Total Warnings: 
-                                <span data-metric="warningCount" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="warningCount" class="text-green-600">No</span></small>
-                            </p>
+                            @foreach($flagTypes->slice(4) as $flagType)
+                                <p class="font-medium">
+                                    {{ $flagType->name }}: 
+                                    <span data-metric="{{ Str::camel($flagType->name) }}" class="text-gray-600">0</span>
+                                    <br/>
+                                    <small>Flagged: <span data-metric-flag="{{ Str::camel($flagType->name) }}" class="text-green-600">No</span></small>
+                                </p>
+                            @endforeach
                         </div>
                     </div>
                 </div>

@@ -2,44 +2,57 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Alert;
+use App\Models\CandidateFlag;
+use App\Models\FlagType;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
-class FlagController extends Controller
+class CandidateFlagController extends Controller
 {
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'personCount' => 'required|integer',
-            'hasBook' => 'required|boolean',
-            'hasCellPhone' => 'required|boolean',
-            'timestamp' => 'required|date'
+        $validatedData = $request->validate([
+            'candidateId' => 'required|exists:candidates,id',
+            'testId' => 'required|exists:tests,id',
+            'flagType' => 'required|string',
+            'occurrences' => 'required|integer',
+            'isFlagged' => 'required|boolean'
         ]);
 
-        $user = auth()->user();
-        $userName = $user ? $user->name : 'Unknown user';
+        // Find flag type
+        $flagType = FlagType::where('name', $validatedData['flagType'])->first();
 
-        $logMessage = "Test alert for {$userName}: ";
-        $logMessage .= "Persons detected: {$data['personCount']}, ";
-        $logMessage .= "Book detected: " . ($data['hasBook'] ? 'Yes' : 'No') . ", ";
-        $logMessage .= "Cell phone detected: " . ($data['hasCellPhone'] ? 'Yes' : 'No');
+        if (!$flagType) {
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Flag type not found'
+            ], 404);
+        }
 
-        // Log::warning($logMessage, [
-        //     'user_id' => $user ? $user->id : null,
-        //     'timestamp' => $data['timestamp']
-        // ]);
+        // Create or update candidate flag
+        $candidateFlag = CandidateFlag::updateOrCreate(
+            [
+                'candidate_id' => $validatedData['candidateId'],
+                'test_id' => $validatedData['testId'],
+                'flag_type_id' => $flagType->id
+            ],
+            [
+                'occurrences' => $validatedData['occurrences'],
+                'is_flagged' => $validatedData['isFlagged']
+            ]
+        );
 
-        // Store the alert in the database
-        // Alert::create([
-        //     'user_id' => $user ? $user->id : null,
-        //     'message' => $logMessage,
-        //     'person_count' => $data['personCount'],
-        //     'has_book' => $data['hasBook'],
-        //     'has_cell_phone' => $data['hasCellPhone'],
-        //     'timestamp' => $data['timestamp']
-        // ]);
+        return response()->json([
+            'status' => 'success', 
+            'message' => 'Candidate flag recorded',
+            'flag' => $candidateFlag
+        ]);
+    }
 
-        return response()->json(['status' => 'success', 'message' => 'Alert received and stored']);
+    private function getThresholdForFlagType($flagType)
+    {
+        return Cache::remember("flag_type_threshold_{$flagType}", now()->addHours(24), function () use ($flagType) {
+            $flagTypeRecord = FlagType::where('name', $flagType)->first();
+            return $flagTypeRecord ? $flagTypeRecord->threshold : 0;
+        });
     }
 }

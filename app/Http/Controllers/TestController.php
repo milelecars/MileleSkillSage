@@ -8,6 +8,7 @@ use App\Models\QuestionChoice;
 use App\Models\QuestionMedia;
 use App\Models\Invitation;
 use App\Models\Answer;
+use App\Models\FlagType;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -635,8 +636,9 @@ class TestController extends Controller
         session(['test_session' => $testSession]);
         
         $currentQuestionIndex = $testSession['current_question'];
+        $flagTypes = FlagType::all();
 
-        return view('tests.start', compact('test', 'questions', 'currentQuestionIndex'));
+        return view('tests.start', compact('test', 'questions', 'currentQuestionIndex', 'flagTypes'));
     }
 
     
