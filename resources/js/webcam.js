@@ -22,8 +22,79 @@ class WebcamManager {
             '/tests/\\d+/start'
         ];
 
+        this.lastViolationTimes = {
+            'More than One Person': 0,
+            'Book': 0,
+            'Cellphone': 0
+        };
+        this.violationFrameCounters = {
+            'More than One Person': 0,
+            'Book': 0,
+            'Cellphone': 0
+        };
+        this.FRAME_THRESHOLD = 50; // Number of frames needed to confirm violation
+        this.COOLDOWN_PERIOD = 30000; // 30 seconds in milliseconds
+        
+        
         // Initialize camera only after checking permissions
         this.initialize();
+    }
+
+    updateStatus(personCount, hasBook, hasCellPhone) {
+        let statusMessage = '';
+        const now = Date.now();
+
+        // Helper function to handle violations
+        const handleViolation = (condition, type) => {
+            if (condition) {
+                this.violationFrameCounters[type]++;
+                
+                if (this.violationFrameCounters[type] >= this.FRAME_THRESHOLD) {
+                    const timeSinceLastViolation = now - this.lastViolationTimes[type];
+                    
+                    if (timeSinceLastViolation >= this.COOLDOWN_PERIOD) {
+                        document.dispatchEvent(new CustomEvent('webcamViolation', {
+                            detail: { violation: type }
+                        }));
+                        this.lastViolationTimes[type] = now;
+                        console.log(`Violation recorded for ${type}`);
+                    }
+                    this.violationFrameCounters[type] = 0;
+                }
+            } else {
+                this.violationFrameCounters[type] = 0;
+            }
+        };
+
+        // Update status message and handle violations
+        if (personCount > 1) {
+            statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
+            handleViolation(true, 'More than One Person');
+        } else if (personCount === 0) {
+            statusMessage += "<p style='color: red;'>No person detected!</p>";
+            handleViolation(false, 'More than One Person');
+        } else {
+            statusMessage += "<p style='color: green;'>One person detected.</p>";
+            handleViolation(false, 'More than One Person');
+        }
+
+        if (hasBook) {
+            statusMessage += "<p>Book detected.</p>";
+            handleViolation(true, 'Book');
+        } else {
+            handleViolation(false, 'Book');
+        }
+
+        if (hasCellPhone) {
+            statusMessage += "<p>Cell phone detected.</p>";
+            handleViolation(true, 'Cellphone');
+        } else {
+            handleViolation(false, 'Cellphone');
+        }
+
+        if (this.detectionStatus) {
+            this.detectionStatus.innerHTML = statusMessage;
+        }
     }
 
     async initialize() {
@@ -259,87 +330,6 @@ class WebcamManager {
         }
     }
 
-    updateStatus(personCount, hasBook, hasCellPhone) {
-        let statusMessage = '';
-
-        if (personCount === 0) {
-            statusMessage = "<p style='color: red;'>No person detected!</p>";
-        } else if (personCount === 1) {
-            statusMessage = "<p style='color: green;'>One person detected.</p>";
-        } else {
-            statusMessage = `<p style='color: orange;'>${personCount} people detected!</p>`;
-        }
-
-        if (hasBook) {
-            statusMessage += "<p>Book detected.</p>";
-        }
-
-        if (hasCellPhone) {
-            statusMessage += "<p>Cell phone detected.</p>";
-        }
-
-        if (this.detectionStatus) {
-            this.detectionStatus.innerHTML = statusMessage;
-        }
-    }
-
-    handleCameraError(error) {
-        console.log("7")
-        console.error("Camera error:", error);
-        if (this.detectionStatus) {
-            this.detectionStatus.innerHTML = "<p style='color: red;'>Camera Error: " + error + "</p>";
-        }
-        
-        const cameraWarning = document.getElementById('camera-warning');
-        if (cameraWarning) {
-            cameraWarning.style.display = 'flex';
-        }
-
-        document.dispatchEvent(new CustomEvent('webcamStatusUpdate', {
-            detail: {
-                personCount: 0,
-                hasBook: false,
-                hasCellPhone: false
-            }
-        }));
-    }
-
-    // sendAlert(personCount, hasBook, hasCellPhone) {
-    //     console.log("8")
-    //     const alertData = {
-    //         personCount: personCount,
-    //         hasBook: hasBook,
-    //         hasCellPhone: hasCellPhone,
-    //         timestamp: new Date().toISOString()
-    //     };
-
-    //     fetch('/flag', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-    //         },
-    //         body: JSON.stringify(alertData)
-    //     })
-    //     .then(response => response.json())
-    //     .then(data => console.log('Alert sent:', data))
-    //     .catch(error => console.error('Error sending alert:', error));
-    // }
-
-    cleanup() {
-        if (this.isSafari) {
-            this.preserveStream().catch(console.error);
-        } else {
-            if (this.stream) {
-                this.stream.getTracks().forEach(track => track.stop());
-                this.stream = null;
-            }
-        }
-        
-        if (this.video) {
-            this.video.srcObject = null;
-        }
-    }
 }
 
 // Initialize webcam manager when DOM is loaded
