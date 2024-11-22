@@ -37,6 +37,9 @@
     </style>
     
     <div class="min-h-screen bg-gray-100">
+        <input type="hidden" id="test-id" value="{{ $test->id }}">
+        <input type="hidden" id="candidate-id" value="{{ $candidate->id }}">
+        
         {{-- Camera Section --}}
         <div class="rounded-lg overflow-hidden bg-gray-50 p-4 hidden">
             <video id="video" class="w-full h-auto  rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
@@ -124,38 +127,16 @@
                     <div class="h-full bg-blue-600 rounded-full" style="width: {{ ($currentQuestionIndex + 1) / count($questions) * 100 }}%"></div>
                 </div>
 
-                <!-- Test Monitoring Results  -->
-                <div class="mt-4 p-4 bg-red-200 rounded-lg shadow monitoring-summary">
-                    <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
-                    <div class="mt-2 grid grid-cols-2 gap-4">
-                        <div>
-                            @foreach($flagTypes->slice(0, 4) as $flagType)
-                                <p class="font-medium">
-                                    {{ $flagType->name }}: 
-                                    <span data-metric="{{ Str::camel($flagType->name) }}" class="text-gray-600">0</span>
-                                    <br/>
-                                    <small>Flagged: <span data-metric-flag="{{ Str::camel($flagType->name) }}" class="text-green-600">No</span></small>
-                                </p>
-                            @endforeach
-                        </div>
-                        <div>
-                            @foreach($flagTypes->slice(4) as $flagType)
-                                <p class="font-medium">
-                                    {{ $flagType->name }}: 
-                                    <span data-metric="{{ Str::camel($flagType->name) }}" class="text-gray-600">0</span>
-                                    <br/>
-                                    <small>Flagged: <span data-metric-flag="{{ Str::camel($flagType->name) }}" class="text-green-600">No</span></small>
-                                </p>
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
+
+
+                <livewire:test-monitoring :testSessionId="$test->id" />
+
             </div>
         </div>
     </div>
     <script src="{{ asset('js/webcam.js') }}"></script>
     <script src="{{ asset('js/test-monitoring.js') }}"></script>
-    <script>
+    <!-- <script>
         document.addEventListener('DOMContentLoaded', function() {
             disableCopyPaste();
             // disableRightClick();
@@ -210,5 +191,5 @@
                 }
             });
         }
-    </script>
+    </script> -->
 </x-app-layout>

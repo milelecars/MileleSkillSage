@@ -7,6 +7,7 @@ use App\Models\Question;
 use App\Models\QuestionChoice;
 use App\Models\QuestionMedia;
 use App\Models\Invitation;
+use App\Models\FlagType;
 use App\Models\Answer;
 use App\Models\FlagType;
 use Illuminate\Support\Str;
@@ -632,13 +633,15 @@ class TestController extends Controller
                     return $this->handleExpiredTest($test);
         }
 
-        
+        $flagTypes = FlagType::all();
         session(['test_session' => $testSession]);
         
         $currentQuestionIndex = $testSession['current_question'];
         $flagTypes = FlagType::all();
 
-        return view('tests.start', compact('test', 'questions', 'currentQuestionIndex', 'flagTypes'));
+
+        return view('tests.start', compact('test', 'candidate', 'questions', 'currentQuestionIndex', 'flagTypes'));
+
     }
 
     

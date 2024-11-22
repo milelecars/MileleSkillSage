@@ -34,107 +34,93 @@ class TestMonitoring {
         this.startPeriodicSync();
     }
 
-    async sendFlagData() {
-        const flagTypes = [
-            'Tab Switches', 
-            'Window Blurs', 
-            'Mouse Exits', 
-            'Copy/Cut Attempts', 
-            'Right Clicks', 
-            'Keyboard Shortcuts',
-            'More than One Person',
-            'Book',
-            'Cellphone'
-        ];
 
-        for (const flagType of flagTypes) {
-            if (this.metrics[flagType.replace(/\s+/g, '')] > this.getThreshold(flagType.replace(/\s+/g, ''))) {
-                try {
-                    const response = await fetch('/candidate-flags', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        body: JSON.stringify({
-                            candidateId: this.candidateId,
-                            testId: this.testId,
-                            flagType: flagType,
-                            occurrences: this.metrics[flagType.replace(/\s+/g, '')],
-                            isFlagged: true
-                        })
-                    });
-    
-                    if (!response.ok) {
-                        throw new Error('Failed to send flag data');
-                    }
-                } catch (error) {
-                    console.error('Error sending flag data:', error);
-                }
+    async logSuspiciousBehavior(flagType) {
+        try {
+            const response = await fetch('/flag', { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken
+                },
+                body: JSON.stringify({
+                    flag_type: flagType,
+                    test_session_id: window.testSessionId 
+                })
+            });
+
+
+            if (!response.ok) {
+                console.error('Failed to log suspicious behavior');
             }
+        } catch (error) {
+            console.error('Error logging suspicious behavior:', error);
         }
     }
 
     setupEventListeners() {
-        console.log('Setting up event listeners');
-
         // Tab Switching
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 this.metrics.tabSwitches++;
                 window.monitoringData.metrics.tabSwitches = this.metrics.tabSwitches;
                 this.checkIfFlagged();
-                this.showWarning("Tab Switching Detected!");
+                console.log('⚠️ Tab Switching Detected!', this.metrics.tabSwitches);
                 this.updateDisplay();
+                this.logSuspiciousBehavior('Tab Switches');
             }
         });
-
+    
         // Window Blur 
         window.addEventListener('blur', () => {
             this.metrics.windowBlurs++;
             window.monitoringData.metrics.windowBlurs = this.metrics.windowBlurs;
             this.checkIfFlagged();
-            this.showWarning("Window focus lost!");
+            console.log('⚠️ Window focus lost!', this.metrics.windowBlurs);
             this.updateDisplay();
+            this.logSuspiciousBehavior('Window Blurs');
         });
-
+    
         // Mouse Leaving the window 
         document.addEventListener('mouseleave', () => {
             this.metrics.mouseExits++;
             window.monitoringData.metrics.mouseExits = this.metrics.mouseExits;
             this.checkIfFlagged();
-            this.showWarning("Mouse exit detected!");
+            console.log('⚠️ Mouse exit detected!', this.metrics.mouseExits);
             this.updateDisplay();
+            this.logSuspiciousBehavior('Mouse Exits');
         });
-
+    
         // Detect copy/cut attempts
         document.addEventListener('copy', (e) => {
             e.preventDefault();
             this.metrics.copyCutAttempts++;
             window.monitoringData.metrics.copyCutAttempts = this.metrics.copyCutAttempts;
             this.checkIfFlagged();
-            this.showWarning('Copying is not allowed!');
+            console.log('⚠️ Copying is not allowed!', this.metrics.copyCutAttempts);
             this.updateDisplay();
+            this.logSuspiciousBehavior('Copy/Cut Attempts');
         });
-
+    
         document.addEventListener('cut', (e) => {
             e.preventDefault();
             this.metrics.copyCutAttempts++;
             window.monitoringData.metrics.copyCutAttempts = this.metrics.copyCutAttempts;
             this.checkIfFlagged();
-            this.showWarning('Cutting is not allowed!');
+            console.log('⚠️ Cutting is not allowed!', this.metrics.copyCutAttempts);
             this.updateDisplay();
+            this.logSuspiciousBehavior('Copy/Cut Attempts');
         });
-
-        // Rigth Click Attempt 
+    
+        // Right Click Attempt 
         document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.metrics.rightClicks++;
-            console.log('Right click detected:', this.metrics.rightClicks); // Debug log
-            this.showWarning('Right clicking is not allowed!');
+            console.log('⚠️ Right clicking is not allowed!', this.metrics.rightClicks);
             this.updateDisplay();
+            this.logSuspiciousBehavior('Right Clicks');
         });
-
+    
         // Detect keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && 
@@ -143,14 +129,15 @@ class TestMonitoring {
                 this.metrics.keyboardShortcuts++;
                 window.monitoringData.metrics.keyboardShortcuts = this.metrics.keyboardShortcuts;
                 this.checkIfFlagged();
-                this.showWarning('Keyboard shortcuts are not allowed!');
+                console.log('⚠️ Keyboard shortcut detected!', e.key, this.metrics.keyboardShortcuts);
                 this.updateDisplay();
+                this.logSuspiciousBehavior('Keyboard Shortcuts');
             }
         });
     }
 
     updateDisplay() {
-        console.log('Updating display with metrics:', this.metrics);
+        // console.log('Updating display with metrics:', this.metrics);
         const summaryDiv = document.querySelector('.monitoring-summary');
         if (summaryDiv) {
             // Update metrics
