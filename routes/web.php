@@ -79,7 +79,7 @@ Route::middleware('auth:candidate')->group(function () {
     Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
     Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
     Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
-    Route::get('/reports/v1', [ReportPDFController::class, 'generateSimplePDF'])->name('reports.v1');
+    Route::get('/reports/candidate-report', [ReportPDFController::class, 'generateSimplePDF'])->name('reports.candidate-report');
 });
 
 // Logout route (accessible to both admins and candidates)

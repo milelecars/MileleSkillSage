@@ -84,7 +84,7 @@ class ReportPDFController extends Controller
             ],
         ];
 
-        $pdf = Pdf::loadView('reports.v1', $data);
+        $pdf = Pdf::loadView('reports.candidate-report', $data);
 
         $pdf->getDomPDF()->set_option('defaultFont', 'figtree');
         $pdf->setPaper('A4', 'portrait');        
