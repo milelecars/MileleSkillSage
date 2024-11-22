@@ -37,6 +37,9 @@
     </style>
     
     <div class="min-h-screen bg-gray-100">
+        <input type="hidden" id="test-id" value="{{ $test->id }}">
+        <input type="hidden" id="candidate-id" value="{{ $candidate->id }}">
+        
         {{-- Camera Section --}}
         <div class="rounded-lg overflow-hidden bg-gray-50 p-4 hidden">
             <video id="video" class="w-full h-auto  rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
@@ -124,64 +127,14 @@
                     <div class="h-full bg-blue-600 rounded-full" style="width: {{ ($currentQuestionIndex + 1) / count($questions) * 100 }}%"></div>
                 </div>
 
-                <!-- Test Monitoring Results  -->
-                <div class="mt-4 p-4 bg-red-200 rounded-lg shadow monitoring-summary">
-                    <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
-                    <div class="mt-2 grid grid-cols-2 gap-4">
-                        <div>
-                            <p class="font-medium">
-                                Tab Switches: 
-                                <span data-metric="tabSwitches" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="tabSwitches" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Window Blurs: 
-                                <span data-metric="windowBlurs" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="windowBlurs" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Mouse Exits: 
-                                <span data-metric="mouseExits" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="mouseExits" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Copy/Cut Attempts: 
-                                <span data-metric="copyCutAttempts" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="copyCutAttempts" class="text-green-600">No</span></small>
-                            </p>
-                        </div>
-                        <div>
-                            <p class="font-medium">
-                                Right Clicks: 
-                                <span data-metric="rightClicks" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="rightClicks" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Keyboard Shortcuts: 
-                                <span data-metric="keyboardShortcuts" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="keyboardShortcuts" class="text-green-600">No</span></small>
-                            </p>
-                            <p class="font-medium">
-                                Total Warnings: 
-                                <span data-metric="warningCount" class="text-gray-600">0</span>
-                                <br/>
-                                <small>Flagged: <span data-metric-flag="warningCount" class="text-green-600">No</span></small>
-                            </p>
-                        </div>
-                    </div>
-                </div>
+
+                <livewire:test-monitoring :testSessionId="$test->id" />
             </div>
         </div>
     </div>
     <script src="{{ asset('js/webcam.js') }}"></script>
     <script src="{{ asset('js/test-monitoring.js') }}"></script>
-    <script>
+    <!-- <script>
         document.addEventListener('DOMContentLoaded', function() {
             disableCopyPaste();
             // disableRightClick();
@@ -236,5 +189,5 @@
                 }
             });
         }
-    </script>
+    </script> -->
 </x-app-layout>
