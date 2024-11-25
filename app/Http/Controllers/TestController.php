@@ -770,23 +770,20 @@ class TestController extends Controller
                 'candidate_id' => $candidate->id,
                 'question_count' => $questions->count()
             ]);
-
             $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->first();
-
             if (!$testAttempt) {
                 Log::error('Test attempt not found', ['test_id' => $id, 'candidate_id' => $candidate->id]);
                 return redirect()->route('tests.start', ['id' => $id])
                     ->with('error', 'Test attempt not found.');
             }
-
             $request->validate([
                 'current_index' => 'required|numeric',
                 'answer' => 'nullable|exists:question_choices,id', 
             ]);
     
-            Log::info('hi');
+            Log::info('in submit');
     
             $testSession = session('test_session');
             if (!$testSession || $testSession['test_id'] != $id) {
@@ -862,11 +859,13 @@ class TestController extends Controller
             $candidate->tests()->updateExistingPivot($id, [
                 'completed_at' => $now,
                 'score' => $score,
+                'ip_address' => $realIP,
             ]);
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'score' => $score
+                'score' => $score,
+                'ip_address' => $realIP,
             ]);
     
             // Clear the session
@@ -933,6 +932,7 @@ class TestController extends Controller
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => $completed_at,
             'score' => $score,
+            'ip_address' => $realIP,
         ]);
 
         session()->forget('test_session');
