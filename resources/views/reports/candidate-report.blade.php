@@ -181,8 +181,8 @@
         }
 
 
-        /* Test Sections */
-        .score-detail {
+         /* Test Sections */
+         .score-detail {
             font-size: 13px;
             font-weight: 50;
             color: #000000;
@@ -211,7 +211,7 @@
             display: inline-block;
             text-align: right;
             width: 55%;
-            height: 28%;
+            height: 10%;
             justify-content:center;
         }
 

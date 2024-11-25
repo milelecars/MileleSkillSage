@@ -90,12 +90,13 @@ class ReportPDFController extends Controller
     {
         $this->debugIpHeaders();
 
-        $this->debugIpHeaders();
-
         $candidate = Candidate::findOrFail($candidateId);
         $test = Test::findOrFail($testId);
 
-        // Fetch data from the candidate_test pivot table
+        $totalQuestions = DB::table('questions')
+        ->where('test_id', $testId)
+        ->count();
+
         $candidateTest = DB::table('candidate_test')
             ->where('candidate_id', $candidateId)
             ->where('test_id', $testId)
@@ -105,10 +106,60 @@ class ReportPDFController extends Controller
             abort(404, 'Test data for the candidate not found.');
         }
 
+        $ip = $candidateTest->ip_address;
+        Log::info('Looking up IP:', ['ip' => $ip]);
+
+        $location = $ip ? $this->getLocationFromIP($ip) : 'No IP recorded';
+        Log::info('Location result:', ['location' => $location]);
+
+        // Fetch anti-cheat data
+        $candidateFlags = CandidateFlag::where([
+            'test_id' => $testId,
+            'candidate_id' => $candidateId
+        ])
+        ->join('flag_types', 'candidate_flags.flag_type_id', '=', 'flag_types.id')
+        ->select('flag_types.name', 'candidate_flags.occurrences', 'candidate_flags.is_flagged')
+        ->get();
+
+        $antiCheatData = [
+            ['label' => 'Device used', 'value' => 'Desktop'],
+            ['label' => 'Location', 'value' => $location],
+            ['label' => 'IP Address', 'value' => $ip ?? 'Not available'],
+            ['label' => 'Filled out only once from IP address?', 'value' => 'Yes'],
+            ['label' => 'Webcam enabled?', 'value' => 'Yes'],
+            ['label' => 'Full-screen mode always active?', 'value' => 'Yes'],
+            ['label' => 'Mouse always in assessment window?', 'value' => 'Yes'],
+        ];
+
+        
+        $tabSwitches = $candidateFlags->first(function ($flag) {
+            return $flag->name === 'Tab Switches';
+        });
+        if ($tabSwitches && $tabSwitches->occurrences > 0) {
+            $antiCheatData[5]['value'] = 'No';
+        }
+
+        // Add violation counts
+        foreach ($candidateFlags as $flag) {
+            $antiCheatData[] = [
+                'label' => $flag->name,
+                'value' => (string)$flag->occurrences,
+                'flagged' => $flag->is_flagged ? 'Yes' : 'No'
+            ];
+        }
+
+        // // Add total warnings
+        // $totalWarnings = $candidateFlags->where('is_flagged', true)->count();
+        // $antiCheatData[] = [
+        //     'label' => 'Total Warnings',
+        //     'value' => (string)$totalWarnings,
+        //     'flagged' => $totalWarnings > 0 ? 'Yes' : 'No'
+        // ];
+
         // Prepare data for the PDF
         $data = [
-            'title' => 'Simple PDF Report',
-            'date' => date('Y-m-d'),
+            'title' => 'Skill Test Report',
+            'date' => now()->format('Y-m-d'),
             'companyName' => 'Milele Motors',
             'department' => 'Admin & Personal Assistant', 
             'candidateName' => $candidate->name,
@@ -126,6 +177,7 @@ class ReportPDFController extends Controller
                     'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
                     'time_limit' => gmdate('H:i:s', $test->duration * 60),
                     'skills' => [
+                        // Example data, replace with actual skill calculations
                         [
                             'name' => 'Controlling and driving the discussion',
                             'correct' => 35,
@@ -133,30 +185,19 @@ class ReportPDFController extends Controller
                             'unanswered' => 0,
                         ],
                         [
-                            'name' => 'Influencing the counterparty',
-                            'correct' => 25,
-                            'incorrect' => 75,
-                            'unanswered' => 0,
+                            'name' => 'Leveraging the psychology of the counterparty',
+                            'correct' => 20,
+                            'incorrect' => 30,
+                            'unanswered' => 50,
+                        ],
+                        [
+                            'name' => 'Using emotional intelligence',
+                            'correct' => 0,
+                            'incorrect' => 0,
+                            'unanswered' => 100,
                         ],
                     ],
                 ],
-            ],
-
-            // Dynamic anti-cheat data
-            'antiCheat' => [
-                ['label' => 'Device used', 'value' => 'Desktop'],
-                ['label' => 'Location', 'value' => 'Rawalpindi (Punjab), PK'],
-                ['label' => 'Filled out only once from IP address?', 'value' => 'Yes'],
-                ['label' => 'Webcam enabled?', 'value' => 'Yes'],
-                ['label' => 'Full-screen mode always active?', 'value' => 'Yes'],
-                ['label' => 'Mouse always in assessment window?', 'value' => 'Yes'],
-                ['label' => 'Tab Switches', 'value' => '0', 'flagged' => 'No'],
-                ['label' => 'Window Blurs', 'value' => '0', 'flagged' => 'No'],
-                ['label' => 'Mouse Exits', 'value' => '0', 'flagged' => 'No'],
-                ['label' => 'Copy/Cut Attempts', 'value' => '0', 'flagged' => 'No'],
-                ['label' => 'Right Clicks', 'value' => '0', 'flagged' => 'No'],
-                ['label' => 'Keyboard Shortcuts', 'value' => '0', 'flagged' => 'No'],
-                ['label' => 'Total Warnings', 'value' => '0', 'flagged' => 'No'],
             ],
         ];
 
