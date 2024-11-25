@@ -8,8 +8,8 @@
                         @csrf
                         @method('PUT')
                         <div class="mb-4">
-                            <label for="name" class="block text-gray-700 text-md font-bold mb-2">Test Name:</label>
-                            <input type="text" name="name" id="name" value="{{ old('name', $test->name) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                            <label for="title" class="block text-gray-700 text-md font-bold mb-2">Test Title</label>
+                            <input type="text" name="title" id="title" value="{{ old('title', $test->title) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                         </div>
                         <div class="mb-4">
                             <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Test Duration</label>

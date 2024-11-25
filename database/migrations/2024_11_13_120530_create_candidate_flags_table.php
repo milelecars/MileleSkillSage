@@ -9,24 +9,24 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
-        Schema::create('test_invitations', function (Blueprint $table) {
+        Schema::create('candidate_flags', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('candidate_id')->constrained('candidates')->onDelete('cascade');
             $table->foreignId('test_id')->constrained('tests')->onDelete('cascade');
-            $table->string('invitation_link')->unique();
-            $table->json('email_list')->default(json_encode([])); 
-            $table->timestamp('expires_at');
-            $table->foreignId('created_by')->constrained('users'); // Admin can create invitations
+            $table->foreignId('flag_type_id')->constrained('flag_types')->onDelete('cascade');
+            $table->integer('occurrences');
+            $table->boolean('is_flagged')->default(false);
             $table->timestamps();
         });
     }
-
+    
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_invitations');
+        Schema::dropIfExists('candidate_flags');
     }
 };

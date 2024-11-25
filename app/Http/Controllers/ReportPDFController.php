@@ -158,8 +158,8 @@ class ReportPDFController extends Controller
 
         // Prepare data for the PDF
         $data = [
-            'title' => 'Simple PDF Report',
-            'date' => date('Y-m-d'),
+            'title' => 'Skill Test Report',
+            'date' => now()->format('Y-m-d'),
             'companyName' => 'Milele Motors',
             'department' => 'Admin & Personal Assistant', 
             'candidateName' => $candidate->name,
@@ -177,6 +177,7 @@ class ReportPDFController extends Controller
                     'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
                     'time_limit' => gmdate('H:i:s', $test->duration * 60),
                     'skills' => [
+                        // Example data, replace with actual skill calculations
                         [
                             'name' => 'Controlling and driving the discussion',
                             'correct' => 35,

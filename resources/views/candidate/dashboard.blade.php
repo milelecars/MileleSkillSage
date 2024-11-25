@@ -16,7 +16,7 @@
             </div>
 
             {{-- content --}}
-            <div class="grid grid-cols-2 gap-4 mx-4">
+            <div class="grid grid-cols-2 gap-4 mx-4 pb-8">
                 {{-- Camera Section --}}
                 <div class="bg-white rounded-xl p-8">
                     <div class="mb-6">
@@ -70,7 +70,7 @@
 
                     @if(isset($test))
                         <div class="mb-6">
-                            @if(isset($testStatus) && $testStatus && $testStatus->pivot->completed_at)
+                            @if($testAttempt && optional($testAttempt->pivot)->completed_at)
                                 {{-- Test completed --}}
                                 <div class="flex justify-between items-center bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
                                     <p class="text-green-700">You have completed this test.</p>
@@ -79,31 +79,29 @@
                                         View Results
                                     </a>
                                 </div>
-                            @elseif(isset($testStatus) && $testStatus && $testStatus->pivot->started_at)
+                            @elseif($testAttempt && optional($testAttempt->pivot)->started_at)
                                 {{-- Test in progress --}}
                                 <div class="flex justify-between items-center bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
                                     <p class="text-blue-700">You have a test in progress.</p>
                                     <a href="{{ route('tests.start', ['id' => $test->id]) }}"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    id="continue-test-btn" style="display: none;">
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         Continue Test
                                     </a>
                                 </div>
                             @else
                                 {{-- Test not started --}}
-                                <div class="flex w-full justify-between items-center bg-gray-100 border-l-4 border-blue-600 rounded-lg p-4 pr-0 mb-4 ">
+                                <div class="flex w-full justify-between items-center bg-gray-100 border-l-4 border-blue-600 rounded-lg p-4 pr-0 mb-4">
                                     <p class="text-gray-700">Please review the guidelines before starting the test.</p>
                                     <a href="{{ route('tests.show', ['id' => $test->id]) }}"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                                    id="view-guidelines-btn" style="display: none;">
+                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         View Guidelines
                                     </a>
                                 </div>
                             @endif
                         </div>
                     @else
-                        <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4">
-                            <p class="text-yellow-700">No test is currently available. Please check your invitation or contact the administrator.</p>
+                        <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded-lg">
+                            <p class="text-yellow-700">No test is currently available. <br> Please check your invitation or contact the administrator.</p>
                         </div>
                     @endif
                 </div>

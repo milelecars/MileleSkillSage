@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
-use App\Models\TestInvitation;
+use App\Models\Invitation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+
 
 class CandidateController extends Controller
 {
@@ -16,26 +18,31 @@ class CandidateController extends Controller
             return redirect()->route('invitation.candidate-auth');
         }
 
+        // Retrieve test from session
         $test = session('test');
         if (!$test) {
-            // If test is not in session, try to get it from the session test_id
-            $testId = session('current_test_id');
+            $testId = session('test_id');
             $test = $testId ? Test::find($testId) : null;
         }
 
-        // Get the test status
-        $testStatus = null;
-        if ($test) {
-            $testStatus = $candidate->tests()
-                ->where('test_id', $test->id)
-                ->first();
+        // Validate session and fetch invitation
+        $invitation = $this->validateSession();
+        
+        // If we don't have a test yet, that's okay for first-time users
+        if (!$test) {
+            return view('candidate.dashboard', [
+                'test' => null,
+                'testAttempt' => null,
+                'invitation' => $invitation
+            ]);
         }
 
-        // Get the invitation
-        $invitation = $this->validateSession();
-
-        return view('candidate.dashboard', compact('test', 'testStatus', 'invitation'));
+        // If we have a test, check for an attempt
+        $testAttempt = $candidate->tests()->where('test_id', $test->id)->first();
+        
+        return view('candidate.dashboard', compact('test', 'testAttempt', 'invitation'));
     }
+
 
     private function validateSession()
     {
@@ -46,8 +53,8 @@ class CandidateController extends Controller
             return null;
         }
 
-        return TestInvitation::where('invitation_link', $invitationLink)
-            ->where('expires_at', '>', now())
+        return Invitation::where('invitation_link', $invitationLink)
+            ->where('expiration_date', '>', now())
             ->first();
     }
     

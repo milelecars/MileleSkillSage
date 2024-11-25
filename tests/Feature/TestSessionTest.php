@@ -4,9 +4,9 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Test;
-use App\Models\User;
+use App\Models\Admin;
 use App\Models\Candidate;
-use App\Models\TestInvitation;
+use App\Models\Invitation;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +17,7 @@ class TestSessionTest extends TestCase
     use WithFaker, RefreshDatabase;
 
     protected $existingTest;
-    protected $testInvitation;
+    protected $Invitation;
     protected $invitedEmails;
     protected $admin;
     protected $invitationToken = 'TFT8mnftxu1xv5nFkhfHqiCQw78Fv0B';
@@ -27,18 +27,19 @@ class TestSessionTest extends TestCase
         parent::setUp();
         
         // Create admin user
-        $this->admin = User::create([
+        $this->admin = Admin::create([
             'email' => 'heliaa.haghighi@gmail.com',
             'name' => 'Admin User',
-            'password' => bcrypt('password12')
+            'password' => Hash::make($request->password),
+
         ]);
 
         // Create a test with all required fields
         $this->existingTest = Test::create([
-            'name' => 'Sample Test',
+            'title' => 'Sample Test',
             'description' => 'Test Description',
             'duration' => 60,
-            'questions_file_path' => 'questions/sample.xlsx'
+            'questions_image_url' => 'questions/sample.xlsx'
         ]);
 
         $this->invitedEmails = [
@@ -47,12 +48,12 @@ class TestSessionTest extends TestCase
         ];
 
         // Create invitation
-        $this->testInvitation = TestInvitation::create([
+        $this->Invitation = Invitation::create([
             'test_id' => $this->existingTest->id,
             'invitation_token' => $this->invitationToken,
             'invitation_link' => "http://127.0.0.1:8000/invitation/{$this->invitationToken}",
-            'email_list' => $this->invitedEmails,
-            'expires_at' => now()->addDays(7),
+            'invited_emails' => $this->invitedEmails,
+            'expiration_date' => now()->addDays(7),
             'created_by' => $this->admin->id
         ]);
     }
@@ -150,7 +151,7 @@ class TestSessionTest extends TestCase
 
         // Set up session for the test
         Session::put([
-            'current_test_id' => $this->existingTest->id,
+            'test_id' => $this->existingTest->id,
             'test_session' => [
                 'test_id' => $this->existingTest->id,
                 'start_time' => now()->subMinutes(5)->toDateTimeString(),
@@ -177,8 +178,8 @@ class TestSessionTest extends TestCase
     public function expired_invitation_prevents_access()
     {
         // Set invitation as expired
-        $this->testInvitation->update([
-            'expires_at' => now()->subDay()
+        $this->Invitation->update([
+            'expiration_date' => now()->subDay()
         ]);
 
         // Try to access expired invitation
@@ -186,6 +187,6 @@ class TestSessionTest extends TestCase
             ->get("/invitation/{$this->invitationToken}");
 
         $response->assertRedirect(route('invitation.expired'));
-        $this->assertTrue($this->testInvitation->fresh()->isExpired());
+        $this->assertTrue($this->Invitation->fresh()->isExpired());
     }
 }

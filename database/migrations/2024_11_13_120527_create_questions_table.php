@@ -9,20 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('test_id')->constrained('tests')->onDelete('cascade');
             $table->text('question_text');
-            $table->json('options');
-            $table->string('correct_answer');
-            $table->string('diagram_path')->nullable();
-            $table->integer('order')->unsigned();
+            $table->string('question_type');
             $table->timestamps();
         });
     }
-
+    
     /**
      * Reverse the migrations.
      */
