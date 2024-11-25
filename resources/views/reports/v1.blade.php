@@ -21,7 +21,7 @@
         /* Header Section */
         .header-table {
             width: 100%;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             border-collapse: collapse;
         }
 
@@ -55,7 +55,7 @@
 
         /* Candidate Info */
         .candidate-info {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         .candidate-name {
@@ -128,7 +128,12 @@
         
         .monitor-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .monitor-table tr {
+            height: 36px;
         }
         
         .monitor-table td {
@@ -140,14 +145,41 @@
             text-align: right;
             font-weight: 300;
             font-size: 15px;
+            width: 120px;
+            padding-right: 20px;
+        }
+
+        .monitor-table td:last-child span {
+            display: inline-block;
+            min-width: 60px;
+            text-align: center;
         }
 
         .yes-badge {
             background: #e2f4b3;
-            padding: 4px 12px;
+            padding: 3px 8px;
             border-radius: 12px;
             font-size: 15px;
         }
+        
+        .no-badge {
+            background: #f4b3b3;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+
+        .count-badge {
+            background: #e2f4b3;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+
+        .count-badge.flagged {
+            background-color: #f4b3b3;
+        }
+
 
         /* Test Sections */
         .score-detail {
@@ -323,7 +355,7 @@
         .skill-guide {
             display: inline-block;
             width: 100%;
-            gap: 16px;
+            gap: 20px;
             margin-top: 8px;
             font-size: 12px;
             color: #666666;
@@ -365,11 +397,11 @@
         .footer {
             position: absolute;
             left:-20px;
-            bottom: 0;
+            bottom: 10;
             width: 100%;
             text-align: center;
             font-size: 10px;
-            padding: 20px;
+            padding: 0px 20px;
             color: #e5e5e5;
             background: #122f53;
         }
@@ -430,9 +462,15 @@
                 <td>{{ $check['label'] }}</td>
                 <td>
                     @if($check['value'] === 'Yes')
-                    <span class="yes-badge">Yes</span>
+                        <span class="yes-badge">Yes</span>
+                    @elseif($check['value'] === 'No')
+                        <span class="no-badge">No</span>
+                    @elseif(is_numeric($check['value']))
+                        <span class="count-badge {{ isset($check['flagged']) && $check['flagged'] === 'Yes' ? 'flagged' : '' }}">
+                            {{ $check['value'] }}
+                        </span>
                     @else
-                    {{ $check['value'] }}
+                        <span class="badge-value">{{ $check['value'] }}</span>
                     @endif
                 </td>
             </tr>
@@ -518,7 +556,15 @@
     @endforeach
 
     <div class="footer">
-        <p>Page {{ '[page]' }} of {{ '[pages]' }}</p>
+        <script type="text/php">
+            if (isset($pdf)) {
+                $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
+                $font = 'figtree';
+                $size =9;
+                $color = array(0,0,0);
+                $pdf->page_text(($pdf->get_width()/2) - 35, $pdf->get_height()-35, $text, $font, $size, $color);
+            }
+        </script>
         <p class="brand">Powered by Milele SkillSage</p>
     </div>
 

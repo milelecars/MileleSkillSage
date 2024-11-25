@@ -26,9 +26,9 @@ class Test extends Model
 
     public function candidates()
     {
-        return $this->belongsToMany(Candidate::class, 'test_candidate')
-            ->withTimestamps()
-            ->withPivot(['started_at', 'completed_at', 'answers', 'score']);
+        return $this->belongsToMany(Candidate::class, 'candidate_test')
+            ->withPivot(['started_at', 'completed_at', 'score','ip_address'])
+            ->withTimestamps();
     }
 
     protected static function boot()

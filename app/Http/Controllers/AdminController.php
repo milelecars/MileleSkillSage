@@ -39,12 +39,18 @@ class AdminController extends Controller
 
     public function manageCandidates()
     {
-        $candidates = Candidate::with(['tests' => function($query) {
-            $query->select('tests.id', 'name', 'questions_file_path');
-        }])
-        ->select('id', 'name', 'email', 'test_name', 'test_started_at', 
-                'test_completed_at', 'test_score')
-        ->latest('test_completed_at')
+        $candidates = Candidate::with([
+            'tests' => function ($query) {
+                $query->select('tests.id', 'title', 'description', 'duration')
+                    ->withPivot('started_at', 'completed_at', 'score','ip_address');
+            },
+            'tests.questions',
+            'reports' => function ($query) {
+                $query->select('id', 'candidate_id', 'test_id', 'score', 'completion_status', 'date_completed');
+            }
+        ])
+        ->select('id', 'name', 'email', 'created_at', 'updated_at')
+        ->latest()
         ->paginate(10);
 
         
@@ -65,7 +71,11 @@ class AdminController extends Controller
 
     public function candidateResult(Candidate $candidate)
     {
-        $test = $candidate->tests()->first();
+        $test = $candidate->tests()
+            ->with(['questions.choices', 'questions.media']) // Eager load relationships
+            ->withPivot('started_at', 'completed_at', 'score','ip_address') // Specify pivot columns explicitly
+            ->first();
+    
         if (!$test) {
             return redirect()->back()->with('error', 'No test found for this candidate.');
         }

@@ -332,7 +332,31 @@ class TestController extends Controller
     
         try {
             $candidate = Auth::guard('candidate')->user();
-            $test = Test::findOrFail($id);
+            $test = Test::with('questions.choices')->findOrFail($id);
+            $questions = $test->questions;
+            Log::info('Loaded test and questions for submission', [
+                'test_id' => $id,
+                'candidate_id' => $candidate->id,
+                'question_count' => $questions->count()
+            ]);
+
+            $testAttempt = $candidate->tests()
+            ->wherePivot('test_id', $id)
+            ->first();
+
+            if (!$testAttempt) {
+                Log::error('Test attempt not found', ['test_id' => $id, 'candidate_id' => $candidate->id]);
+                return redirect()->route('tests.start', ['id' => $id])
+                    ->with('error', 'Test attempt not found.');
+            }
+
+            $request->validate([
+                'current_index' => 'required|numeric',
+                'answer' => 'nullable|exists:question_choices,id', 
+            ]);
+    
+            Log::info('in submit');
+    
             $testSession = session('test_session');
     
             if (!$testSession || $testSession['test_id'] != $id) {
@@ -369,7 +393,13 @@ class TestController extends Controller
                 'completed_at' => $now,
                 'answers' => $answers,
                 'score' => $score,
-                'is_expired' => $request->boolean('expired', false)
+                'ip_address' => $realIP,
+            ]);
+            Log::info('Test completed successfully', [
+                'test_id' => $id,
+                'candidate_id' => $candidate->id,
+                'score' => $score,
+                'ip_address' => $realIP,
             ]);
     
             
@@ -440,7 +470,7 @@ class TestController extends Controller
             'completed_at' => $now,
             'answers' => $answers,
             'score' => $score,
-            'is_expired' => true  
+            'ip_address' => $realIP,
         ]);
         
         
