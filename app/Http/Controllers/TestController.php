@@ -786,10 +786,9 @@ class TestController extends Controller
                 'answer' => 'nullable|exists:question_choices,id', 
             ]);
     
-            Log::info('in submit');
+            Log::info('hi');
     
             $testSession = session('test_session');
-    
             if (!$testSession || $testSession['test_id'] != $id) {
                 Log::error('Invalid test session during submission', [
                     'test_id' => $id,
@@ -863,27 +862,11 @@ class TestController extends Controller
             $candidate->tests()->updateExistingPivot($id, [
                 'completed_at' => $now,
                 'score' => $score,
-                'ip_address' => $realIP,
             ]);
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'score' => $score,
-                'ip_address' => $realIP,
-            ]);
-    
-            
-            $candidate->update([
-                'test_completed_at' => $now,
-                'test_score' => $score,
-                'test_name' => $test->name,
-                'test_answers'=> $answers
-            ]);
-    
-            Log::info('Test data saved successfully', [
-                'test_id' => $id,
-                'score' => $score,
-                'answers' => $answers
+                'score' => $score
             ]);
     
             // Clear the session
@@ -950,17 +933,7 @@ class TestController extends Controller
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => $completed_at,
             'score' => $score,
-            'ip_address' => $realIP,
         ]);
-        
-        
-        $candidate->update([
-            'test_completed_at' => $now,
-            'test_score' => $score,
-            'test_name' => $test->name,
-            'test_answers'=> $answers
-        ]);
-
 
         session()->forget('test_session');
 

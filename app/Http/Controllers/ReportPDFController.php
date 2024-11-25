@@ -97,6 +97,7 @@ class ReportPDFController extends Controller
         ->where('test_id', $testId)
         ->count();
 
+
         $candidateTest = DB::table('candidate_test')
             ->where('candidate_id', $candidateId)
             ->where('test_id', $testId)
@@ -105,6 +106,7 @@ class ReportPDFController extends Controller
         if (!$candidateTest) {
             abort(404, 'Test data for the candidate not found.');
         }
+
 
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
@@ -156,6 +158,7 @@ class ReportPDFController extends Controller
         //     'flagged' => $totalWarnings > 0 ? 'Yes' : 'No'
         // ];
 
+
         // Prepare data for the PDF
         $data = [
             'title' => 'Skill Test Report',
@@ -196,21 +199,10 @@ class ReportPDFController extends Controller
                             'incorrect' => 0,
                             'unanswered' => 100,
                         ],
-                        [
-                            'name' => 'Leveraging the psychology of the counterparty',
-                            'correct' => 20,
-                            'incorrect' => 30,
-                            'unanswered' => 50,
-                        ],
-                        [
-                            'name' => 'Using emotional intelligence',
-                            'correct' => 0,
-                            'incorrect' => 0,
-                            'unanswered' => 100,
-                        ],
                     ],
                 ],
             ],
+
         ];
 
         // Generate PDF

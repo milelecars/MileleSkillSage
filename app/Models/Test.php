@@ -78,17 +78,15 @@ class Test extends Model
     public function candidates()
     {
         return $this->belongsToMany(Candidate::class, 'candidate_test')
+
             ->withPivot(['started_at', 'completed_at', 'score','ip_address'])
+
             ->withTimestamps();
     }
 
-    protected static function boot()
+    public function admin()
     {
-        parent::boot();
-        static::deleting(function ($test) {
-            $test->invitation()->delete();
-            $test->candidates()->detach();
-        });
+        return $this->belongsTo(Admin::class, 'admin_id');
     }
 
     public function invitation()

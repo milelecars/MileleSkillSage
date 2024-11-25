@@ -1,6 +1,5 @@
 @startuml "Milele SkillSage"
 
-
 entity "Candidates" {
   * id : int
   --
@@ -29,16 +28,6 @@ entity "Candidate Test" {
   * started_at : datetime
   * completed_at : datetime
   * score : int
-  * location : text
-}
-
-entity "Candidate Test Screenshots" {
-  * id : int
-  --
-  * candidate_test_id : int
-  * screenshot_path : varchar
-  * created_at : datetime
-  * updated_at : datetime
 }
 
 entity "Questions" {
@@ -121,11 +110,25 @@ entity "Invitations" {
   * expiration_date : datetime
   * invitation_token : varchar
   * invitation_link : varchar
-  * created_at : datetime 
+  * created_at : datetime
   * updated_at : datetime
 }
 
+' entity "Reports" {
+'   * id : int
+'   --
+'   * candidate_id : int
+'   * test_id : int
+'   * score : int
+'   * pdf_path: varchar
+'   * completion_status : varchar
+'   * date_completed : datetime
+'   * created_at : datetime
+'   * updated_at : datetime
+' }
+
 ' Relationships
+' "Candidates" ||--|{ "Reports" : has many
 "Candidates" ||--|{ "Answers" : has many
 "Candidates" ||--|{ "Candidate Flags" : has many
 "Candidates" ||--|{ "Candidate Test" : takes many tests
@@ -136,6 +139,5 @@ entity "Invitations" {
 "Questions" ||--|{ "Answers" : has many  
 "Flag Types" ||--|{ "Candidate Flags" : many types used by
 "Users(Admins)" ||--|{ "Tests" : manages many
-"Candidate Test" ||--|{ "Candidate Test Screenshots" : "has many screenshots"
 
 @enduml
