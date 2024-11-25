@@ -81,6 +81,7 @@ Route::middleware('auth:candidate')->group(function () {
     Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
     Route::post('/candidate-flags', [FlagController::class, 'store'])->name('candidate-flags.store');
     Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'generateSimplePDF'])->name('reports.candidate-report');
+
 });
 
 // Logout route (accessible to both admins and candidates)
