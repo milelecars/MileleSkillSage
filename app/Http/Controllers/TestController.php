@@ -9,7 +9,6 @@ use App\Models\QuestionMedia;
 use App\Models\Invitation;
 use App\Models\FlagType;
 use App\Models\Answer;
-use App\Models\FlagType;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

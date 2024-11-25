@@ -33,9 +33,6 @@ class InvitationController extends Controller
                 ->where('test_id', $invitation->test_id)
                 ->first();
     
-            if ($testAttempt && $testAttempt->pivot->completed_at) {
-                return redirect()->route('candidate.test.completed');
-            }
     
             if ($testAttempt) {
                 $this->setCandidateSession($candidate, $invitation->test_id);
