@@ -17,6 +17,7 @@ return new class extends Migration
             $table->datetime('started_at')->nullable();
             $table->datetime('completed_at')->nullable();
             $table->integer('score')->nullable();
+            $table->integer('report_pdf_path')->nullable();
             $table->timestamps();
 
             $table->primary(['candidate_id', 'test_id']);

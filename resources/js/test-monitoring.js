@@ -1,34 +1,39 @@
 class TestMonitoring {
-    constructor() {
-        console.log('TestMonitoring initialized')
-        this.metrics = {
-            tabSwitches: 0,
-            windowBlurs: 0,
-            warningCount: 0,
-            mouseExits: 0,
-            copyCutAttempts: 0,
-            rightClicks: 0,
-            keyboardShortcuts: 0
-        };
-
-        this.flags = {
-            tabSwitches: false,
-            windowBlurs: false,
-            warningCount: false,
-            mouseExits: false,
-            copyCutAttempts: false,
-            rightClicks: false,
-            keyboardShortcuts: false
-        };
-
+    constructor(testId, candidateId) {
+        this.testId = testId;
+        this.candidateId = candidateId;
+        console.log('TestMonitoring initialized');
+        this.metrics = {};
+        this.flags = {};
+    
+        // Dynamically create metrics and flags based on flag types
+        const flagTypeNames = [
+            'Tab Switches', 
+            'Window Blurs', 
+            'Mouse Exits', 
+            'Copy/Cut Attempts', 
+            'Right Clicks', 
+            'Keyboard Shortcuts',
+            'More than One Person',
+            'Book',
+            'Cellphone'
+        ];
+    
+        flagTypeNames.forEach(flagType => {
+            const camelCaseName = flagType.replace(/\s+/g, '');
+            this.metrics[camelCaseName] = 0;
+            this.flags[camelCaseName] = false;
+        });
+    
         window.monitoringData = {
             metrics: this.metrics,
             flags: this.flags
         };
-
+    
         this.setupEventListeners();
         this.startPeriodicSync();
     }
+
 
     async logSuspiciousBehavior(flagType) {
         try {
@@ -43,6 +48,7 @@ class TestMonitoring {
                     test_session_id: window.testSessionId 
                 })
             });
+
 
             if (!response.ok) {
                 console.error('Failed to log suspicious behavior');
@@ -166,6 +172,8 @@ class TestMonitoring {
             this.flags[metric] = isThisMetricFlagged;
             if (isThisMetricFlagged) {
                 anyFlagged = true;
+                // Send flag data when a metric exceeds threshold
+                this.sendFlagData();
             }
         }
         
@@ -212,6 +220,8 @@ class TestMonitoring {
 
 // Initialize monitoring
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded'); // Debug log
-    window.testMonitoring = new TestMonitoring();
+    console.log('DOM Content Loaded');
+    const testId = document.getElementById('test-id').value;
+    const candidateId = document.getElementById('candidate-id').value;
+    window.testMonitoring = new TestMonitoring(testId, candidateId);
 });

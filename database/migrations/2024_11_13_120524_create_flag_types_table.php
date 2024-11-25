@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('flag_types', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->text('description');
-            $table->integer('threshold');
+            $table->text('description')->nullable();
+            $table->integer('threshold')->default(0);
             $table->timestamps();
         });
     }
@@ -24,8 +24,11 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
+    public function down()
     {
+        Schema::table('candidate_flags', function (Blueprint $table) {
+            $table->dropForeign(['flag_type_id']);
+        });
         Schema::dropIfExists('flag_types');
     }
 };

@@ -128,7 +128,9 @@
                 </div>
 
 
+
                 <livewire:test-monitoring :testSessionId="$test->id" />
+
             </div>
         </div>
     </div>

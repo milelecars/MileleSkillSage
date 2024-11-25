@@ -636,8 +636,11 @@ class TestController extends Controller
         session(['test_session' => $testSession]);
         
         $currentQuestionIndex = $testSession['current_question'];
+        $flagTypes = FlagType::all();
+
 
         return view('tests.start', compact('test', 'candidate', 'questions', 'currentQuestionIndex', 'flagTypes'));
+
     }
 
     
@@ -987,7 +990,7 @@ class TestController extends Controller
             return null;
         }
 
-        return TestInvitation::where('invitation_link', $invitationLink)
+        return Invitation::where('invitation_link', $invitationLink)
             ->where('expiration_date', '>', now())
             ->first();
     }

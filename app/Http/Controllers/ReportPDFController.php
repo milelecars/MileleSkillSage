@@ -3,23 +3,45 @@
 namespace App\Http\Controllers;
 
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Candidate;
+use App\Models\Test;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportPDFController extends Controller
 {
-    public function generateSimplePDF()
+    public function generateSimplePDF($candidateId, $testId)
     {
+        // Fetch candidate data
+        $candidate = Candidate::findOrFail($candidateId);
+
+        // Fetch test data
+        $test = Test::findOrFail($testId);
+
+        // Fetch data from the candidate_test pivot table
+        $candidateTest = DB::table('candidate_test')
+            ->where('candidate_id', $candidateId)
+            ->where('test_id', $testId)
+            ->first();
+
+        if (!$candidateTest) {
+            abort(404, 'Test data for the candidate not found.');
+        }
+
+        // Prepare data for the PDF
         $data = [
-            'title' => 'Simple PDF Report',
-            'date' => date('Y-m-d'),
+            'title' => 'Skill Test Report',
+            'date' => now()->format('Y-m-d'),
             'companyName' => 'Milele Motors',
-            'department' => 'Admin & Personal Assistant',
-            'candidateName' => 'Abdullah Nawab',
-            'email' => 'abdullahnawab654@gmail.com',
-            'overallRating' => '0.0',
-            'status' => 'Completed: Sep 10, 2024',
-            'averageScore' => 49,
-            'weightedScore' => 59,
-            
+            'department' => 'Admin & Personal Assistant', 
+            'candidateName' => $candidate->name,
+            'email' => $candidate->email,
+            'overallRating' => $candidateTest->score,
+            'status' => 'Completed: ' . date('M d, Y', strtotime($candidateTest->completed_at)),
+            'averageScore' => $candidateTest->score, 
+            'weightedScore' => $candidateTest->score, 
+
+            // Static weights (example), replace with dynamic data if available
             'weights' => [
                 [
                     'name' => 'Administrative Assistant',
@@ -37,15 +59,17 @@ class ReportPDFController extends Controller
                     'impact' => 11,
                 ],
             ],
-            
+
+            // Example: Fetch test-related questions and results
             'tests' => [
                 [
-                    'name' => 'Negotiation',
-                    'score' => 20,
-                    'description' => 'This Negotiation test evaluates a candidate\'s ability to negotiate in a business context. This screening test will help you hire employees who can negotiate for your interests in a variety of contexts.',
-                    'time_spent' => '00:10:00',
-                    'time_limit' => '00:10:00',
+                    'name' => $test->title,
+                    'score' => $candidateTest->score,
+                    'description' => $test->description,
+                    'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
+                    'time_limit' => gmdate('H:i:s', $test->duration * 60),
                     'skills' => [
+                        // Example data, replace with actual skill calculations
                         [
                             'name' => 'Controlling and driving the discussion',
                             'correct' => 35,
@@ -58,22 +82,11 @@ class ReportPDFController extends Controller
                             'incorrect' => 75,
                             'unanswered' => 0,
                         ],
-                        [
-                            'name' => 'Leveraging the psychology of the counterparty',
-                            'correct' => 20,
-                            'incorrect' => 30,
-                            'unanswered' => 50,
-                        ],
-                        [
-                            'name' => 'Using emotional intelligence',
-                            'correct' => 0,
-                            'incorrect' => 0,
-                            'unanswered' => 100,
-                        ],
                     ],
                 ],
             ],
-            
+
+            // Dynamic anti-cheat data
             'antiCheat' => [
                 ['label' => 'Device used', 'value' => 'Desktop'],
                 ['label' => 'Location', 'value' => 'Rawalpindi (Punjab), PK'],
@@ -81,14 +94,22 @@ class ReportPDFController extends Controller
                 ['label' => 'Webcam enabled?', 'value' => 'Yes'],
                 ['label' => 'Full-screen mode always active?', 'value' => 'Yes'],
                 ['label' => 'Mouse always in assessment window?', 'value' => 'Yes'],
+                ['label' => 'Tab Switches', 'value' => '0', 'flagged' => 'No'],
+                ['label' => 'Window Blurs', 'value' => '0', 'flagged' => 'No'],
+                ['label' => 'Mouse Exits', 'value' => '0', 'flagged' => 'No'],
+                ['label' => 'Copy/Cut Attempts', 'value' => '0', 'flagged' => 'No'],
+                ['label' => 'Right Clicks', 'value' => '0', 'flagged' => 'No'],
+                ['label' => 'Keyboard Shortcuts', 'value' => '0', 'flagged' => 'No'],
+                ['label' => 'Total Warnings', 'value' => '0', 'flagged' => 'No'],
             ],
         ];
 
+        // Generate PDF
         $pdf = Pdf::loadView('reports.candidate-report', $data);
 
         $pdf->getDomPDF()->set_option('defaultFont', 'figtree');
-        $pdf->setPaper('A4', 'portrait');        
-        
+        $pdf->setPaper('A4', 'portrait');
+
         return $pdf->stream();
     }
 }
