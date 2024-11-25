@@ -43,7 +43,9 @@ class AdminController extends Controller
         $candidates = Candidate::with([
             'tests' => function ($query) {
                 $query->select('tests.id', 'title', 'description', 'duration')
-                    ->withPivot('started_at', 'completed_at', 'score');
+
+                    ->withPivot('started_at', 'completed_at', 'score','ip_address');
+
             },
             'tests.questions',
             'reports' => function ($query) {
@@ -81,7 +83,9 @@ class AdminController extends Controller
     {
         $test = $candidate->tests()
             ->with(['questions.choices', 'questions.media']) // Eager load relationships
-            ->withPivot('started_at', 'completed_at', 'score') // Specify pivot columns explicitly
+
+            ->withPivot('started_at', 'completed_at', 'score','ip_address') // Specify pivot columns explicitly
+
             ->first();
     
         if (!$test) {
