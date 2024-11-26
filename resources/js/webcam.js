@@ -21,7 +21,6 @@ class WebcamManager {
             '/tests/\\d+/',
             '/tests/\\d+/start'
         ];
-
         this.lastViolationTimes = {
             'More than One Person': 0,
             'Book': 0,
@@ -38,6 +37,23 @@ class WebcamManager {
         
         // Initialize camera only after checking permissions
         this.initialize();
+
+        // Screenshot configuration
+        this.screenshotRetryAttempts = 3;
+        this.screenshotRetryDelay = 5000; // 5 seconds
+        this.screenshotQueue = [];
+        this.isProcessingQueue = false;
+        this.failedScreenshots = [];
+        this.maxQueueSize = 10;
+        
+        // Screenshot status tracking
+        this.screenshotStats = {
+            attempted: 0,
+            successful: 0,
+            failed: 0,
+            lastSuccess: null,
+            lastError: null
+        };
     }
 
     updateStatus(personCount, hasBook, hasCellPhone) {
@@ -202,6 +218,9 @@ class WebcamManager {
         }
 
         await this.requestCameraAccess();
+
+        // Start taking screenshots every 30 seconds
+        this.startPeriodicScreenshots();
     }
 
     async requestCameraAccess() {
@@ -330,6 +349,189 @@ class WebcamManager {
         }
     }
 
+    startPeriodicScreenshots(intervalMs = this.screenshotIntervalTime) {
+        if (this.isCapturingScreenshots) {
+            console.log('Screenshot capture already running');
+            return;
+        }
+    
+        this.screenshotIntervalTime = intervalMs;
+        this.isCapturingScreenshots = true;
+        
+        // Take initial screenshot
+        this.captureScreenshot();
+        
+        // Set up interval for periodic screenshots
+        this.screenshotInterval = setInterval(() => {
+            this.captureScreenshot();
+        }, this.screenshotIntervalTime);
+    
+        console.log(`Started periodic screenshots every ${intervalMs}ms`);
+    }
+    
+    stopPeriodicScreenshots() {
+        if (this.screenshotInterval) {
+            clearInterval(this.screenshotInterval);
+            this.screenshotInterval = null;
+            this.isCapturingScreenshots = false;
+            console.log('Stopped periodic screenshots');
+        }
+    }
+    
+    // async captureScreenshot() {
+    //     if (!this.video || !this.video.videoWidth) {
+    //         console.error('Video element not ready');
+    //         return;
+    //     }
+    
+    //     try {
+    //         // Set canvas dimensions to match video
+    //         this.screenshotCanvas.width = this.video.videoWidth;
+    //         this.screenshotCanvas.height = this.video.videoHeight;
+            
+    //         // Draw current video frame to canvas
+    //         this.screenshotContext.drawImage(this.video, 0, 0);
+    
+    //         // Convert to base64 image
+    //         const screenshot = this.screenshotCanvas.toDataURL('image/jpeg', 0.8);
+            
+    //         // Add to queue instead of sending immediately
+    //         await this.queueScreenshot({
+    //             data: screenshot,
+    //             timestamp: new Date().toISOString(),
+    //             attempts: 0
+    //         });
+    
+    //     } catch (error) {
+    //         console.error('Error capturing screenshot:', error);
+    //         this.screenshotStats.failed++;
+    //         this.screenshotStats.lastError = {
+    //             timestamp: new Date(),
+    //             error: 'Capture error: ' + error.message
+    //         };
+    //     }
+    // }
+
+    async queueScreenshot(screenshotData) {
+        // Remove oldest item if queue is full
+        if (this.screenshotQueue.length >= this.maxQueueSize) {
+            this.screenshotQueue.shift();
+        }
+        
+        this.screenshotQueue.push(screenshotData);
+        this.screenshotStats.attempted++;
+        
+        // Start processing queue if not already processing
+        if (!this.isProcessingQueue) {
+            await this.processScreenshotQueue();
+        }
+    }
+
+    async processScreenshotQueue() {
+        if (this.isProcessingQueue || this.screenshotQueue.length === 0) {
+            return;
+        }
+
+        this.isProcessingQueue = true;
+
+        while (this.screenshotQueue.length > 0) {
+            const screenshot = this.screenshotQueue[0];
+            let success = false;
+
+            try {
+                success = await this.saveScreenshot(screenshot);
+                
+                if (success) {
+                    this.screenshotQueue.shift(); // Remove from queue
+                    this.screenshotStats.successful++;
+                    this.screenshotStats.lastSuccess = new Date();
+                } else {
+                    screenshot.attempts++;
+                    
+                    if (screenshot.attempts >= this.screenshotRetryAttempts) {
+                        this.screenshotQueue.shift(); // Remove after max attempts
+                        this.failedScreenshots.push({
+                            timestamp: screenshot.timestamp,
+                            error: 'Max retry attempts exceeded'
+                        });
+                    } else {
+                        // Move to end of queue for retry
+                        this.screenshotQueue.shift();
+                        this.screenshotQueue.push(screenshot);
+                        await this.delay(this.screenshotRetryDelay);
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing screenshot:', error);
+                screenshot.attempts++;
+                this.screenshotStats.lastError = {
+                    timestamp: new Date(),
+                    error: error.message
+                };
+            }
+        }
+
+        this.isProcessingQueue = false;
+    }
+
+    async saveScreenshot(screenshot) {
+        try {
+            const response = await fetch('/api/screenshots', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': this.getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    screenshot: screenshot.data,
+                    timestamp: screenshot.timestamp,
+                    retryAttempt: screenshot.attempts
+                })
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(`Server returned ${response.status}${errorData ? ': ' + JSON.stringify(errorData) : ''}`);
+            }
+    
+            const result = await response.json();
+            console.log('Screenshot saved:', result);
+            return true;
+        } catch (error) {
+            console.error('Error saving screenshot:', error);
+            return false;
+        }
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    getScreenshotStats() {
+        return {
+            ...this.screenshotStats,
+            queueLength: this.screenshotQueue.length,
+            failedScreenshots: this.failedScreenshots.length
+        };
+    }
+
+    cleanup() {
+        this.stopPeriodicScreenshots();
+        
+        // Try to process any remaining screenshots before cleanup
+        if (this.screenshotQueue.length > 0) {
+            console.log(`Attempting to process ${this.screenshotQueue.length} remaining screenshots...`);
+            this.processScreenshotQueue().finally(() => {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+            });
+        } else if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+        }
+    }
 }
 
 // Initialize webcam manager when DOM is loaded

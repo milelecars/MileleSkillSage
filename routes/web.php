@@ -13,6 +13,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DescriptionController;
 use App\Http\Controllers\Auth\RegisteredAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\ScreenshotController;
 
 // Root route
 Route::get('/', function () {
@@ -34,7 +35,10 @@ Route::get('/welcome', function () {
 Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
 Route::post('/camera-permission', [CameraController::class, 'updatePermission'])->name('camera.update');
 Route::get('/camera-permission', [CameraController::class, 'checkPermission'])->name('camera.check');
+Route::post('/api/screenshots', [ScreenshotController::class, 'store'])
+    ->name('screenshots.store');
 
+    
 // Guest routes
 Route::middleware('guest')->group(function () {
     // Admin registration and login routes

@@ -29,7 +29,7 @@ entity "Candidate Test" {
   * started_at : datetime
   * completed_at : datetime
   * score : int
-  * location : text
+  * ip_address : text
 }
 
 entity "Candidate Test Screenshots" {
@@ -81,7 +81,7 @@ entity "Answers" {
   * updated_at : datetime
 }
 
-entity "Users(Admins)" {
+entity "Admins" {
   * id : int
   --
   * name : varchar
@@ -135,7 +135,7 @@ entity "Invitations" {
 "Questions" ||--o| "Question Media" : has one
 "Questions" ||--|{ "Answers" : has many  
 "Flag Types" ||--|{ "Candidate Flags" : many types used by
-"Users(Admins)" ||--|{ "Tests" : manages many
+"Admins" ||--|{ "Tests" : manages many
 "Candidate Test" ||--|{ "Candidate Test Screenshots" : "has many screenshots"
 
 @enduml

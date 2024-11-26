@@ -14,6 +14,10 @@ use Illuminate\Support\Facades\Log;
 
 class ReportPDFController extends Controller
 {
+    private function store(){
+        
+    }
+
     private function getClientIP()
     {
         $ipaddress = '';
@@ -85,17 +89,10 @@ class ReportPDFController extends Controller
     {
         return $score > 0 ? round(($score / $totalQuestions) * 100, 2) : 0;
     }
-
+    
     public function generateSimplePDF($candidateId, $testId)
     {
         $this->debugIpHeaders();
-
-        $candidate = Candidate::findOrFail($candidateId);
-        $test = Test::findOrFail($testId);
-
-        $totalQuestions = DB::table('questions')
-        ->where('test_id', $testId)
-        ->count();
 
         $candidateTest = DB::table('candidate_test')
             ->where('candidate_id', $candidateId)
@@ -105,6 +102,19 @@ class ReportPDFController extends Controller
         if (!$candidateTest) {
             abort(404, 'Test data for the candidate not found.');
         }
+
+        // If report exists and file exists in storage, just stream it
+        if ($candidateTest->report_path && Storage::disk('public')->exists($candidateTest->report_path)) {
+            return response()->file(Storage::disk('public')->path($candidateTest->report_path));
+            Log::info("report exists");
+        }
+
+        $candidate = Candidate::findOrFail($candidateId);
+        $test = Test::findOrFail($testId);
+
+        $totalQuestions = DB::table('questions')
+        ->where('test_id', $testId)
+        ->count();
 
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
@@ -201,13 +211,28 @@ class ReportPDFController extends Controller
             ],
         ];
 
+        $fileName = "report_candidate{$candidateId}_test{$testId}_" . time() . '.pdf';
+        $folderPath ="report_candidate{$candidateId}_test{$testId}";
+
+        if(!Storage::disk('public')->exists($folderPath)){
+            Storage::disk('public')->makeDirectory($folderPath);
+        }
+
+        $fullPath = $folderPath . '/' . $fileName;
+        Log::info("full path is ", $fullPath);
+
         // Generate PDF
         $pdf = Pdf::loadView('reports.candidate-report', $data);
         $pdf->getDomPDF()->set_option('defaultFont', 'figtree');
         $pdf->getDomPDF()->set_option('isPhpEnabled', true);
         $pdf->getDomPDF()->set_option('isRemoteEnabled', true);
         $pdf->setPaper('A4', 'portrait');
+
+
+        Storage::disk('public')-> put($fullPath, $pdf->output());
+
+        DB::table('candidate_test')->where('candidate_id', $candidateId)->where('test_id', $testId)->update(['report_path', $fullPath]);
         
-        return $pdf->stream();
+        return $pdf->stream($fileName);
     }
 }
