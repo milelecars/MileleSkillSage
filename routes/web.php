@@ -13,6 +13,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DescriptionController;
 use App\Http\Controllers\Auth\RegisteredAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\ScreenshotController;
 
 // Root route
 Route::get('/', function () {
@@ -34,6 +35,7 @@ Route::get('/welcome', function () {
 Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
 Route::post('/camera-permission', [CameraController::class, 'updatePermission'])->name('camera.update');
 Route::get('/camera-permission', [CameraController::class, 'checkPermission'])->name('camera.check');
+Route::post('/api/screenshots', [TestController::class, 'saveScreenshot'])->name('screenshots.save');
 
 // Guest routes
 Route::middleware('guest')->group(function () {
@@ -54,11 +56,12 @@ Route::middleware('auth:web')->group(function () {
     // Admin routes
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
-    Route::get('/admin/candidates', [AdminController::class, 'manageCandidates'])->name('manage-candidates');
+    Route::get('/admin/manage-candidates', [AdminController::class, 'manageCandidates'])->name('manage-candidates');
     Route::get('/admin/candidate-result/{candidate}', [AdminController::class, 'candidateResult'])->name('admin.candidate-result');
     Route::put('/admin/approve/{candidate}', [AdminController::class, 'approveCandidate'])->name('candidate.approve');
     Route::put('/admin/reject/{candidate}', [AdminController::class, 'rejectCandidate'])->name('candidate.reject');
-
+    Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'streamPDF'])->name('reports.candidate-report');
+    
     // Test routes for admin
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
     Route::get('/tests/create', [TestController::class, 'create'])->name('tests.create');
@@ -79,9 +82,7 @@ Route::middleware('auth:candidate')->group(function () {
     Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
     Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
     Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
-    Route::post('/candidate-flags', [FlagController::class, 'store'])->name('candidate-flags.store');
-    Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'generateSimplePDF'])->name('reports.candidate-report');
-
+    Route::post('/candidate-flags', [FlagController::class, 'store'])->name('candidate-flags.store'); 
 });
 
 // Logout route (accessible to both admins and candidates)

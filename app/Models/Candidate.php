@@ -11,12 +11,6 @@ class Candidate extends Authenticatable
 
     protected $fillable = ['name', 'email'];
 
-    // Candidate has many Reports
-    public function reports()
-    {
-        return $this->hasMany(Report::class);
-    }
-
     // Candidate has many Answers
     public function answers()
     {

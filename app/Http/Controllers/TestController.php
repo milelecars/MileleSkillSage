@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
+use App\Models\Candidate;
 use App\Models\Question;
 use App\Models\QuestionChoice;
 use App\Models\QuestionMedia;
 use App\Models\Invitation;
 use App\Models\FlagType;
+use App\Models\CandidateFlag;
 use App\Models\Answer;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -17,10 +19,22 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionsImport;
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\TestReportService;
 
 
 class TestController extends Controller
 {
+    protected $testReportService;
+
+    public function __construct(TestReportService $testReportService)
+    {
+        $this->testReportService = $testReportService;
+    }
+
     public function index()
     {
         $tests = Test::all();
@@ -557,6 +571,82 @@ class TestController extends Controller
         ->with('error', 'Unauthorized access');
     }
 
+    public function saveScreenshot(Request $request)
+    {
+    
+        $candidate = Auth::guard('candidate')->user();
+        $testSession = session('test_session');
+    
+        if (!$testSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save screenshot: No active test session found'
+            ], 500);
+        }
+    
+        try {
+            $request->validate([
+                'screenshot' => 'required|string',
+                'timestamp' => 'required|date'
+            ]);
+    
+            $candidateTest = DB::table('candidate_test')
+                ->select('candidate_id', 'test_id')
+                ->where('candidate_id', $candidate->id)
+                ->where('test_id', $testSession['test_id'])
+                ->first();
+    
+            if (!$candidateTest) {
+                throw new \Exception('No active test attempt found');
+            }
+    
+            $directory = 'screenshots/' . $testSession['test_id'] . '/' . $candidate->id;
+            if (!Storage::exists($directory)) {
+                Storage::makeDirectory($directory);
+            }
+    
+            $filename = $directory . '/' . now()->format('Y-m-d_H-i-s') . '.jpg';
+    
+            $image = str_replace('data:image/jpeg;base64,', '', $request->screenshot);
+            $image = str_replace(' ', '+', $image);
+            $imageBinary = base64_decode($image);
+    
+            Storage::put($filename, $imageBinary);
+
+            DB::table('candidate_test_screenshots')->insert([
+                'candidate_id' => $candidate->id,
+                'test_id' => $testSession['test_id'],
+                'screenshot_path' => $filename,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+    
+            Log::info('Screenshot saved', [
+                'test_id' => $testSession['test_id'],
+                'candidate_id' => $candidate->id,
+                'filename' => $filename
+            ]);
+    
+            return response()->json([
+                'success' => true,
+                'filename' => $filename
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Screenshot save error:', [
+                'error' => $e->getMessage(),
+                'test_id' => $testSession['test_id'] ?? null,
+                'candidate_id' => $candidate->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save screenshot: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function startTest(Request $request, $id)
     {
         if (!Auth::guard('candidate')->check()) {
@@ -751,7 +841,6 @@ class TestController extends Controller
 
         return redirect()->route('tests.start', ['id' => $id]);
     }
-
     
     public function submitTest(Request $request, $id)
     {
@@ -770,6 +859,7 @@ class TestController extends Controller
                 'candidate_id' => $candidate->id,
                 'question_count' => $questions->count()
             ]);
+            
             $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->first();
@@ -853,20 +943,24 @@ class TestController extends Controller
                     }
                 }
             }
+            
     
-            $now = now();
-    
+            $realIP = $this->testReportService->getClientIP();
             $candidate->tests()->updateExistingPivot($id, [
-                'completed_at' => $now,
-                'score' => $score,
+                'completed_at' => now() > $testAttempt->pivot->started_at->addMinutes($test->duration) 
+                    ? $testAttempt->pivot->started_at->addMinutes($test->duration) 
+                    : now(),                
+                'score' => $score?? 0,
                 'ip_address' => $realIP,
             ]);
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'score' => $score,
+                'score' => $score?? 0,
                 'ip_address' => $realIP,
             ]);
+        
+            $this->testReportService->generatePDF($candidate->id, $id);
     
             // Clear the session
             session()->forget('test_session');
@@ -874,6 +968,8 @@ class TestController extends Controller
             $message = $request->boolean('expired')
                 ? 'Test time has expired. Your answers have been submitted automatically.'
                 : 'Test completed successfully!';
+            
+            
             
             return redirect()->route('tests.result', ['id' => $id])
                 ->with($request->boolean('expired') ? 'warning' : 'success', $message);
@@ -928,14 +1024,16 @@ class TestController extends Controller
         $started_at = Carbon::parse($test_pivot->started_at);
         $completed_at = $started_at->addMinutes($test->duration);
         
-        
+        $realIP = $this->testReportService->getClientIP();
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => $completed_at,
-            'score' => $score,
+            'score' => $score ?? 0,
             'ip_address' => $realIP,
         ]);
+        $this->testReportService->generatePDF($candidate->id, $id);
 
         session()->forget('test_session');
+
 
         return redirect()->route('tests.result', ['id' => $test->id])
             ->with('warning', 'Test time has expired. Your answers have been submitted automatically.');

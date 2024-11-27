@@ -2,6 +2,7 @@ class TestMonitoring {
     constructor(testId, candidateId) {
         this.testId = testId;
         this.candidateId = candidateId;
+        this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         console.log('TestMonitoring initialized');
         this.metrics = {};
         this.flags = {};
@@ -36,8 +37,12 @@ class TestMonitoring {
 
 
     async logSuspiciousBehavior(flagType) {
+        if (!this.csrfToken || !window.testSessionId) {
+            return;
+        }
+
         try {
-            const response = await fetch('/flag', { 
+            await fetch('/flag', { 
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -48,13 +53,8 @@ class TestMonitoring {
                     test_session_id: window.testSessionId 
                 })
             });
-
-
-            if (!response.ok) {
-                console.error('Failed to log suspicious behavior');
-            }
         } catch (error) {
-            console.error('Error logging suspicious behavior:', error);
+            console.warn('Error logging behavior:', error);
         }
     }
 
