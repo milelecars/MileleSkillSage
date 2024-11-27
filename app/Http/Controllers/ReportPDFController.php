@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Candidate;
-use App\Models\Test;
-use App\Models\CandidateFlag;
-use App\Models\FlagType;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use App\Services\PDFGenerationService;
+use App\Services\TestReportService;
+
 
 
 class ReportPDFController extends Controller
 {
+    protected $testReportService;
+
+    public function __construct(TestReportService $testReportService)
+    {
+        $this->testReportService = $testReportService;
+    }
+
     public function streamPDF($candidateId, $testId)
     {
         $candidateTest = DB::table('candidate_test')
@@ -35,7 +36,7 @@ class ReportPDFController extends Controller
         }
 
         // If report doesn't exist, generate and stream it
-        $fullPath = $this->generatePDF($candidateId, $testId);
+        $fullPath = $this->testReportService->generatePDF($candidateId, $testId);
         return response()->file(Storage::disk('public')->path($fullPath));
     }
 
