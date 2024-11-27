@@ -29,6 +29,7 @@ entity "Candidate Test" {
   * started_at : datetime
   * completed_at : datetime
   * score : int
+  * report_path: string
   * ip_address : text
 }
 

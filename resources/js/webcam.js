@@ -3,7 +3,6 @@
 console.log("Webcam script loaded");
 
 class WebcamManager {
-
     constructor() {
         this.video = null;
         this.detectionStatus = null;
@@ -12,15 +11,53 @@ class WebcamManager {
         this.permissionGranted = false;
         this.deviceId = null;
 
-        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        console.log("Browser is Safari:", this.isSafari);
+        // Check if we're on a test page with camera enabled
+        this.testId = document.getElementById('test-id')?.value;
+        this.candidateId = document.getElementById('candidate-id')?.value;
 
+        console.log('Test session data:', {
+            test_id: this.testId,
+            candidate_id: this.candidateId,
+            elements: {
+                testIdElement: !!document.getElementById('test-id'),
+                candidateIdElement: !!document.getElementById('candidate-id')
+            }
+        });
+        
+        // Screenshot configuration - always initialize these
+        this.screenshotCanvas = document.createElement('canvas');
+        this.screenshotContext = this.screenshotCanvas.getContext('2d');
+        this.screenshotInterval = null;
+        this.isCapturingScreenshots = false;
+        this.screenshotIntervalTime = 30000; // 30 seconds
+        this.screenshotQueue = []; // Always initialize array
+        this.maxQueueSize = 10;
+        this.screenshotRetryAttempts = 3;
+        this.screenshotRetryDelay = 5000;
+        this.isProcessingQueue = false;
+        this.failedScreenshots = []; // Always initialize array
+        this.screenshotStats = {  // Always initialize stats
+            attempted: 0,
+            successful: 0,
+            failed: 0,
+            lastSuccess: null,
+            lastError: null
+        };
+
+        // Log if screenshots are enabled
+        if (!this.testId || !this.candidateId) {
+            console.log('No active test session, screenshots will be disabled');
+            this.isCapturingScreenshots = false;
+        }
+
+        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         this.allowedRoutes = [
             '/invitation/\\w+',
             '/candidate/dashboard',
             '/tests/\\d+/',
             '/tests/\\d+/start'
         ];
+
         this.lastViolationTimes = {
             'More than One Person': 0,
             'Book': 0,
@@ -31,29 +68,84 @@ class WebcamManager {
             'Book': 0,
             'Cellphone': 0
         };
-        this.FRAME_THRESHOLD = 50; // Number of frames needed to confirm violation
-        this.COOLDOWN_PERIOD = 30000; // 30 seconds in milliseconds
-        
-        
-        // Initialize camera only after checking permissions
-        this.initialize();
+        this.FRAME_THRESHOLD = 50;
+        this.COOLDOWN_PERIOD = 30000;
 
-        // Screenshot configuration
-        this.screenshotRetryAttempts = 3;
-        this.screenshotRetryDelay = 5000; // 5 seconds
-        this.screenshotQueue = [];
-        this.isProcessingQueue = false;
-        this.failedScreenshots = [];
-        this.maxQueueSize = 10;
+        this.initialize();
+    }
+
+
+    initializeCanvas() {
+        try {
+            // Create canvas element
+            this.screenshotCanvas = document.createElement('canvas');
+            
+            // Get 2D context
+            this.screenshotContext = this.screenshotCanvas.getContext('2d');
+            
+            if (!this.screenshotContext) {
+                throw new Error('Failed to get 2D context from canvas');
+            }
+
+            // Set initial dimensions (will be updated when video loads)
+            this.screenshotCanvas.width = 640;  // Default width
+            this.screenshotCanvas.height = 480; // Default height
+
+            console.log('Canvas initialized successfully');
+        } catch (error) {
+            console.error('Error initializing canvas:', error);
+            this.screenshotCanvas = null;
+            this.screenshotContext = null;
+        }
+    }
+
+    async initializeCamera() {
+        console.log("Initializing camera for route:", window.location.pathname);
         
-        // Screenshot status tracking
-        this.screenshotStats = {
-            attempted: 0,
-            successful: 0,
-            failed: 0,
-            lastSuccess: null,
-            lastError: null
-        };
+        this.video = document.getElementById('video');
+        this.detectionStatus = document.getElementById('detection-status');
+
+        if (!this.video || !this.detectionStatus) {
+            console.error("Required elements not found");
+            return;
+        }
+
+        // Wait for video to be ready before starting screenshots
+        this.video.addEventListener('loadedmetadata', () => {
+            console.log('Video metadata loaded, dimensions:', this.video.videoWidth, 'x', this.video.videoHeight);
+            if (this.screenshotCanvas && this.video.videoWidth) {
+                this.screenshotCanvas.width = this.video.videoWidth;
+                this.screenshotCanvas.height = this.video.videoHeight;
+            }
+        });
+
+        await this.requestCameraAccess();
+
+        // Only start screenshots if canvas was initialized successfully
+        if (this.screenshotCanvas && this.screenshotContext) {
+            this.startPeriodicScreenshots(this.screenshotIntervalTime);
+        } else {
+            console.error('Cannot start screenshots - canvas not initialized');
+        }
+    }
+
+    async initialize() {
+        try {
+            const permission = await this.checkServerPermission();
+            // Handle case where permission request fails
+            this.permissionGranted = permission?.granted || false;
+            this.deviceId = permission?.deviceId || null;
+            
+            console.log("Initial permission status from server:", this.permissionGranted);
+            console.log("Current path:", window.location.pathname);
+            
+            if (this.shouldActivateCamera()) {
+                await this.initializeCamera();
+            }
+        } catch (error) {
+            console.error("Initialization error:", error);
+            this.handleCameraError("Failed to initialize camera permissions");
+        }
     }
 
     updateStatus(personCount, hasBook, hasCellPhone) {
@@ -110,25 +202,6 @@ class WebcamManager {
 
         if (this.detectionStatus) {
             this.detectionStatus.innerHTML = statusMessage;
-        }
-    }
-
-    async initialize() {
-        try {
-            const permission = await this.checkServerPermission();
-            // Handle case where permission request fails
-            this.permissionGranted = permission?.granted || false;
-            this.deviceId = permission?.deviceId || null;
-            
-            console.log("Initial permission status from server:", this.permissionGranted);
-            console.log("Current path:", window.location.pathname);
-            
-            if (this.shouldActivateCamera()) {
-                await this.initializeCamera();
-            }
-        } catch (error) {
-            console.error("Initialization error:", error);
-            this.handleCameraError("Failed to initialize camera permissions");
         }
     }
 
@@ -204,23 +277,6 @@ class WebcamManager {
         return this.allowedRoutes.some(route => 
             new RegExp('^' + route).test(currentPath)
         );
-    }
-
-    async initializeCamera() {
-        console.log("Initializing camera for route:", window.location.pathname);
-        
-        this.video = document.getElementById('video');
-        this.detectionStatus = document.getElementById('detection-status');
-
-        if (!this.video || !this.detectionStatus) {
-            console.error("Required elements not found");
-            return;
-        }
-
-        await this.requestCameraAccess();
-
-        // Start taking screenshots every 30 seconds
-        this.startPeriodicScreenshots();
     }
 
     async requestCameraAccess() {
@@ -355,8 +411,15 @@ class WebcamManager {
             return;
         }
     
+        if (!this.screenshotCanvas || !this.screenshotContext) {
+            console.error('Cannot start screenshots - canvas not initialized');
+            return;
+        }
+    
         this.screenshotIntervalTime = intervalMs;
         this.isCapturingScreenshots = true;
+        
+        console.log(`Starting periodic screenshots every ${intervalMs}ms`);
         
         // Take initial screenshot
         this.captureScreenshot();
@@ -365,8 +428,6 @@ class WebcamManager {
         this.screenshotInterval = setInterval(() => {
             this.captureScreenshot();
         }, this.screenshotIntervalTime);
-    
-        console.log(`Started periodic screenshots every ${intervalMs}ms`);
     }
     
     stopPeriodicScreenshots() {
@@ -378,40 +439,52 @@ class WebcamManager {
         }
     }
     
-    // async captureScreenshot() {
-    //     if (!this.video || !this.video.videoWidth) {
-    //         console.error('Video element not ready');
-    //         return;
-    //     }
+    async captureScreenshot() {
+        if (!this.video || !this.video.videoWidth || !this.screenshotCanvas || !this.screenshotContext) {
+            console.error('Video or canvas not ready', {
+                video: !!this.video,
+                videoWidth: this.video?.videoWidth,
+                canvas: !!this.screenshotCanvas,
+                context: !!this.screenshotContext
+            });
+            return;
+        }
     
-    //     try {
-    //         // Set canvas dimensions to match video
-    //         this.screenshotCanvas.width = this.video.videoWidth;
-    //         this.screenshotCanvas.height = this.video.videoHeight;
+        try {
+            console.log('Attempting to capture screenshot...');
+            this.screenshotCanvas.width = this.video.videoWidth;
+            this.screenshotCanvas.height = this.video.videoHeight;
             
-    //         // Draw current video frame to canvas
-    //         this.screenshotContext.drawImage(this.video, 0, 0);
-    
-    //         // Convert to base64 image
-    //         const screenshot = this.screenshotCanvas.toDataURL('image/jpeg', 0.8);
+            this.screenshotContext.drawImage(this.video, 0, 0);
+            const screenshot = this.screenshotCanvas.toDataURL('image/jpeg', 0.8);
             
-    //         // Add to queue instead of sending immediately
-    //         await this.queueScreenshot({
-    //             data: screenshot,
-    //             timestamp: new Date().toISOString(),
-    //             attempts: 0
-    //         });
+            console.log('Sending screenshot to server...');
+            const response = await fetch('/api/screenshots', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': this.getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    screenshot: screenshot,
+                    timestamp: new Date().toISOString()
+                })
+            });
     
-    //     } catch (error) {
-    //         console.error('Error capturing screenshot:', error);
-    //         this.screenshotStats.failed++;
-    //         this.screenshotStats.lastError = {
-    //             timestamp: new Date(),
-    //             error: 'Capture error: ' + error.message
-    //         };
-    //     }
-    // }
-
+            const data = await response.json();
+            console.log('Server response:', data);
+    
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}: ${data.message || 'Unknown error'}`);
+            }
+    
+        } catch (error) {
+            console.error('Error capturing/saving screenshot:', error);
+        }
+    }
+    
     async queueScreenshot(screenshotData) {
         // Remove oldest item if queue is full
         if (this.screenshotQueue.length >= this.maxQueueSize) {
@@ -474,36 +547,6 @@ class WebcamManager {
         this.isProcessingQueue = false;
     }
 
-    async saveScreenshot(screenshot) {
-        try {
-            const response = await fetch('/api/screenshots', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': this.getCsrfToken(),
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    screenshot: screenshot.data,
-                    timestamp: screenshot.timestamp,
-                    retryAttempt: screenshot.attempts
-                })
-            });
-    
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => null);
-                throw new Error(`Server returned ${response.status}${errorData ? ': ' + JSON.stringify(errorData) : ''}`);
-            }
-    
-            const result = await response.json();
-            console.log('Screenshot saved:', result);
-            return true;
-        } catch (error) {
-            console.error('Error saving screenshot:', error);
-            return false;
-        }
-    }
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));

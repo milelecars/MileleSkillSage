@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Candidate;
 use App\Models\Test;
 use App\Models\Answer;
-use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -44,15 +43,12 @@ class AdminController extends Controller
             'tests' => function ($query) {
                 $query->select('tests.id', 'title', 'description', 'duration')
                     ->withPivot('started_at', 'completed_at', 'score','ip_address');
-            },
-            'tests.questions',
-            'reports' => function ($query) {
-                $query->select('id', 'candidate_id', 'test_id', 'score', 'completion_status', 'date_completed');
             }
         ])
         ->select('id', 'name', 'email', 'created_at', 'updated_at')
         ->latest()
         ->paginate(10);
+
 
         foreach ($candidates as $candidate) {
             if ($test = $candidate->tests->first()) {
@@ -60,6 +56,7 @@ class AdminController extends Controller
                 $candidate->test_started_at = $test->pivot->started_at;
                 $candidate->test_completed_at = $test->pivot->completed_at;
                 $candidate->test_score = $test->pivot->score;
+                $candidate->test_id = $test->id;
             }
         }
 
@@ -70,7 +67,6 @@ class AdminController extends Controller
                 ->distinct('candidate_id')
                 ->count(),
             'activeTests' => Test::count(),
-            'totalReports' => Report::count()
         ];
 
         return view('admin.manage-candidates', array_merge(compact('candidates'), $stats));
@@ -93,9 +89,6 @@ class AdminController extends Controller
                 $query->where('test_id', $test->id);
             })->get();
     
-        $report = Report::where('candidate_id', $candidate->id)
-            ->where('test_id', $test->id)
-            ->first();
     
         $totalQuestions = $test->questions->count();
         $percentage = $totalQuestions > 0 
@@ -111,7 +104,6 @@ class AdminController extends Controller
                 'score' => $test->pivot->score
             ],
             'answers' => $answers,
-            'report' => $report,
             'totalQuestions' => $totalQuestions,
             'percentage' => $percentage
         ]);
@@ -124,19 +116,19 @@ class AdminController extends Controller
             ->latest()
             ->first();
     
-        if ($testAttempt) {
-            Report::updateOrCreate( // Prevent duplicates
-                [
-                    'candidate_id' => $candidate->id,
-                    'test_id' => $testAttempt->id,
-                ],
-                [
-                    'score' => $testAttempt->pivot->score,
-                    'completion_status' => 'approved',
-                    'date_completed' => $testAttempt->pivot->completed_at
-                ]
-            );
-        }
+        // if ($testAttempt) {
+        //     Report::updateOrCreate( // Prevent duplicates
+        //         [
+        //             'candidate_id' => $candidate->id,
+        //             'test_id' => $testAttempt->id,
+        //         ],
+        //         [
+        //             'score' => $testAttempt->pivot->score,
+        //             'completion_status' => 'approved',
+        //             'date_completed' => $testAttempt->pivot->completed_at
+        //         ]
+        //     );
+        // }
     
         return redirect()->back()->with('success', 'Candidate approved successfully.');
     }
@@ -149,19 +141,19 @@ class AdminController extends Controller
             ->latest()
             ->first();
     
-        if ($testAttempt) {
-            Report::updateOrCreate( // Prevent duplicates
-                [
-                    'candidate_id' => $candidate->id,
-                    'test_id' => $testAttempt->id,
-                ],
-                [
-                    'score' => $testAttempt->pivot->score,
-                    'completion_status' => 'rejected',
-                    'date_completed' => $testAttempt->pivot->completed_at
-                ]
-            );
-        }
+        // if ($testAttempt) {
+        //     Report::updateOrCreate( // Prevent duplicates
+        //         [
+        //             'candidate_id' => $candidate->id,
+        //             'test_id' => $testAttempt->id,
+        //         ],
+        //         [
+        //             'score' => $testAttempt->pivot->score,
+        //             'completion_status' => 'rejected',
+        //             'date_completed' => $testAttempt->pivot->completed_at
+        //         ]
+        //     );
+        // }
     
         return redirect()->back()->with('success', 'Candidate rejected successfully.');
     }

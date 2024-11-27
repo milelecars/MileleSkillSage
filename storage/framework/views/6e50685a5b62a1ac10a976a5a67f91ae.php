@@ -1,23 +1,33 @@
-<x-app-layout>
+<?php if (isset($component)) { $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54 = $attributes; } ?>
+<?php $component = App\View\Components\AppLayout::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('app-layout'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\App\View\Components\AppLayout::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
     <div class="text-theme" id="dashboard-container">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {{-- header --}}
+            
             <div class="p-6 pb-4 mt-5 mb-10 border-b-2 border-gray-800">
                 <h1 class="text-3xl font-bold text-gray-900">
-                    Welcome, {{ Auth::guard('candidate')->user()->name}} 👋
+                    Welcome, <?php echo e(Auth::guard('candidate')->user()->name); ?> 👋
                 </h1>
                 <div class="text-sm text-gray-600 mt-2 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                         <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                     </svg>
-                    {{ Auth::guard('candidate')->user()->email }}
+                    <?php echo e(Auth::guard('candidate')->user()->email); ?>
+
                 </div>
             </div>
 
-            {{-- content --}}
+            
             <div class="grid grid-cols-2 gap-4 mx-4 pb-8">
-                {{-- Camera Section --}}
+                
                 <div class="bg-white rounded-xl p-8">
                     <div class="mb-6">
                         <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -38,9 +48,9 @@
                     </div>
                 </div>
 
-                {{-- right --}}
+                
                 <div class="grid gap-4 text-justify">
-                    {{-- Camera Warning --}}
+                    
                     <div id="camera-warning" class="bg-amber-50 rounded-xl p-6 border border-amber-200">
                         <div class="flex items-center gap-4">
                             <div class="flex-shrink-0">
@@ -54,7 +64,7 @@
                         </div>
                     </div>
 
-                    {{-- Troubleshooting Guide --}}
+                    
                     <div class="bg-blue-100 rounded-xl p-6 border border-blue-800">
                         <h3 class="text-lg font-semibold text-blue-900  mb-4">Trouble with your webcam?</h3>
                         <p class="space-y-3 text-sm text-blue-800 leading-9">
@@ -68,47 +78,47 @@
                     </div>
 
 
-                    @if(isset($test))
+                    <?php if(isset($test)): ?>
                         <div class="mb-6">
-                            @if($testAttempt && optional($testAttempt->pivot)->completed_at)
-                                {{-- Test completed --}}
+                            <?php if($testAttempt && optional($testAttempt->pivot)->completed_at): ?>
+                                
                                 <div class="flex justify-between items-center bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
                                     <p class="text-green-700">You have completed this test.</p>
-                                    <a href="{{ route('tests.result', ['id' => $test->id]) }}"
+                                    <a href="<?php echo e(route('tests.result', ['id' => $test->id])); ?>"
                                     class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
                                         View Results
                                     </a>
                                 </div>
-                            @elseif($testAttempt && optional($testAttempt->pivot)->started_at)
-                                {{-- Test in progress --}}
+                            <?php elseif($testAttempt && optional($testAttempt->pivot)->started_at): ?>
+                                
                                 <div class="flex justify-between items-center bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
                                     <p class="text-blue-700">You have a test in progress.</p>
-                                    <a href="{{ route('tests.start', ['id' => $test->id]) }}"
+                                    <a href="<?php echo e(route('tests.start', ['id' => $test->id])); ?>"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         Continue Test
                                     </a>
                                 </div>
-                            @else
-                                {{-- Test not started --}}
+                            <?php else: ?>
+                                
                                 <div class="flex w-full justify-between items-center bg-gray-100 border-l-4 border-blue-600 rounded-lg p-4 pr-0 mb-4">
                                     <p class="text-gray-700">Please review the guidelines before starting the test.</p>
-                                    <a href="{{ route('tests.show', ['id' => $test->id]) }}"
+                                    <a href="<?php echo e(route('tests.show', ['id' => $test->id])); ?>"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         View Guidelines
                                     </a>
                                 </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
-                    @else
+                    <?php else: ?>
                         <div class="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded-lg">
                             <p class="text-yellow-700">No test is currently available. <br> Please check your invitation or contact the administrator.</p>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/webcam.js') }}"></script>
+    <script src="<?php echo e(asset('js/webcam.js')); ?>"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const viewGuidelinesBtn = document.getElementById('view-guidelines-btn');
@@ -133,4 +143,13 @@
         });
 
     </script>
-</x-app-layout>
+ <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $attributes = $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?><?php /**PATH C:\Users\HeliaHaghighi\Desktop\AGCT-Software\resources\views/candidate/dashboard.blade.php ENDPATH**/ ?>

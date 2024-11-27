@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Test;
+use App\Models\Candidate;
 use App\Models\Question;
 use App\Models\QuestionChoice;
 use App\Models\QuestionMedia;
 use App\Models\Invitation;
 use App\Models\FlagType;
+use App\Models\CandidateFlag;
 use App\Models\Answer;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -17,6 +19,10 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QuestionsImport;
+use Illuminate\Support\Facades\DB; 
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 
 class TestController extends Controller
@@ -557,6 +563,82 @@ class TestController extends Controller
         ->with('error', 'Unauthorized access');
     }
 
+    public function saveScreenshot(Request $request)
+    {
+    
+        $candidate = Auth::guard('candidate')->user();
+        $testSession = session('test_session');
+    
+        if (!$testSession) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save screenshot: No active test session found'
+            ], 500);
+        }
+    
+        try {
+            $request->validate([
+                'screenshot' => 'required|string',
+                'timestamp' => 'required|date'
+            ]);
+    
+            $candidateTest = DB::table('candidate_test')
+                ->select('candidate_id', 'test_id')
+                ->where('candidate_id', $candidate->id)
+                ->where('test_id', $testSession['test_id'])
+                ->first();
+    
+            if (!$candidateTest) {
+                throw new \Exception('No active test attempt found');
+            }
+    
+            $directory = 'screenshots/' . $testSession['test_id'] . '/' . $candidate->id;
+            if (!Storage::exists($directory)) {
+                Storage::makeDirectory($directory);
+            }
+    
+            $filename = $directory . '/' . now()->format('Y-m-d_H-i-s') . '.jpg';
+    
+            $image = str_replace('data:image/jpeg;base64,', '', $request->screenshot);
+            $image = str_replace(' ', '+', $image);
+            $imageBinary = base64_decode($image);
+    
+            Storage::put($filename, $imageBinary);
+
+            DB::table('candidate_test_screenshots')->insert([
+                'candidate_id' => $candidate->id,
+                'test_id' => $testSession['test_id'],
+                'screenshot_path' => $filename,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+    
+            Log::info('Screenshot saved', [
+                'test_id' => $testSession['test_id'],
+                'candidate_id' => $candidate->id,
+                'filename' => $filename
+            ]);
+    
+            return response()->json([
+                'success' => true,
+                'filename' => $filename
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Screenshot save error:', [
+                'error' => $e->getMessage(),
+                'test_id' => $testSession['test_id'] ?? null,
+                'candidate_id' => $candidate->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save screenshot: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function startTest(Request $request, $id)
     {
         if (!Auth::guard('candidate')->check()) {
@@ -751,7 +833,6 @@ class TestController extends Controller
 
         return redirect()->route('tests.start', ['id' => $id]);
     }
-
     
     public function submitTest(Request $request, $id)
     {
@@ -770,6 +851,7 @@ class TestController extends Controller
                 'candidate_id' => $candidate->id,
                 'question_count' => $questions->count()
             ]);
+            
             $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->first();
@@ -853,20 +935,24 @@ class TestController extends Controller
                     }
                 }
             }
+            
     
-            $now = now();
-    
+            $realIP = $this->getClientIP();
             $candidate->tests()->updateExistingPivot($id, [
-                'completed_at' => $now,
-                'score' => $score,
+                'completed_at' => now() > $testAttempt->pivot->started_at->addMinutes($test->duration) 
+                    ? $testAttempt->pivot->started_at->addMinutes($test->duration) 
+                    : now(),                
+                'score' => $score?? 0,
                 'ip_address' => $realIP,
             ]);
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'score' => $score,
+                'score' => $score?? 0,
                 'ip_address' => $realIP,
             ]);
+        
+            $this->generatePDF($candidate->id, $id);
     
             // Clear the session
             session()->forget('test_session');
@@ -874,6 +960,8 @@ class TestController extends Controller
             $message = $request->boolean('expired')
                 ? 'Test time has expired. Your answers have been submitted automatically.'
                 : 'Test completed successfully!';
+            
+            
             
             return redirect()->route('tests.result', ['id' => $id])
                 ->with($request->boolean('expired') ? 'warning' : 'success', $message);
@@ -928,17 +1016,224 @@ class TestController extends Controller
         $started_at = Carbon::parse($test_pivot->started_at);
         $completed_at = $started_at->addMinutes($test->duration);
         
-        
+        $realIP = $this->getClientIP();
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => $completed_at,
-            'score' => $score,
+            'score' => $score ?? 0,
             'ip_address' => $realIP,
         ]);
+        $this->generatePDF($candidate->id, $id);
 
         session()->forget('test_session');
 
+
         return redirect()->route('tests.result', ['id' => $test->id])
             ->with('warning', 'Test time has expired. Your answers have been submitted automatically.');
+    }
+    
+    public function generatePDF($candidateId, $testId)
+    {
+        $this->debugIpHeaders();
+        
+        $candidateTest = DB::table('candidate_test')
+        ->where('candidate_id', $candidateId)
+        ->where('test_id', $testId)
+        ->first();
+        
+        if (!$candidateTest) {
+            abort(404, 'Test data for the candidate not found.');
+
+        }
+
+        $candidate = Candidate::findOrFail($candidateId);
+        $test = Test::findOrFail($testId);
+
+        $totalQuestions = DB::table('questions')
+            ->where('test_id', $testId)
+            ->count();
+
+        $ip = $candidateTest->ip_address;
+        Log::info('Looking up IP:', ['ip' => $ip]);
+
+        $location = $ip ? $this->getLocationFromIP($ip) : 'No IP recorded';
+        Log::info('Location result:', ['location' => $location]);
+
+        // Fetch anti-cheat data
+        $candidateFlags = CandidateFlag::where([
+            'test_id' => $testId,
+            'candidate_id' => $candidateId
+        ])
+        ->join('flag_types', 'candidate_flags.flag_type_id', '=', 'flag_types.id')
+        ->select('flag_types.name', 'candidate_flags.occurrences', 'candidate_flags.is_flagged')
+        ->get();
+
+        $antiCheatData = [
+            ['label' => 'Device used', 'value' => 'Desktop'],
+            ['label' => 'Location', 'value' => $location],
+            ['label' => 'IP Address', 'value' => $ip ?? 'Not available'],
+            ['label' => 'Filled out only once from IP address?', 'value' => 'Yes'],
+            ['label' => 'Webcam enabled?', 'value' => 'Yes'],
+            ['label' => 'Full-screen mode always active?', 'value' => 'Yes'],
+            ['label' => 'Mouse always in assessment window?', 'value' => 'Yes'],
+        ];
+
+        $tabSwitches = $candidateFlags->first(function ($flag) {
+            return $flag->name === 'Tab Switches';
+        });
+        if ($tabSwitches && $tabSwitches->occurrences > 0) {
+            $antiCheatData[5]['value'] = 'No';
+        }
+
+        // Add violation counts
+        foreach ($candidateFlags as $flag) {
+            $antiCheatData[] = [
+                'label' => $flag->name,
+                'value' => (string)$flag->occurrences,
+                'flagged' => $flag->is_flagged ? 'Yes' : 'No'
+            ];
+        }
+
+        // Prepare data for the PDF
+        $data = [
+            'title' => 'Skill Test Report',
+            'date' => now()->format('Y-m-d'),
+            'companyName' => 'Milele Motors',
+            'department' => 'Admin & Personal Assistant', 
+            'candidateName' => $candidate->name,
+            'email' => $candidate->email,
+            'overallRating' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            'status' => 'Completed on ' . date('M d, Y', strtotime($candidateTest->completed_at)),
+            'averageScore' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            'weightedScore' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            'antiCheat' => $antiCheatData,
+            'tests' => [
+                [
+                    'name' => $test->title,
+                    'score' => $this->calculateScore($candidateTest->score, $totalQuestions),
+                    'description' => $test->description,
+                    'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
+                    'time_limit' => gmdate('H:i:s', $test->duration * 60),
+                    'skills' => [
+                        [
+                            'name' => 'Controlling and driving the discussion',
+                            'correct' => 35,
+                            'incorrect' => 65,
+                            'unanswered' => 0,
+                        ],
+                        [
+                            'name' => 'Leveraging the psychology of the counterparty',
+                            'correct' => 20,
+                            'incorrect' => 30,
+                            'unanswered' => 50,
+                        ],
+                        [
+                            'name' => 'Using emotional intelligence',
+                            'correct' => 0,
+                            'incorrect' => 0,
+                            'unanswered' => 100,
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $fileName = "report_candidate{$candidateId}_test{$testId}_" . time() . '.pdf';
+        $folderPath = "reports";
+
+        if(!Storage::disk('public')->exists($folderPath)){
+            Storage::disk('public')->makeDirectory($folderPath);
+        }
+
+        $fullPath = $folderPath . '/' . $fileName;
+        Log::info("full path is", ['path' => $fullPath]);
+
+        // Generate PDF
+        $pdf = Pdf::loadView('reports.candidate-report', $data);
+        $pdf->getDomPDF()->set_option('defaultFont', 'figtree');
+        $pdf->getDomPDF()->set_option('isPhpEnabled', true);
+        $pdf->getDomPDF()->set_option('isRemoteEnabled', true);
+        $pdf->setPaper('A4', 'portrait');
+
+        Storage::disk('public')->put($fullPath, $pdf->output());
+
+        DB::table('candidate_test')
+            ->where('candidate_id', $candidateId)
+            ->where('test_id', $testId)
+            ->update(['report_path' => $fullPath]);
+
+        return $fullPath;
+    }
+
+    private function getClientIP()
+    {
+        $ipaddress = '';
+        
+        if (isset($_SERVER['HTTP_CLIENT_IP']))
+            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+        else if(isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        else if(isset($_SERVER['HTTP_X_FORWARDED']))
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+        else if(isset($_SERVER['HTTP_FORWARDED_FOR']))
+            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        else if(isset($_SERVER['HTTP_FORWARDED']))
+            $ipaddress = $_SERVER['HTTP_FORWARDED'];
+        else if(isset($_SERVER['REMOTE_ADDR']))
+            $ipaddress = $_SERVER['REMOTE_ADDR'];
+        else
+            $ipaddress = 'UNKNOWN';
+    
+        return $ipaddress;
+    }
+    
+    private function getLocationFromIP($ipAddress)
+    {
+        $cacheKey = 'ip_location_' . $ipAddress;
+        
+        return Cache::remember($cacheKey, now()->addDays(1), function () use ($ipAddress) {
+            try {
+                // Get the real client IP
+                $realIP = $this->getClientIP();
+                Log::info('Real Client IP:', ['ip' => $realIP]);
+    
+                $response = Http::get("http://ip-api.com/json/{$realIP}");
+                $data = $response->json();
+                
+                Log::info('IP API Response:', $data);
+    
+                if ($response->successful() && ($data['status'] ?? '') === 'success') {
+                    return sprintf(
+                        '%s (%s)',
+                        $data['city'] ?? 'Unknown City',
+                        $data['country'] ?? 'Unknown Country'
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::error('IP location lookup failed: ' . $e->getMessage());
+            }
+            
+            return 'Location not available';
+        });
+    }
+
+    private function debugIpHeaders()
+    {
+        $headers = [
+            'HTTP_CLIENT_IP' => $_SERVER['HTTP_CLIENT_IP'] ?? 'not set',
+            'HTTP_X_FORWARDED_FOR' => $_SERVER['HTTP_X_FORWARDED_FOR'] ?? 'not set',
+            'HTTP_X_FORWARDED' => $_SERVER['HTTP_X_FORWARDED'] ?? 'not set',
+            'HTTP_FORWARDED_FOR' => $_SERVER['HTTP_FORWARDED_FOR'] ?? 'not set',
+            'HTTP_FORWARDED' => $_SERVER['HTTP_FORWARDED'] ?? 'not set',
+            'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? 'not set'
+        ];
+        
+        Log::info('All possible IP sources:', $headers);
+        return $headers;
+    }
+    
+    private function calculateScore($score, $totalQuestions)
+    {
+        return $score > 0 ? round(($score / $totalQuestions) * 100, 2) : 0;
     }
 
     public function showResult($id)
