@@ -946,13 +946,16 @@ class TestController extends Controller
             
     
             $realIP = $this->testReportService->getClientIP();
+            $started_at = Carbon::parse($testAttempt->pivot->started_at);
+
             $candidate->tests()->updateExistingPivot($id, [
-                'completed_at' => now() > $testAttempt->pivot->started_at->addMinutes($test->duration) 
-                    ? $testAttempt->pivot->started_at->addMinutes($test->duration) 
-                    : now(),                
-                'score' => $score?? 0,
+                'completed_at' => now() > $started_at->copy()->addMinutes($test->duration)
+                    ? $started_at->copy()->addMinutes($test->duration)
+                    : now(),
+                'score' => $score ?? 0,
                 'ip_address' => $realIP,
             ]);
+            
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
@@ -1001,7 +1004,7 @@ class TestController extends Controller
         $candidate = Auth::guard('candidate')->user();
 
         $answers = Answer::where('candidate_id', $candidate->id)
-        ->whereIn('question_id', $questions->pluck('id')) // Ensure answers belong to test questions
+        ->whereIn('question_id', $questions->pluck('id')) 
         ->get();
         Log::info('answers', $answers->toArray());
         
@@ -1030,7 +1033,7 @@ class TestController extends Controller
             'score' => $score ?? 0,
             'ip_address' => $realIP,
         ]);
-        $this->testReportService->generatePDF($candidate->id, $id);
+        $this->testReportService->generatePDF($candidate->id, $test->id);
 
         session()->forget('test_session');
 

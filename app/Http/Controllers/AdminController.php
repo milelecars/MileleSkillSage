@@ -17,7 +17,8 @@ class AdminController extends Controller
         $stats = [
             'totalCandidates' => Candidate::count(),
             'completedTests' => DB::table('candidate_test')->whereNotNull('completed_at')->distinct('candidate_id')->count(),
-            'activeTests' => Test::count()
+            'activeTests' => Test::count(),
+            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
         ];
         
         return view('admin.dashboard', $stats);
@@ -67,6 +68,7 @@ class AdminController extends Controller
                 ->distinct('candidate_id')
                 ->count(),
             'activeTests' => Test::count(),
+            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
         ];
 
         return view('admin.manage-candidates', array_merge(compact('candidates'), $stats));

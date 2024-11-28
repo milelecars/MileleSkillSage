@@ -151,7 +151,7 @@ class TestReportService
         return $fullPath;
     }
 
-    private function getClientIP()
+    public function getClientIP()
     {
         $ipaddress = '';
         
@@ -173,7 +173,7 @@ class TestReportService
         return $ipaddress;
     }
     
-    private function getLocationFromIP($ipAddress)
+    public function getLocationFromIP($ipAddress)
     {
         $cacheKey = 'ip_location_' . $ipAddress;
         
@@ -203,7 +203,7 @@ class TestReportService
         });
     }
 
-    private function debugIpHeaders()
+    public function debugIpHeaders()
     {
         $headers = [
             'HTTP_CLIENT_IP' => $_SERVER['HTTP_CLIENT_IP'] ?? 'not set',
@@ -218,7 +218,7 @@ class TestReportService
         return $headers;
     }
     
-    private function calculateScore($score, $totalQuestions)
+    public function calculateScore($score, $totalQuestions)
     {
         return $score > 0 ? round(($score / $totalQuestions) * 100, 2) : 0;
     }
