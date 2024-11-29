@@ -8,6 +8,8 @@ use App\Models\Test;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\TestController;
+use App\Services\TestReportService;
+
 
 #[LivewireComponent]
 class TestTimer extends Component
@@ -20,7 +22,8 @@ class TestTimer extends Component
 
     public function boot()
     {
-        $this->testController = new TestController();
+        $testReportService = app(TestReportService::class);
+        $controller = new TestController($testReportService);
     }
 
     public function mount($testId)
@@ -61,7 +64,7 @@ class TestTimer extends Component
             $test = Test::findOrFail($this->testId);
             return $this->testController->handleExpiredTest($test);
         } catch (\Exception $e) {
-            Log::error('Error handling expired test', [
+            Log::error('Error handling expired test time', [
                 'test_id' => $this->testId,
                 'error' => $e->getMessage()
             ]);
