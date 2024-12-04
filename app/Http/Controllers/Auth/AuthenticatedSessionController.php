@@ -84,16 +84,28 @@ class AuthenticatedSessionController extends Controller
 
     public function destroy(Request $request)
     {
+        // Check if user is candidate and store token before logout
+        $isCandidate = Auth::guard('candidate')->check();
+        $token = $request->session()->get('invitation_token');
+        
         if (Auth::guard('web')->check()) {
             $admin = Auth::guard('web')->user();
             Log::info('Admin logged out', ['admin_id' => $admin->id]);
             Auth::guard('web')->logout();
+        } else if (Auth::guard('candidate')->check()) {
+            $candidate = Auth::guard('candidate')->user();
+            Log::info('Candidate logged out', ['candidate_id' => $candidate->id]);
+            Auth::guard('candidate')->logout();
         }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect('/')
-            ->with('success', 'You have been successfully logged out.');
+        // Redirect based on user type
+        if ($isCandidate && $token) {
+            return redirect()->route('invitation.show', ['token' => $token]);
+        }
+        
+        return redirect()->route('welcome');
     }
 }

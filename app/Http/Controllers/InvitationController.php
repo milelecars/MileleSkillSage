@@ -54,37 +54,40 @@ class InvitationController extends Controller
 
    public function validateEmail(Request $request, $token)
    {
-       $validatedData = $request->validate([
-           'name' => 'required|string|max:255',
-           'email' => 'required|email',
-       ]);
-   
-       $invitation = Invitation::with('test')
-           ->where('invitation_token', $token)
-           ->firstOrFail();
-           
-       if (now()->greaterThan($invitation->expiration_date)) {
-           return redirect()->route('invitation.expired');
-       }
-   
-       $invitedEmails = $invitation->invited_emails;
-       Log::info('hellooo {{ $invitedEmails}}');
-       if (!in_array($validatedData['email'], $invitedEmails)) {
-           return back()->withErrors(['email' => 'The email does not match the invitation.']);
-       }
-   
-       $candidate = Candidate::firstOrCreate(
-           ['email' => $validatedData['email']],
-           ['name' => $validatedData['name']]
-       );
-       
-       $existingAttempt = $candidate->tests()
-           ->where('test_id', $invitation->test_id)
-           ->first();
-   
-       Auth::guard('candidate')->login($candidate);
-       
-       return redirect()->route('candidate.dashboard');
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email',
+        ]);
+
+        $invitation = Invitation::with('test')
+            ->where('invitation_token', $token)
+            ->firstOrFail();
+            
+        if (now()->greaterThan($invitation->expiration_date)) {
+            return redirect()->route('invitation.expired');
+        }
+
+        $invitedEmails = $invitation->invited_emails;
+        if (!in_array($validatedData['email'], $invitedEmails)) {
+            return back()->withErrors(['email' => 'The email does not match the invitation.']);
+        }
+
+        $candidate = Candidate::firstOrCreate(
+            ['email' => $validatedData['email']],
+            ['name' => $validatedData['name']]
+        );
+        
+        $existingAttempt = $candidate->tests()->where('test_id', $invitation->test_id)->first();
+        
+        session([
+            'invitation_token' => $token,
+            'test_id' => $invitation->test_id,
+            'test' => $invitation->test,
+        ]);
+
+        Auth::guard('candidate')->login($candidate);
+        
+        return redirect()->route('candidate.dashboard');
    }
 
    private function setCandidateSession($candidate, $testId)

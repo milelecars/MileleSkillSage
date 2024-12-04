@@ -75,26 +75,31 @@ class InviteCandidates extends Component
         try {
             
             $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
+            $existingEmails = $invitation->invited_emails ?? [];
+            $allEmails= array_unique(array_merge($existingEmails, $this->emailList));
             
             
-            $this->sendInvitationEmails($invitation);
+            // Send emails only to new addresses
+            $newEmails = array_diff($this->emailList, $existingEmails);
+            if (!empty($newEmails)) {
+                $this->sendInvitationEmails($invitation, $newEmails);
+            }
             
             
             $invitation->update([
-                'invited_emails' => $this->emailList
+                'invited_emails' => $allEmails
             ]);
 
             
             session()->forget("test_{$this->testId}_emails");
-
-            
             $this->emailList = [];
 
-            session()->flash('message', 'Invitations have been sent successfully!');
+            session()->flash('success', 'Invitations have been sent successfully!');
 
+            $this->dispatch('invitations-sent');
             
-            return redirect()->route('tests.index');
         } catch (\Exception $e) {
+            session()->forget('success');
             $this->addError('submission', 'Failed to send invitations. Please try again.');
         }
     }
