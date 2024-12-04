@@ -61,16 +61,9 @@
                                         
                                         <div class="space-y-2 ml-4 mb-4">
                                             @foreach($question->choices as $choice)
-                                                <label class="flex items-center space-x-3">
-                                                    <input type="radio" 
-                                                        name="option_{{ $loop->parent->index }}" 
-                                                        value="{{ $choice->choice_text }}" 
-                                                        class="form-radio text-blue-600"
-                                                        {{ $choice->is_correct ? 'data-correct="true"' : '' }}>
-                                                    <span class="text-gray-700">
-                                                        {{ chr(65 + $loop->index) }}. {{ $choice->choice_text }}
-                                                    </span>
-                                                </label>
+                                                <div class="text-gray-700">
+                                                    {{ chr(65 + $loop->index) }}. {{ $choice->choice_text }}
+                                                </div>
                                             @endforeach
                                         </div>
                                         

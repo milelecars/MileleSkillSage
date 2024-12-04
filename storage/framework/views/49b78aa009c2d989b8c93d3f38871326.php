@@ -37,7 +37,7 @@
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-700">Total Reports</h3>
-                            <p class="text-2xl font-bold text-gray-900">temp</p>
+                            <p class="text-2xl font-bold text-gray-900"><?php echo e($totalReports); ?></p>
                         </div>
                     </div>
 

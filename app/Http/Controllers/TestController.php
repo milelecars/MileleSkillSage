@@ -93,7 +93,7 @@ class TestController extends Controller
             $invitation = Invitation::create([
                 'test_id' => $test->id,
                 'invited_emails' => json_encode([]),
-                'expiration_date' => now()->addDays(7),
+                'expiration_date' => now()->addYear(),
                 'invitation_token' => $invitationToken,
                 'invitation_link' => $validatedData['invitation_link'],
             ]);

@@ -72,17 +72,10 @@
                                         
                                         <div class="space-y-2 ml-4 mb-4">
                                             <?php $__currentLoopData = $question->choices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $choice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                                <label class="flex items-center space-x-3">
-                                                    <input type="radio" 
-                                                        name="option_<?php echo e($loop->parent->index); ?>" 
-                                                        value="<?php echo e($choice->choice_text); ?>" 
-                                                        class="form-radio text-blue-600"
-                                                        <?php echo e($choice->is_correct ? 'data-correct="true"' : ''); ?>>
-                                                    <span class="text-gray-700">
-                                                        <?php echo e(chr(65 + $loop->index)); ?>. <?php echo e($choice->choice_text); ?>
+                                                <div class="text-gray-700">
+                                                    <?php echo e(chr(65 + $loop->index)); ?>. <?php echo e($choice->choice_text); ?>
 
-                                                    </span>
-                                                </label>
+                                                </div>
                                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
                                         
