@@ -61,6 +61,8 @@ Route::middleware('auth:web')->group(function () {
     Route::put('/admin/approve/{candidate}', [AdminController::class, 'approveCandidate'])->name('candidate.approve');
     Route::put('/admin/reject/{candidate}', [AdminController::class, 'rejectCandidate'])->name('candidate.reject');
     Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'streamPDF'])->name('reports.candidate-report');
+    Route::get('/admin/manage-reports', [AdminController::class, 'manageReports'])->name('admin.manage-reports');
+    Route::get('/admin/manage-reports/download/{testId}', [AdminController::class, 'downloadTestReports'])->name('admin.download-test-reports');
     
     // Test routes for admin
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');

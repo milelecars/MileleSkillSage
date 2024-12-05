@@ -5,9 +5,9 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="/" class="w-28 ">
+                    <div class="w-28 ">
                         <x-application-logo />
-                    </a>
+                    </div>
                 </div>
 
                 <!-- Navigation Links -->

@@ -18,9 +18,9 @@
         <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.jpg') }}" />
         <div class="relative min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
             <div>
-                <a href="/" class="w-[30%] mx-auto my-2 block object-contain">
+                <div  class="w-[30%] mx-auto my-2 block object-contain">
                     <x-application-logo />
-                </a>
+                </div>
             </div>
 
             <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
