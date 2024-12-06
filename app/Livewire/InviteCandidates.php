@@ -73,45 +73,54 @@ class InviteCandidates extends Component
     public function submitInvitations()
     {
         try {
-            
             $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
             $existingEmails = $invitation->invited_emails ?? [];
-            $allEmails= array_unique(array_merge($existingEmails, $this->emailList));
-            
-            
-            // Send emails only to new addresses
             $newEmails = array_diff($this->emailList, $existingEmails);
-            if (!empty($newEmails)) {
-                $this->sendInvitationEmails($invitation, $newEmails);
+            
+            if (empty($newEmails)) {
+                session()->flash('info', 'No new emails to send invitations to.');
+                return;
             }
+    
+            // Try to send emails first
+            $failedEmails = $this->sendInvitationEmails($invitation);
             
-            
+            if (!empty($failedEmails)) {
+                // If any emails failed, don't update the database
+                $failedEmailsList = implode(', ', $failedEmails);
+                $this->addError('email_error', "Failed to send emails to: {$failedEmailsList}");
+                return;
+            }
+    
+            // Only if all emails were sent successfully, update the database
+            $allEmails = array_unique(array_merge($existingEmails, $this->emailList));
             $invitation->update([
                 'invited_emails' => $allEmails
             ]);
-
-            
+    
+            // Clear session and reset state
             session()->forget("test_{$this->testId}_emails");
             $this->emailList = [];
-
+    
             session()->flash('success', 'Invitations have been sent successfully!');
-
             $this->dispatch('invitations-sent');
-            
+    
         } catch (\Exception $e) {
+            \Log::error("Failed to process invitations: " . $e->getMessage());
             session()->forget('success');
-            $this->addError('submission', 'Failed to send invitations. Please try again.');
+            $this->addError('submission', 'Failed to process invitations. Please try again.');
         }
     }
-
+    
     private function sendInvitationEmails(Invitation $invitation)
     {
         $test = Test::findOrFail($this->testId);
+        $failedEmails = [];
         
         $mail = new PHPMailer(true);
-
+    
         try {
-            
+            // Configure PHPMailer
             $mail->isSMTP();
             $mail->Host = config('mail.mailers.smtp.host');
             $mail->SMTPAuth = true;
@@ -119,35 +128,42 @@ class InviteCandidates extends Component
             $mail->Password = config('mail.mailers.smtp.password');
             $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = config('mail.mailers.smtp.port');
-
-            
             $mail->setFrom(config('mail.from.address'), config('mail.from.name'));
-
-            
             $mail->isHTML(true);
             $mail->Subject = 'Invitation to Take a Test for Milele Motors';
-
-            
+    
+            // Prepare email template
             $emailTemplate = view('emails.invitation-email-template', [
                 'invitationLink' => $invitation->invitation_link,
                 'testName' => $test->title
             ])->render();
-
+    
             $mail->Body = $emailTemplate;
-
+    
+            // Try to send to each email individually
             foreach ($this->emailList as $email) {
-                $mail->clearAddresses();
-                $mail->addAddress($email);
-
-                if (!$mail->send()) {
-                    \Log::error("Failed to send invitation email to {$email}: " . $mail->ErrorInfo);
+                try {
+                    $mail->clearAddresses();
+                    $mail->addAddress($email);
+                    
+                    if (!$mail->send()) {
+                        \Log::error("Failed to send invitation email to {$email}: " . $mail->ErrorInfo);
+                        $failedEmails[] = $email;
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error sending to {$email}: " . $e->getMessage());
+                    $failedEmails[] = $email;
                 }
             }
-        } catch (Exception $e) {
-            \Log::error("Error sending invitation emails: " . $e->getMessage());
+    
+        } catch (\Exception $e) {
+            \Log::error("SMTP Configuration Error: " . $e->getMessage());
+            // If SMTP configuration fails, consider all emails as failed
+            $failedEmails = $this->emailList;
         }
+    
+        return $failedEmails;
     }
-
 
     public function render()
     {

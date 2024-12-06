@@ -42,12 +42,23 @@ return [
             'url' => null,
             'host' => 'smtp.gmail.com',
             'port' => 587,
-            'encryption' => 'tls',
-            'username' => 'heliaa.haghighi@gmail.com',
-            'password' => "swzngxtwvwjpuyfi",
+            'encryption' => 'tsl',
+            'username' => 'milelematrix@gmail.com',
+            'password' => "wzybbtxspannxhdi",
             'timeout' => null,
             'local_domain' => null,
         ],
+        // 'smtp' => [
+        //     'transport' => 'smtp',
+        //     'url' => null,
+        //     'host' => 'smtp.gmail.com',
+        //     'port' => 587,
+        //     'encryption' => 'tls',
+        //     'username' => 'heliaa.haghighi@gmail.com',
+        //     'password' => "swzngxtwvwjpuyfi",
+        //     'timeout' => null,
+        //     'local_domain' => null,
+        // ],
 
         'ses' => [
             'transport' => 'ses',
@@ -109,7 +120,7 @@ return [
     */
 
     'from' => [
-        'address' => 'heliaa.haghighi@gmail.com',
+        'address' => 'milelematrix@gmail.com',
         'name' =>  'Milele Motors',
     ],
 

@@ -46,7 +46,7 @@
             <div class="flex items-center justify-center mt-6">
                 <button type="submit" 
                         class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:shadow-outline">
-                    Start Test
+                    Enter
                 </button>
             </div>
         </form>

@@ -67,8 +67,7 @@ class AuthenticatedSessionController extends Controller
             ]);
             
             return redirect()
-                ->intended(route('admin.dashboard'))
-                ->with('success', 'Welcome back, ' . $admin->name);
+                ->intended(route('admin.dashboard'));
         }
 
         Log::warning('Failed admin login attempt - password mismatch', [

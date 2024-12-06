@@ -27,7 +27,7 @@ class Candidate extends Authenticatable
     public function tests()
     {
         return $this->belongsToMany(Test::class, 'candidate_test')
-        ->withPivot(['started_at', 'completed_at', 'score','ip_address'])
+        ->withPivot(['started_at', 'completed_at', 'score','ip_address', 'status'])
         ->withTimestamps();
     }
 

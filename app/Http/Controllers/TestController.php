@@ -600,7 +600,7 @@ class TestController extends Controller
                 throw new \Exception('No active test attempt found');
             }
     
-            $directory = 'screenshots/' . $testSession['test_id'] . '/' . $candidate->id;
+            $directory = 'screenshots/test' . $testSession['test_id'] . '/candidate' . $candidate->id;
             if (!Storage::exists($directory)) {
                 Storage::makeDirectory($directory);
             }
@@ -658,10 +658,9 @@ class TestController extends Controller
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
         $questions = $test->questions;
         
-        // Check if completed
         $isCompleted = $candidate->tests()
             ->wherePivot('test_id', $id)
-            ->whereNotNull('candidate_test.completed_at')
+            ->where('candidate_test.status', 'completed')
             ->exists();
         
         if ($isCompleted) {
@@ -982,6 +981,7 @@ class TestController extends Controller
                     : now(),
                 'score' => $score ?? 0,
                 'ip_address' => $realIP,
+                'status' => 'completed'
             ]);
             
             Log::info('Test completed successfully', [
@@ -1060,6 +1060,7 @@ class TestController extends Controller
             'completed_at' => $completed_at,
             'score' => $score ?? 0,
             'ip_address' => $realIP,
+            'status' => 'completed'
         ]);
         $this->testReportService->generatePDF($candidate->id, $test->id);
 

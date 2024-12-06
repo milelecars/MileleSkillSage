@@ -1,7 +1,7 @@
-# AGCT-Software: Test Management System
+# MileleSkillSage: Test Management System
 
 ## 📋 Overview
-AGCT-Software is a secure, feature-rich online test management system built with Laravel 11. It provides a comprehensive platform for creating, conducting, and monitoring online assessments with advanced anti-cheating capabilities.
+MileleSkillSage is a secure, feature-rich online test management system built with Laravel 11. It provides a comprehensive platform for creating, conducting, and monitoring online assessments with advanced anti-cheating capabilities.
 
 ## 🌟 Key Features
 
@@ -55,8 +55,8 @@ AGCT-Software is a secure, feature-rich online test management system built with
 
 1. Clone the repository
 ```bash
-git clone https://github.com/heli-ih/AGCT-Software.git
-cd AGCT-Software
+git clone https://github.com/milelecars/MileleSkillSage.git
+cd MileleSkillSage
 ```
 
 2. Install PHP dependencies

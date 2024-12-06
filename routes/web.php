@@ -51,15 +51,21 @@ Route::middleware('guest')->group(function () {
     Route::post('/invitation/{token}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 });
 
+
 // Admin authenticated routes
 Route::middleware('auth:web')->group(function () {
     // Admin routes
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
-    Route::get('/admin/manage-candidates', [AdminController::class, 'manageCandidates'])->name('manage-candidates');
+    Route::get('/admin/manage-candidates', [AdminController::class, 'manageCandidates'])->name('admin.manage-candidates');
     Route::get('/admin/candidate-result/{candidate}', [AdminController::class, 'candidateResult'])->name('admin.candidate-result');
-    Route::put('/admin/approve/{candidate}', [AdminController::class, 'approveCandidate'])->name('candidate.approve');
-    Route::put('/admin/reject/{candidate}', [AdminController::class, 'rejectCandidate'])->name('candidate.reject');
+    Route::get('private-screenshot/{testId}/{candidateId}/{filename}', [AdminController::class, 'getPrivateScreenshot'])
+        ->name('private.screenshot');
+    Route::put('/candidates/{candidate}/accept', [AdminController::class, 'acceptCandidate'])
+        ->name('candidate.accept');
+    Route::put('/candidates/{candidate}/reject', [AdminController::class, 'rejectCandidate'])
+        ->name('candidate.reject');
+
     Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'streamPDF'])->name('reports.candidate-report');
     Route::get('/admin/manage-reports', [AdminController::class, 'manageReports'])->name('admin.manage-reports');
     Route::get('/admin/manage-reports/download/{testId}', [AdminController::class, 'downloadTestReports'])->name('admin.download-test-reports');

@@ -78,6 +78,12 @@ class InvitationController extends Controller
         );
         
         $existingAttempt = $candidate->tests()->where('test_id', $invitation->test_id)->first();
+
+        if (!$existingAttempt) {
+            $candidate->tests()->attach($invitation->test_id, [
+                'status' => 'in progress'  
+            ]);
+        }
         
         session([
             'invitation_token' => $token,

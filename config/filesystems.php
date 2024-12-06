@@ -44,6 +44,11 @@ return [
             'visibility' => 'public',
             'throw' => false,
         ],
+        
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+        ],
 
         's3' => [
             'driver' => 's3',
