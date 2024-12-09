@@ -121,21 +121,34 @@
                                     <h2 class="text-xl font-bold text-red-700">Important Guidelines</h2>
                                 </div>
                                 <ul class="text-base text-gray-700 list-disc pl-6 space-y-3">
-                                    <li><strong>Test Duration:</strong> Once started, the timer continues even if you close the browser. Complete all questions in one session.</li>
-                                    <li><strong>Email Requirement:</strong> Use the same email throughout. You'll need it to resume if you leave.</li>
-                                    <li><strong>No Pauses:</strong> The test cannot be paused. Interruptions won't stop the timer.</li>
-                                    <li><strong>Webcam Monitoring:</strong> Your webcam and audio may be monitored. Ensure it's enabled and you're alone.</li>
                                     <li><strong>One Attempt:</strong> You can take the test only once. Be prepared before starting.</li>
+                                    <li><strong>Test Duration:</strong> Once started, the timer continues even if you close the browser. Complete all questions in one session.</li>
+                                    <li><strong>Allowed:</strong> You are free to use a calculator, pen and paper.</li>
+                                    <li><strong>No Pauses:</strong> The test cannot be paused and any interruptions won't stop the timer.</li>
+                                    <li><strong>Email Requirement:</strong> Use the same email throughout. You'll need it to resume if you leave or accidentally close the web page.</li>
+                                    <li><strong>Webcam Monitoring:</strong> Your webcam and audio may be monitored. Ensure it's enabled and you're alone.</li>
                                 </ul>
                             </div>
-                            <div class="flex justify-end mt-8">
-                                <a href="{{ route('tests.start', $test->id) }}" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md">
-                                    Start Test
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                </a>
-                            </div>
+                            <form action="{{ route('tests.start', $test->id) }}" method="POST"> 
+                                @csrf 
+                                <div class="mt-5 p-2 flex items-center space-x-2">
+                                    <input type="checkbox" name="agreement" id="agreement" class="rounded border-black" required>
+                                    <label for="agreement" class="text-sm text-gray-600">
+                                        I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">Guidelines</a>
+                                    </label>
+                                </div>
+                                @error('agreement')
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
+                                <div class="flex justify-end mt-8">
+                                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md">
+                                        Start Test
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </form>
                         @endif
                     @endif
                 </div>

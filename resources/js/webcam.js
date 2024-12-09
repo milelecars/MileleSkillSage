@@ -179,22 +179,22 @@ class WebcamManager {
             statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
             handleViolation(true, 'More than One Person');
         } else if (personCount === 0) {
-            statusMessage += "<p style='color: red;'>No person detected!</p>";
+            statusMessage += "<p style='color: red;'>No one is present!</p>";
             handleViolation(false, 'More than One Person');
         } else {
-            statusMessage += "<p style='color: green;'>One person detected.</p>";
+            statusMessage += "<p style='color: green;'>One person detected</p>";
             handleViolation(false, 'More than One Person');
         }
 
         if (hasBook) {
-            statusMessage += "<p>Book detected.</p>";
+            statusMessage += "<p>Book detected</p>";
             handleViolation(true, 'Book');
         } else {
             handleViolation(false, 'Book');
         }
 
         if (hasCellPhone) {
-            statusMessage += "<p>Cell phone detected.</p>";
+            statusMessage += "<p>Cell phone detected</p>";
             handleViolation(true, 'Cellphone');
         } else {
             handleViolation(false, 'Cellphone');

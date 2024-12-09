@@ -657,6 +657,10 @@ class TestController extends Controller
         $candidate = Auth::guard('candidate')->user();
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
         $questions = $test->questions;
+
+        $request->validate([
+            'agreement' => 'required|accepted',
+        ]);
         
         $isCompleted = $candidate->tests()
             ->wherePivot('test_id', $id)
