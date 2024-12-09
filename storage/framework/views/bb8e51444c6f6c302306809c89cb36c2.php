@@ -53,4 +53,4 @@
 
     </body>
 </html>
-<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/layouts/app.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views\layouts\app.blade.php ENDPATH**/ ?>

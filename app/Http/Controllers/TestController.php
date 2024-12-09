@@ -658,9 +658,9 @@ class TestController extends Controller
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
         $questions = $test->questions;
 
-        $request->validate([
-            'agreement' => 'required|accepted',
-        ]);
+        // $request->validate([
+        //     'agreement' => 'required|accepted',
+        // ]);
         
         $isCompleted = $candidate->tests()
             ->wherePivot('test_id', $id)
@@ -904,8 +904,6 @@ class TestController extends Controller
                 'answer' => 'nullable|exists:question_choices,id', 
             ]);
     
-            Log::info('in submit');
-    
             $testSession = session('test_session');
             if (!$testSession || $testSession['test_id'] != $id) {
                 Log::error('Invalid test session during submission', [
@@ -977,6 +975,9 @@ class TestController extends Controller
             
     
             $realIP = $this->testReportService->getClientIP();
+            $location = $this->testReportService->getLocationFromIP('192.168.1.37');
+            Log::info("location is ", $location);
+
             $started_at = Carbon::parse($testAttempt->pivot->started_at);
 
             $candidate->tests()->updateExistingPivot($id, [
@@ -1060,6 +1061,8 @@ class TestController extends Controller
         $completed_at = $started_at->addMinutes($test->duration);
         
         $realIP = $this->testReportService->getClientIP();
+        $location = $this->testReportService->getLocationFromIP('192.168.1.37');
+            Log::info("location is ", $location);
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => $completed_at,
             'score' => $score ?? 0,

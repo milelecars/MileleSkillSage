@@ -142,33 +142,46 @@
                                     <li><strong>Webcam Monitoring:</strong> Your webcam and audio may be monitored. Ensure it's enabled and you're alone.</li>
                                 </ul>
                             </div>
-                            <form action="<?php echo e(route('tests.start', $test->id)); ?>" method="POST"> 
-                                <?php echo csrf_field(); ?> 
+                            <div class="mt-8 p-2 flex items-center space-x-2">
+                                <input type="checkbox" name="agreement" id="agreement" class="rounded border-black" required>
+                                <label for="agreement" class="text-sm text-gray-600">
+                                    I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">
+                                        Guidelines
+                                    </a>
+                                </label>
+                            </div>
+                            <div class="flex justify-end mt-8">
+                                <a href="<?php echo e(route('tests.start', $test->id)); ?>" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md">
+                                    Start Test
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                    </svg>
+                                </a>
+                            </div>
+
+                            <!-- <div x-data="{ agreed: false }">
                                 <div class="mt-5 p-2 flex items-center space-x-2">
-                                    <input type="checkbox" name="agreement" id="agreement" class="rounded border-black" required>
+                                    <input type="checkbox" 
+                                        x-model="agreed" 
+                                        id="agreement" 
+                                        class="rounded border-black">
                                     <label for="agreement" class="text-sm text-gray-600">
                                         I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">Guidelines</a>
                                     </label>
                                 </div>
-                                <?php $__errorArgs = ['agreement'];
-$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
-if ($__bag->has($__errorArgs[0])) :
-if (isset($message)) { $__messageOriginal = $message; }
-$message = $__bag->first($__errorArgs[0]); ?>
-                                    <span class="text-red-500 text-sm"><?php echo e($message); ?></span>
-                                <?php unset($message);
-if (isset($__messageOriginal)) { $message = $__messageOriginal; }
-endif;
-unset($__errorArgs, $__bag); ?>
+                                <span x-show="!agreed" x-cloak class="text-red-500 text-sm">You must agree to the terms to continue</span>
+                                
                                 <div class="flex justify-end mt-8">
-                                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md">
+                                    <button @click="if(agreed) window.location.href='<?php echo e(route('tests.start', $test->id)); ?>'"
+                                            :class="{ 'opacity-50 cursor-not-allowed': !agreed, 'hover:bg-blue-700': agreed }"
+                                            class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md">
                                         Start Test
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                                         </svg>
                                     </button>
                                 </div>
-                            </form>
+                            </div> -->
                         <?php endif; ?>
                     <?php endif; ?>
                 </div>

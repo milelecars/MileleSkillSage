@@ -18,7 +18,16 @@ use App\Services\TestReportService;
 
 class TestReportService
 {
-   public function generatePDF($candidateId, $testId)
+    private $apiKey; 
+    private $cache;
+    private $logger;
+    
+    public function __construct($apiKey = null)
+    {
+        $this->apiKey = $apiKey;
+    }
+
+    public function generatePDF($candidateId, $testId)
     {
         $this->debugIpHeaders();
         
@@ -71,7 +80,6 @@ class TestReportService
             $antiCheatData[5]['value'] = 'No';
         }
 
-        // Add violation counts
         foreach ($candidateFlags as $flag) {
             $antiCheatData[] = [
                 'label' => $flag->name,
@@ -80,7 +88,6 @@ class TestReportService
             ];
         }
 
-        // Prepare data for the PDF
         $data = [
             'title' => 'Skill Test Report',
             'date' => now()->format('Y-m-d'),
@@ -134,7 +141,6 @@ class TestReportService
         $fullPath = $folderPath . '/' . $fileName;
         Log::info("full path is", ['path' => $fullPath]);
 
-        // Generate PDF
         $pdf = Pdf::loadView('reports.candidate-report', $data);
         $pdf->getDomPDF()->set_option('defaultFont', 'figtree');
         $pdf->getDomPDF()->set_option('isPhpEnabled', true);
@@ -153,24 +159,27 @@ class TestReportService
 
     public function getClientIP()
     {
-        $ipaddress = '';
+        $ipHeaders = [
+            'HTTP_CLIENT_IP',
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_FORWARDED',
+            'HTTP_FORWARDED_FOR',
+            'HTTP_FORWARDED',
+            'REMOTE_ADDR'
+        ];
         
-        if (isset($_SERVER['HTTP_CLIENT_IP']))
-            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-        else if(isset($_SERVER['HTTP_X_FORWARDED_FOR']))
-            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        else if(isset($_SERVER['HTTP_X_FORWARDED']))
-            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-        else if(isset($_SERVER['HTTP_FORWARDED_FOR']))
-            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-        else if(isset($_SERVER['HTTP_FORWARDED']))
-            $ipaddress = $_SERVER['HTTP_FORWARDED'];
-        else if(isset($_SERVER['REMOTE_ADDR']))
-            $ipaddress = $_SERVER['REMOTE_ADDR'];
-        else
-            $ipaddress = 'UNKNOWN';
-    
-        return $ipaddress;
+        foreach ($ipHeaders as $header) {
+            if (isset($_SERVER[$header])) {
+                // Handle X-Forwarded-For header which may contain multiple IPs
+                if ($header === 'HTTP_X_FORWARDED_FOR') {
+                    $ips = explode(',', $_SERVER[$header]);
+                    return trim($ips[0]); // Return the first IP in the list
+                }
+                return $_SERVER[$header];
+            }
+        }
+        
+        return 'UNKNOWN';
     }
     
     public function getLocationFromIP($ipAddress)
@@ -182,24 +191,54 @@ class TestReportService
                 // Get the real client IP
                 $realIP = $this->getClientIP();
                 Log::info('Real Client IP:', ['ip' => $realIP]);
-    
-                $response = Http::get("http://ip-api.com/json/{$realIP}");
+                
+                // Use ip-api.com's extended endpoint for more data
+                $endpoint = "http://ip-api.com/json/{$realIP}";
+                $query = http_build_query([
+                    'fields' => 'status,message,continent,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,mobile,proxy,hosting'
+                ]);
+                
+                $response = Http::get($endpoint . '?' . $query);
                 $data = $response->json();
                 
                 Log::info('IP API Response:', $data);
-    
+
                 if ($response->successful() && ($data['status'] ?? '') === 'success') {
-                    return sprintf(
-                        '%s (%s)',
-                        $data['city'] ?? 'Unknown City',
-                        $data['country'] ?? 'Unknown Country'
-                    );
+                    return [
+                        'formatted_address' => sprintf(
+                            '%s, %s, %s',
+                            $data['city'] ?? 'Unknown City',
+                            $data['regionName'] ?? 'Unknown Region',
+                            $data['country'] ?? 'Unknown Country'
+                        ),
+                        'city' => $data['city'] ?? null,
+                        'region' => $data['regionName'] ?? null,
+                        'country' => $data['country'] ?? null,
+                        'country_code' => $data['countryCode'] ?? null,
+                        'zip' => $data['zip'] ?? null,
+                        'latitude' => $data['lat'] ?? null,
+                        'longitude' => $data['lon'] ?? null,
+                        'timezone' => $data['timezone'] ?? null,
+                        'isp' => $data['isp'] ?? null,
+                        'organization' => $data['org'] ?? null,
+                        'is_proxy' => $data['proxy'] ?? false,
+                        'is_mobile' => $data['mobile'] ?? false,
+                        'is_hosting' => $data['hosting'] ?? false
+                    ];
                 }
+                
+                throw new \Exception('Failed to get location data: ' . ($data['message'] ?? 'Unknown error'));
             } catch (\Exception $e) {
-                Log::error('IP location lookup failed: ' . $e->getMessage());
+                Log::error('IP location lookup failed: ' . $e->getMessage(), [
+                    'ip' => $ipAddress,
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                return [
+                    'formatted_address' => 'Location not available',
+                    'error' => $e->getMessage()
+                ];
             }
-            
-            return 'Location not available';
         });
     }
 
@@ -211,11 +250,17 @@ class TestReportService
             'HTTP_X_FORWARDED' => $_SERVER['HTTP_X_FORWARDED'] ?? 'not set',
             'HTTP_FORWARDED_FOR' => $_SERVER['HTTP_FORWARDED_FOR'] ?? 'not set',
             'HTTP_FORWARDED' => $_SERVER['HTTP_FORWARDED'] ?? 'not set',
-            'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? 'not set'
+            'REMOTE_ADDR' => $_SERVER['REMOTE_ADDR'] ?? 'not set',
+            'RESOLVED_IP' => $this->getClientIP()
         ];
         
-        Log::info('All possible IP sources:', $headers);
+        Log::info('IP Headers Debug:', $headers);
         return $headers;
+    }
+
+    public function validateIP($ip)
+    {
+        return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
     
     public function calculateScore($score, $totalQuestions)
