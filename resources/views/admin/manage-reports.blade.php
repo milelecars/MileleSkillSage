@@ -28,12 +28,12 @@
                             <p class="text-2xl font-bold text-green-900">{{ $totalReports }}</p>
                         </div>
                         <div class="bg-purple-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-purple-700">Total Candidates</h3>
-                            <p class="text-2xl font-bold text-purple-900">{{ $totalCandidates }}</p>
+                            <h3 class="text-lg font-semibold text-purple-700">Total Candidates Participated</h3>
+                            <p class="text-2xl font-bold text-purple-900">{{ $totalCandidatesParticipated }}</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-700">Completed Tests</h3>
-                            <p class="text-2xl font-bold text-gray-900">{{ $completedTests }}</p>
+                            <p class="text-2xl font-bold text-gray-900">2</p>
                         </div>
                     </div>
 
@@ -42,10 +42,9 @@
                         <table class="min-w-full divide-y divide-gray-200 border border-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Test ID</th>
                                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Test Title</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Description</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total Candidates</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Progress</th>
+                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Invitation Expiry</th>
                                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Total Reports</th>
                                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                                 </tr>
@@ -53,20 +52,37 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($testReports as $report)
                                     <tr class="text-center">
-                                        <td class="px-2 py-4 text-sm">{{ $report->id }}</td>
                                         <td class="px-2 py-4 text-sm">{{ $report->title }}</td>
-                                        <td class="px-2 py-4 text-sm">{{ Str::limit($report->description, 50) }}</td>
-                                        <td class="px-2 py-4 text-sm">{{ $report->total_candidates }}</td>
+                                        <td class="px-2 py-4 text-sm">
+                                            <div class="relative w-full h-6 bg-gray-200 rounded-full overflow-hidden flex">
+                                                <!-- candidates participated  -->
+                                                <div class="bg-green-200 h-full relative flex items-center justify-center"
+                                                    style="width: {{ ($report->total_candidates_invited > 0 ? ($totalCandidatesParticipated / $report->total_candidates_invited) * 100 : 0) }}%">
+                                                    <span class="text-xs font-medium text-gray-700">{{ $totalCandidatesParticipated }}</span>
+                                                </div>
+                                                
+                                                <!-- candidates invited -->
+                                                <div class="bg-yellow-100 h-full relative flex items-center justify-center"
+                                                    style="width: {{ ($report->total_candidates_invited > 0 ? (($report->total_candidates_invited - $totalCandidatesParticipated) / $report->total_candidates_invited) * 100 : 0) }}%">
+                                                    <span class="text-xs font-medium text-gray-700">
+                                                        {{ $report->total_candidates_invited - $totalCandidatesParticipated }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-2 py-4 text-sm">
+                                            {{ isset($report->invitation_expiry) ? date('Y-m-d', strtotime($report->invitation_expiry)) : 'N/A' }}
+                                        </td>
                                         <td class="px-2 py-4 text-sm">{{ $report->total_reports }}</td>
                                         <td class="px-2 py-4">
                                             <div class="flex justify-center">
-                                            <a href="{{ route('admin.download-test-reports', $report->id) }}" 
-                                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                                                </svg>
-                                                Download All
-                                            </a>
+                                                <a href="{{ route('admin.download-test-reports', $report->id) }}" 
+                                                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                    </svg>
+                                                    Download All
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>

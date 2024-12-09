@@ -108,6 +108,18 @@
                                         </p>
                                     </div>
                                 </div>
+                               
+                                <!-- Report -->
+                                <div>
+                                    <a  class="flex items-center space-x-3" href="<?php echo e(route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id])); ?>">
+                                        <div class="flex-shrink-0">
+                                            <svg fill="#a7acb3" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#c5c9d0" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold">Report</p>
+                                        </div>
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -121,27 +133,28 @@
                                 <div class="p-6 space-y-4">
                                     <div class="flex justify-between items-center">
                                         <span class="text-gray-600">Status</span>
-                                        <?php if($test->pivot->completed_at): ?>
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                                <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                                </svg>
+                                        <?php if($test->pivot->status === 'accepted'): ?>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-green-800 bg-green-100">
+                                                Accepted
+                                            </span>
+                                        <?php elseif($test->pivot->status === 'rejected'): ?>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-red-800 bg-red-100">
+                                                Rejected
+                                            </span>
+                                        <?php elseif($test->pivot->status === 'completed'): ?>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-blue-800 bg-blue-100">
                                                 Completed
                                             </span>
-                                        <?php elseif($test->pivot->started_at): ?>
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                                                <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
-                                                </svg>
+                                        <?php elseif($test->pivot->status === 'in_progress'): ?>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-yellow-800 bg-yellow-100">
                                                 In Progress
                                             </span>
                                         <?php else: ?>
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-gray-800 bg-gray-100">
                                                 Not Started
                                             </span>
                                         <?php endif; ?>
                                     </div>
-
                                     <div class="space-y-2">
                                         <p class="text-sm text-gray-600">Score Progress</p>
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -234,28 +247,32 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="mt-8 flex justify-end space-x-4">
-                        <form action="<?php echo e(route('candidate.approve', $candidate->id)); ?>" method="POST" class="inline">
-                            <?php echo csrf_field(); ?>
-                            <?php echo method_field('PUT'); ?>
-                            <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Approve Candidate
-                            </button>
-                        </form>
-                        <form action="<?php echo e(route('candidate.reject', $candidate->id)); ?>" method="POST" class="inline">
-                            <?php echo csrf_field(); ?>
-                            <?php echo method_field('PUT'); ?>
-                            <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Reject Candidate
-                            </button>
-                        </form>
-                    </div>
+                    <?php if($test->pivot->status !== 'accepted' && $test->pivot->status !== 'rejected'): ?>
+                        <div class="mt-8 flex justify-end space-x-4">
+                            <form action="<?php echo e(route('candidate.accept', $candidate)); ?>" method="POST" class="inline">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
+                                <input type="hidden" name="test_id" value="<?php echo e($test->id); ?>">
+                                <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Accept
+                                </button>
+                            </form>
+                            <form action="<?php echo e(route('candidate.reject', $candidate)); ?>" method="POST" class="inline">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
+                                <input type="hidden" name="test_id" value="<?php echo e($test->id); ?>">
+                                <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Reject
+                                </button>
+                            </form>                                
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

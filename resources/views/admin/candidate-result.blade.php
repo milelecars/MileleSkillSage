@@ -98,6 +98,18 @@
                                         </p>
                                     </div>
                                 </div>
+                               
+                                <!-- Report -->
+                                <div>
+                                    <a  class="flex items-center space-x-3" href="{{ route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id]) }}">
+                                        <div class="flex-shrink-0">
+                                            <svg fill="#a7acb3" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#c5c9d0" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold">Report</p>
+                                        </div>
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -224,28 +236,32 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="mt-8 flex justify-end space-x-4">
-                        <form action="{{ route('candidate.accept', $candidate->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('PUT')
-                            <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                </svg>
-                                Accept
-                            </button>
-                        </form>
-                        <form action="{{ route('candidate.reject', $candidate->id) }}" method="POST" class="inline">
-                            @csrf
-                            @method('PUT')
-                            <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Reject
-                            </button>
-                        </form>
-                    </div>
+                    @if($test->pivot->status !== 'accepted' && $test->pivot->status !== 'rejected')
+                        <div class="mt-8 flex justify-end space-x-4">
+                            <form action="{{ route('candidate.accept', $candidate) }}" method="POST" class="inline">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="test_id" value="{{ $test->id }}">
+                                <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Accept
+                                </button>
+                            </form>
+                            <form action="{{ route('candidate.reject', $candidate) }}" method="POST" class="inline">
+                                @csrf
+                                @method('PUT')
+                                <input type="hidden" name="test_id" value="{{ $test->id }}">
+                                <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Reject
+                                </button>
+                            </form>                                
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

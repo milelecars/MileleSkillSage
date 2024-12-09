@@ -127,17 +127,9 @@ class AdminController extends Controller
 
     public function getPrivateScreenshot($testId, $candidateId, $filename)
     {
-        Log::info('Attempting to serve private screenshot', [
-            'testId' => $testId,
-            'candidateId' => $candidateId,
-            'filename' => $filename
-        ]);
-
-        // Construct the full path
         $path = "screenshots/{$testId}/{$candidateId}/{$filename}";
         Log::info('Constructed path', ['path' => $path]);
 
-        // Check if file exists in private storage
         if (!Storage::disk('private')->exists($path)) {
             Log::error('File not found in private storage', [
                 'path' => $path,
@@ -147,14 +139,7 @@ class AdminController extends Controller
         }
 
         $fullPath = Storage::disk('private')->path($path);
-        
-        // Get file's mime type
         $mimeType = mime_content_type($fullPath);
-        Log::info('File details', [
-            'mimeType' => $mimeType,
-            'fileSize' => filesize($fullPath),
-            'lastModified' => date('Y-m-d H:i:s', filemtime($fullPath))
-        ]);
 
         return response()->file($fullPath, [
             'Content-Type' => $mimeType,
@@ -165,8 +150,6 @@ class AdminController extends Controller
 
     public function candidateResult(Candidate $candidate)
     {
-        Log::info('Loading candidate result page', ['candidateId' => $candidate->id]);
-
         $test = $candidate->tests()
             ->with(['questions.choices', 'questions.media'])
             ->withPivot('started_at', 'completed_at', 'score', 'ip_address', 'status')
@@ -187,7 +170,6 @@ class AdminController extends Controller
 
         $duration = $durationInMinutes . ' ' . Str::plural('minute', $durationInMinutes) . ' and ' . $durationInSeconds . ' ' . Str::plural('second', $durationInSeconds);
 
-        // Get screenshots with debug info
         $screenshots = DB::table('candidate_test_screenshots')
             ->where('candidate_id', $candidate->id)
             ->where('test_id', $test->id)
@@ -199,23 +181,6 @@ class AdminController extends Controller
             'count' => $screenshots->count(),
             'paths' => $screenshots->pluck('screenshot_path')->toArray()
         ]);
-
-        // Debug storage configuration
-        Log::info('Storage configuration', [
-            'private_disk_path' => Storage::disk('private')->path(''),
-            'storage_path' => storage_path('app/private'),
-            'screenshots_exist' => Storage::disk('private')->exists('screenshots')
-        ]);
-
-        // Debug the first screenshot path if it exists
-        if ($screenshots->isNotEmpty()) {
-            $firstScreenshot = $screenshots->first();
-            Log::info('First screenshot details', [
-                'path' => $firstScreenshot->screenshot_path,
-                'full_path' => Storage::disk('private')->path($firstScreenshot->screenshot_path),
-                'exists' => Storage::disk('private')->exists($firstScreenshot->screenshot_path)
-            ]);
-        }
 
         $totalQuestions = $test->questions->count();
         $percentage = $totalQuestions > 0 
@@ -235,7 +200,7 @@ class AdminController extends Controller
 
     public function acceptCandidate(Candidate $candidate)
     {
-    try {
+        try {
         DB::beginTransaction();
         
         $testId = request('test_id');
@@ -249,11 +214,11 @@ class AdminController extends Controller
         DB::commit();
         return redirect()->back()->with('success', 'Candidate accepted and notified successfully.');
         
-    } catch (\Exception $e) {
-        DB::rollback();
-        Log::error('Failed to accept candidate: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Failed to accept candidate. Please try again.');
-    }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to accept candidate: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to accept candidate. Please try again.');
+        }
     }
 
     public function rejectCandidate(Candidate $candidate)
@@ -285,17 +250,23 @@ class AdminController extends Controller
             ->select(
                 'tests.id',
                 'tests.title', 
-                'tests.description',
                 'candidate_test.test_id',
                 DB::raw('COUNT(DISTINCT candidate_test.candidate_id) as total_candidates'),
                 DB::raw('COUNT(candidate_test.report_path) as total_reports'),
                 DB::raw('GROUP_CONCAT(candidate_test.report_path) as report_paths')
             )
             ->join('tests', 'tests.id', '=', 'candidate_test.test_id')
+            ->leftJoin('invitations', 'tests.id', '=', 'invitations.test_id')
             ->whereNotNull('candidate_test.report_path')
-            ->groupBy('tests.id', 'tests.title', 'tests.description', 'candidate_test.test_id')
+            ->groupBy('tests.id', 'tests.title', 'candidate_test.test_id')
             ->get()
             ->map(function($report) {
+                $invitation = DB::table('invitations')
+                    ->where('test_id', $report->id)
+                    ->first();
+                
+                $report->total_candidates_invited = $invitation ? count(json_decode($invitation->invited_emails)) : 0;
+                $report->invitation_expiry = $invitation ? $invitation->expiration_date : null;
                 $report->report_paths = explode(',', $report->report_paths);
                 return $report;
             });
@@ -304,11 +275,7 @@ class AdminController extends Controller
             'testReports' => $testReports,
             'totalTests' => Test::count(),
             'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
-            'totalCandidates' => Candidate::count(),
-            'completedTests' => DB::table('candidate_test')
-                ->where('status', 'completed')
-                ->distinct('candidate_id')
-                ->count()
+            'totalCandidatesParticipated' => DB::table('candidate_test')->whereNotNull('completed_at')->count()           
         ]);
     }
     
