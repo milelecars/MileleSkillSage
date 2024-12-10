@@ -24,7 +24,15 @@
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
         <script src="//unpkg.com/alpinejs" defer></script>
-        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js','resources/js/test-monitoring.js' ])
+        @if (app()->environment('local'))
+            @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
+        @else
+            <!-- Production Files -->
+            <link rel="stylesheet" href="{{ asset('build/assets/app-BaiHRYg5.css') }}">
+            <script src="{{ asset('build/assets/app-z-Rg4TxU.js') }}" defer></script>
+            <script src="{{ asset('build/assets/webcam-D1acwMhq.js') }}" defer></script>
+        @endif
+
         @livewireStyles
 
     </head>
