@@ -6,7 +6,7 @@ use App\Models\CandidateFlag;
 use App\Models\FlagType;
 use Illuminate\Http\Request;
 
-class CandidateFlagController extends Controller
+class FlagController extends Controller
 {
     public function store(Request $request)
     {
