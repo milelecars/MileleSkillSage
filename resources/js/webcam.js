@@ -8,8 +8,8 @@ class WebcamManager {
         this.deviceId = null;
 
         // Check if we're on a test page with camera enabled
-        this.testId = document.getElementById('test-id')?.value;
-        this.candidateId = document.getElementById('candidate-id')?.value;
+        this.testId = document.getElementById('test-id')?.value ?? null;
+        this.candidateId = document.getElementById('candidate-id')?.value ?? null;
 
         console.log('Test session data:', {
             test_id: this.testId,

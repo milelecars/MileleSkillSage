@@ -1,17 +1,17 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-DU6_9obH.css",
+    "file": "assets/app-D9vhX6dF.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-z-Rg4TxU.js",
+    "file": "assets/app-Dh5OhEi1.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
   },
   "resources/js/webcam.js": {
-    "file": "assets/webcam-CUs4iDC3.js",
+    "file": "assets/webcam-C5f4CeFM.js",
     "name": "webcam",
     "src": "resources/js/webcam.js",
     "isEntry": true

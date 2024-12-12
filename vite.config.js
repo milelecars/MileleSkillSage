@@ -12,4 +12,15 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    webcam: ['resources/js/webcam.js']
+                }
+            }
+        },
+        sourcemap: false,
+        minify: false 
+    }
 });
