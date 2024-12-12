@@ -20,19 +20,19 @@ class WebcamManager {
             }
         });
         
-        // Screenshot configuration - always initialize these
+       
         this.screenshotCanvas = document.createElement('canvas');
         this.screenshotContext = this.screenshotCanvas.getContext('2d');
         this.screenshotInterval = null;
         this.isCapturingScreenshots = false;
-        this.screenshotIntervalTime = 30000; // 30 seconds
-        this.screenshotQueue = []; // Always initialize array
+        this.screenshotIntervalTime = 30000; 
+        this.screenshotQueue = []; 
         this.maxQueueSize = 10;
         this.screenshotRetryAttempts = 3;
         this.screenshotRetryDelay = 5000;
         this.isProcessingQueue = false;
-        this.failedScreenshots = []; // Always initialize array
-        this.screenshotStats = {  // Always initialize stats
+        this.failedScreenshots = []; 
+        this.screenshotStats = {  
             attempted: 0,
             successful: 0,
             failed: 0,
@@ -40,7 +40,7 @@ class WebcamManager {
             lastError: null
         };
 
-        // Log if screenshots are enabled
+      
         if (!this.testId || !this.candidateId) {
             console.log('No active test session, screenshots will be disabled');
             this.isCapturingScreenshots = false;
