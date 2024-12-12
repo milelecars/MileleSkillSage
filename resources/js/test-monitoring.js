@@ -113,13 +113,13 @@ class TestMonitoring {
         });
     
         // Right Click Attempt 
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            this.metrics.rightClicks++;
-            console.log('⚠️ Right clicking is not allowed!', this.metrics.rightClicks);
-            this.updateDisplay();
-            this.logSuspiciousBehavior('Right Clicks');
-        });
+        // document.addEventListener('contextmenu', (e) => {
+        //     e.preventDefault();
+        //     this.metrics.rightClicks++;
+        //     console.log('⚠️ Right clicking is not allowed!', this.metrics.rightClicks);
+        //     this.updateDisplay();
+        //     this.logSuspiciousBehavior('Right Clicks');
+        // });
     
         // Detect keyboard shortcuts
         document.addEventListener('keydown', (e) => {

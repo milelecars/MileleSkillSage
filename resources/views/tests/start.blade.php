@@ -1,5 +1,5 @@
 <x-app-layout>
-    <style>
+    <!-- <style>
         /* selection prevention */
         body {
             -webkit-user-select: none;
@@ -34,7 +34,7 @@
             -o-user-drag: none;
             user-drag: none;
         }
-    </style>
+    </style> -->
     
     <div class="min-h-screen bg-gray-100">
         <input type="hidden" id="test-id" value="{{ $test->id }}">

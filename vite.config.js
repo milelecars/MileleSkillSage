@@ -8,6 +8,8 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/webcam.js',
+                'resources/js/test-monitoring.js' 
+
             ],
             refresh: true,
         }),
@@ -16,7 +18,8 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks: {
-                    webcam: ['resources/js/webcam.js']
+                    webcam: ['resources/js/webcam.js'],
+                    monitoring: ['resources/js/test-monitoring.js']
                 }
             }
         },

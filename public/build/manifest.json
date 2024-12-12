@@ -10,6 +10,12 @@
     "src": "resources/js/app.js",
     "isEntry": true
   },
+  "resources/js/test-monitoring.js": {
+    "file": "assets/test-monitoring-DglIC8F2.js",
+    "name": "test-monitoring",
+    "src": "resources/js/test-monitoring.js",
+    "isEntry": true
+  },
   "resources/js/webcam.js": {
     "file": "assets/webcam-C5f4CeFM.js",
     "name": "webcam",
