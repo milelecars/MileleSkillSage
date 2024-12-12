@@ -49,6 +49,28 @@ return [
             'local_domain' => null,
         ],
 
+        // 'smtp' => [
+        //     'transport' => 'smtp',
+        //     'host' => 'smtp-relay.gmail.com',  // Changed to relay server
+        //     'port' => 587,                     // Changed to 587
+        //     'encryption' => 'tls',             // Using TLS instead of SSL
+        //     'username' => env('MAIL_USERNAME'),
+        //     'password' => env('MAIL_PASSWORD'),
+        //     'timeout' => 5,
+        //     'auth_mode' => 'PLAIN',
+        //     'stream_options' => [
+        //         'tcp' => [
+        //             'tcp_nodelay' => true,
+        //         ],
+        //         'ssl' => [
+        //             'verify_peer' => false,
+        //             'verify_peer_name' => false,
+        //             'allow_self_signed' => true,
+        //             'SNI_enabled' => true,
+        //         ]
+        //     ]
+        // ],
+
         'ses' => [
             'transport' => 'ses',
         ],
