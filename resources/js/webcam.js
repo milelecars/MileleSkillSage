@@ -1,6 +1,3 @@
-
-console.log("Webcam script loaded");
-
 class WebcamManager {
     constructor() {
         this.video = null;
