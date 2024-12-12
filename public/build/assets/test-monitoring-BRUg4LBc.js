@@ -1,41 +1,42 @@
 class TestMonitoring {
   constructor(testId, candidateId) {
     var _a;
-    this.testId = testId;
-    this.candidateId = candidateId;
-    this.csrfToken = (_a = document.querySelector('meta[name="csrf-token"]')) == null ? void 0 : _a.getAttribute("content");
-    console.log("TestMonitoring initialized");
-    this.metrics = {};
-    this.flags = {};
-    const flagTypeNames = [
-      "Tab Switches",
-      "Window Blurs",
-      "Mouse Exits",
-      "Copy/Cut Attempts",
-      "Right Clicks",
-      "Keyboard Shortcuts",
-      "More than One Person",
-      "Book",
-      "Cellphone"
-    ];
-    flagTypeNames.forEach((flagType) => {
-      const camelCaseName = flagType.replace(/\s+/g, "");
-      this.metrics[camelCaseName] = 0;
-      this.flags[camelCaseName] = false;
-    });
-    window.monitoringData = {
-      metrics: this.metrics,
-      flags: this.flags
-    };
-    this.setupEventListeners();
-    this.startPeriodicSync();
+    window.testMonitoring = this;
+    try {
+      this.testId = testId;
+      this.candidateId = candidateId;
+      this.csrfToken = (_a = document.querySelector('meta[name="csrf-token"]')) == null ? void 0 : _a.getAttribute("content");
+      this.metrics = {
+        tabSwitches: 0,
+        windowBlurs: 0,
+        mouseExits: 0,
+        copyCutAttempts: 0,
+        rightClicks: 0,
+        keyboardShortcuts: 0,
+        warningCount: 0
+      };
+      this.flags = {};
+      console.log("TestMonitoring initialized with:", {
+        testId: this.testId,
+        candidateId: this.candidateId,
+        csrfToken: !!this.csrfToken
+      });
+      this.setupEventListeners();
+      this.startPeriodicSync();
+    } catch (error) {
+      console.error("Error initializing TestMonitoring:", error);
+    }
   }
   async logSuspiciousBehavior(flagType) {
-    if (!this.csrfToken || !window.testSessionId) {
-      return;
-    }
     try {
-      await fetch("/flag", {
+      if (!this.csrfToken || !this.testId) {
+        console.warn("Missing required data for logging:", {
+          csrfToken: !!this.csrfToken,
+          testId: this.testId
+        });
+        return;
+      }
+      const response = await fetch("/flag", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,9 +44,12 @@ class TestMonitoring {
         },
         body: JSON.stringify({
           flag_type: flagType,
-          test_session_id: window.testSessionId
+          test_session_id: this.testId
         })
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     } catch (error) {
       console.warn("Error logging behavior:", error);
     }
@@ -182,8 +186,22 @@ class TestMonitoring {
   }
 }
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM Content Loaded");
-  const testId = document.getElementById("test-id").value;
-  const candidateId = document.getElementById("candidate-id").value;
-  window.testMonitoring = new TestMonitoring(testId, candidateId);
+  try {
+    const testIdElement = document.getElementById("test-id");
+    const candidateIdElement = document.getElementById("candidate-id");
+    if (testIdElement && candidateIdElement) {
+      new TestMonitoring(
+        testIdElement.value,
+        candidateIdElement.value
+      );
+    } else {
+      console.warn("Test monitoring not initialized - required elements not found", {
+        testIdFound: !!testIdElement,
+        candidateIdFound: !!candidateIdElement
+      });
+    }
+  } catch (error) {
+    console.error("Error during TestMonitoring initialization:", error);
+  }
 });
+window.TestMonitoring = TestMonitoring;

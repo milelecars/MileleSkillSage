@@ -32,7 +32,7 @@
             <link rel="stylesheet" href="/build/assets/app-D9vhX6dF.css">
             <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
             <script src="/build/assets/webcam-C5f4CeFM.js" defer></script>
-            <script src="/build/assets/test-monitoring-DglIC8F2.js " defer></script>
+            <script src="/build/assets/test-monitoring-BRUg4LBc.js " defer></script>
         <?php endif; ?>
 
         <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
