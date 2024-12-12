@@ -1,4 +1,3 @@
-// public/js/webcam.js
 
 console.log("Webcam script loaded");
 
@@ -581,8 +580,15 @@ class WebcamManager {
 let webcamManager = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM fully loaded");
-    webcamManager = new WebcamManager();
+    const videoElement = document.getElementById('video');
+    const statusElement = document.getElementById('detection-status');
+    
+    if (videoElement && statusElement) {
+        console.log("Required webcam elements found, initializing WebcamManager");
+        webcamManager = new WebcamManager();
+    } else {
+        console.log("Webcam elements not found on this page, skipping initialization");
+    }
 });
 
 window.addEventListener('beforeunload', function() {

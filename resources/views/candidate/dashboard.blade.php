@@ -108,7 +108,6 @@
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/webcam.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const viewGuidelinesBtn = document.getElementById('view-guidelines-btn');

@@ -175,5 +175,4 @@
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/webcam.js') }}"></script>
 </x-app-layout>

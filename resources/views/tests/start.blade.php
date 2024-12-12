@@ -134,7 +134,6 @@
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/webcam.js') }}"></script>
     <script src="{{ asset('js/test-monitoring.js') }}"></script>
     <!-- <script>
         document.addEventListener('DOMContentLoaded', function() {
