@@ -14,23 +14,24 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Fonts -->
+        <!-- Fonts and External CSS -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet" />
-        
-        <!-- Scripts -->
+        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet">
+
+        <!-- External Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
-        <script src="//unpkg.com/alpinejs" defer></script>
+        <script src="https://unpkg.com/alpinejs" defer></script>
+
+        <!-- Application Assets -->
         @if (app()->environment('local'))
             @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
         @else
-            <!-- Production Files -->
-            <link rel="stylesheet" href="{{ asset('build/assets/app-BaiHRYg5.css') }}">
-            <script src="{{ asset('build/assets/app-z-Rg4TxU.js') }}" defer></script>
-            <script src="{{ asset('build/assets/webcam-D1acwMhq.js') }}" defer></script>
+            <link rel="stylesheet" href="{{ secure_asset('build/assets/app-BaiHRYg5.css') }}">
+            <script src="{{ secure_asset('build/assets/app-z-Rg4TxU.js') }}" defer></script>
+            <script src="{{ secure_asset('build/assets/webcam-D1acwMhq.js') }}" defer></script>
         @endif
 
         @livewireStyles

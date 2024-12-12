@@ -51,7 +51,7 @@ class TestSessionTest extends TestCase
         $this->Invitation = Invitation::create([
             'test_id' => $this->existingTest->id,
             'invitation_token' => $this->invitationToken,
-            'invitation_link' => "http://127.0.0.1:8000/invitation/{$this->invitationToken}",
+            'invitation_link' => "https://skillsage.ferozriaz.com/invitation/{$this->invitationToken}",
             'invited_emails' => $this->invitedEmails,
             'expiration_date' => now()->addDays(7),
             'created_by' => $this->admin->id

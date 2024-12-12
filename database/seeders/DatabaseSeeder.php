@@ -102,7 +102,7 @@ class DatabaseSeeder extends Seeder
                 'invited_emails' => ['helia.haghighi@milele.com'],
                 'expiration_date' => now()->addYear(),
                 'invitation_token' => 'DpYZDbp5uuenaNxPKuhTrWgwLLGiowkz',
-                'invitation_link' => 'http://127.0.0.1:8000/invitation/DpYZDbp5uuenaNxPKuhTrWgwLLGiowkz'
+                'invitation_link' => 'https://skillsage.ferozriaz.com/invitation/DpYZDbp5uuenaNxPKuhTrWgwLLGiowkz'
 
             ],
         ];

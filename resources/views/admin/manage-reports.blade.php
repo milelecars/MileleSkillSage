@@ -64,9 +64,11 @@
                                                 <!-- candidates invited -->
                                                 <div class="bg-yellow-100 h-full relative flex items-center justify-center"
                                                     style="width: {{ ($report->total_candidates_invited > 0 ? (($report->total_candidates_invited - $totalCandidatesParticipated) / $report->total_candidates_invited) * 100 : 0) }}%">
-                                                    <span class="text-xs font-medium text-gray-700">
-                                                        {{ $report->total_candidates_invited - $totalCandidatesParticipated }}
-                                                    </span>
+                                                    @if($report->total_candidates_invited != $totalCandidatesParticipated )
+                                                        <span class="text-xs font-medium text-gray-700">
+                                                            {{ $report->total_candidates_invited - $totalCandidatesParticipated }}
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </td>

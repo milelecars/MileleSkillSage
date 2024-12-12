@@ -24,7 +24,15 @@
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
         <script src="//unpkg.com/alpinejs" defer></script>
-        <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js','resources/js/test-monitoring.js' ]); ?>
+        <?php if(app()->environment('local')): ?>
+            <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js']); ?>
+        <?php else: ?>
+            <!-- Production Files -->
+            <link rel="stylesheet" href="<?php echo e(asset('build/assets/app-BaiHRYg5.css')); ?>">
+            <script src="<?php echo e(asset('build/assets/app-z-Rg4TxU.js')); ?>" defer></script>
+            <script src="<?php echo e(asset('build/assets/webcam-D1acwMhq.js')); ?>" defer></script>
+        <?php endif; ?>
+
         <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
 
 

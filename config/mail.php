@@ -43,22 +43,11 @@ return [
             'host' => 'smtp.gmail.com',
             'port' => 587,
             'encryption' => 'tsl',
-            'username' => 'milelematrix@gmail.com',
-            'password' => "wzybbtxspannxhdi",
+            'username' => 'skillsage.milele@gmail.com',
+            'password' => "cmlueojajszqbbmr",
             'timeout' => null,
             'local_domain' => null,
         ],
-        // 'smtp' => [
-        //     'transport' => 'smtp',
-        //     'url' => null,
-        //     'host' => 'smtp.gmail.com',
-        //     'port' => 587,
-        //     'encryption' => 'tls',
-        //     'username' => 'heliaa.haghighi@gmail.com',
-        //     'password' => "swzngxtwvwjpuyfi",
-        //     'timeout' => null,
-        //     'local_domain' => null,
-        // ],
 
         'ses' => [
             'transport' => 'ses',
@@ -120,8 +109,8 @@ return [
     */
 
     'from' => [
-        'address' => 'milelematrix@gmail.com',
-        'name' =>  'Milele Motors',
+        'address' => 'skillsage.milele@gmail.com',
+        'name' =>  'Milele SkillSage',
     ],
 
 ];
