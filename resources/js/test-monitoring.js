@@ -113,13 +113,13 @@ class TestMonitoring {
         });
     
         // Right Click Attempt 
-        // document.addEventListener('contextmenu', (e) => {
-        //     e.preventDefault();
-        //     this.metrics.rightClicks++;
-        //     console.log('⚠️ Right clicking is not allowed!', this.metrics.rightClicks);
-        //     this.updateDisplay();
-        //     this.logSuspiciousBehavior('Right Clicks');
-        // });
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.metrics.rightClicks++;
+            console.log('⚠️ Right clicking is not allowed!', this.metrics.rightClicks);
+            this.updateDisplay();
+            this.logSuspiciousBehavior('Right Clicks');
+        });
     
         // Detect keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -218,10 +218,21 @@ class TestMonitoring {
     }
 }
 
-// Initialize monitoring
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Content Loaded');
-    const testId = document.getElementById('test-id').value;
-    const candidateId = document.getElementById('candidate-id').value;
-    window.testMonitoring = new TestMonitoring(testId, candidateId);
+    const testIdElement = document.getElementById('test-id');
+    const candidateIdElement = document.getElementById('candidate-id');
+    
+    if (testIdElement && candidateIdElement) {
+        window.testMonitoring = new TestMonitoring(
+            testIdElement.value,
+            candidateIdElement.value
+        );
+    } else {
+        console.log('Test monitoring not initialized - required elements not found');
+    }
 });
+
+
+window.TestMonitoring = TestMonitoring;
