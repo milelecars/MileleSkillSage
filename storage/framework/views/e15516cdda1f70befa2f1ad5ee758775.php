@@ -6,27 +6,27 @@
                 
                 // Webcam violations
                 document.addEventListener('webcamViolation', (event) => {
-                    @this.logSuspiciousBehavior(event.detail.violation);
+                    window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior(event.detail.violation);
                     console.log('⚠️ Webcam violation detected:', event.detail.violation);
                 });
 
                 // Tab visibility
                 document.addEventListener('visibilitychange', () => {
                     if (document.hidden) {
-                        @this.logSuspiciousBehavior('Tab Switches');
+                        window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Tab Switches');
                         console.log('⚠️ Tab Switching Detected!');
                     }
                 });
 
                 // Window blur
                 window.addEventListener('blur', () => {
-                    @this.logSuspiciousBehavior('Window Blurs');
+                    window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Window Blurs');
                     console.log('⚠️ Window focus lost!');
                 });
 
                 // Mouse exit
                 document.addEventListener('mouseleave', () => {
-                    @this.logSuspiciousBehavior('Mouse Exits');
+                    window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Mouse Exits');
                     console.log('⚠️ Mouse exit detected!');
                 });
 
@@ -34,7 +34,7 @@
                 ['copy', 'cut', 'paste'].forEach(event => {
                     document.addEventListener(event, (e) => {
                         e.preventDefault();
-                        @this.logSuspiciousBehavior('Copy/Cut Attempts');
+                        window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Copy/Cut Attempts');
                         console.log(`⚠️ ${event} is not allowed!`);
                     });
                 });
@@ -42,7 +42,7 @@
                 // Prevent right click
                 document.addEventListener('contextmenu', (e) => {
                     e.preventDefault();
-                    @this.logSuspiciousBehavior('Right Clicks');
+                    window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Right Clicks');
                     console.log('⚠️ Right clicking is not allowed!');
                 });
 
@@ -51,7 +51,7 @@
                     if ((e.ctrlKey || e.metaKey) && 
                         ['c', 'v', 'x', 'a', 'p', 'f12'].includes(e.key.toLowerCase())) {
                         e.preventDefault();
-                        @this.logSuspiciousBehavior('Keyboard Shortcuts');
+                        window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Keyboard Shortcuts');
                         console.log('⚠️ Keyboard shortcut detected!', e.key);
                     }
                     
@@ -59,7 +59,7 @@
                     if (e.key === 'F12' || 
                         ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'C'))) {
                         e.preventDefault();
-                        @this.logSuspiciousBehavior('Developer Tools');
+                        window.Livewire.find('<?php echo e($_instance->getId()); ?>').logSuspiciousBehavior('Developer Tools');
                     }
                 });
             }
@@ -70,28 +70,30 @@
 >
     <h3 class="text-lg font-semibold">Test Monitoring Summary</h3>
     <div class="mt-2 grid grid-cols-2 gap-4">
-        @foreach($flags->chunk(ceil($flags->count() / 2)) as $chunk)
+        <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $flags->chunk(ceil($flags->count() / 2)); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $chunk): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <div>
-                @foreach($chunk as $flagType)
-                    @php
+                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $chunk; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $flagType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <?php
                         $metricKey = lcfirst(str_replace(' ', '', $flagType->name));
-                    @endphp
+                    ?>
                     <p class="font-medium">
-                        {{ $flagType->name }}: 
-                        <span class="{{ $metrics[$metricKey] > $flagType->threshold ? 'text-red-600' : 'text-gray-600' }}">
-                            {{ $metrics[$metricKey] }}
+                        <?php echo e($flagType->name); ?>: 
+                        <span class="<?php echo e($metrics[$metricKey] > $flagType->threshold ? 'text-red-600' : 'text-gray-600'); ?>">
+                            <?php echo e($metrics[$metricKey]); ?>
+
                         </span>
                         <br/>
                         <small>
                             Flagged: 
-                            <span class="{{ $metrics[$metricKey] > $flagType->threshold ? 'text-red-600' : 'text-green-600' }}">
-                                {{ $metrics[$metricKey] > $flagType->threshold ? 'Yes' : 'No' }}
+                            <span class="<?php echo e($metrics[$metricKey] > $flagType->threshold ? 'text-red-600' : 'text-green-600'); ?>">
+                                <?php echo e($metrics[$metricKey] > $flagType->threshold ? 'Yes' : 'No'); ?>
+
                             </span>
-                            <span class="text-xs text-gray-500">(Threshold: {{ $flagType->threshold }})</span>
+                            <span class="text-xs text-gray-500">(Threshold: <?php echo e($flagType->threshold); ?>)</span>
                         </small>
                     </p>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
             </div>
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
     </div>
-</div>
+</div><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/test-monitoring.blade.php ENDPATH**/ ?>

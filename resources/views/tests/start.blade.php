@@ -134,7 +134,8 @@
             </div>
         </div>
     </div>
-    <script src="{{ asset('js/test-monitoring.js') }}"></script>
+    
+    <script src="/build/assets/test-monitoring-DglIC8F2.js " defer></script>
     <!-- <script>
         document.addEventListener('DOMContentLoaded', function() {
             disableCopyPaste();
