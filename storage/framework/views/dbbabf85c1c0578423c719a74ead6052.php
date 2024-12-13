@@ -120,22 +120,8 @@ if (isset($__slots)) unset($__slots);
 
 
 
-                <?php
-$__split = function ($name, $params = []) {
-    return [$name, $params];
-};
-[$__name, $__params] = $__split('test-monitoring', ['testSessionId' => $test->id]);
-
-$__html = app('livewire')->mount($__name, $__params, 'lw-2837484294-1', $__slots ?? [], get_defined_vars());
-
-echo $__html;
-
-unset($__html);
-unset($__name);
-unset($__params);
-unset($__split);
-if (isset($__slots)) unset($__slots);
-?>
+                <!-- Replace the entire monitoring section with just this: -->
+                <div id="violation-log" class="fixed bottom-4 right-4 p-2 bg-black text-white text-xs rounded opacity-50"></div>
 
             </div>
         </div>

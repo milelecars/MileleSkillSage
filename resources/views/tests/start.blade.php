@@ -93,7 +93,8 @@
 
 
 
-                <livewire:test-monitoring :testSessionId="$test->id" />
+                <!-- Replace the entire monitoring section with just this: -->
+                <div id="violation-log" class="fixed bottom-4 right-4 p-2 bg-black text-white text-xs rounded opacity-50"></div>
 
             </div>
         </div>

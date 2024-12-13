@@ -44,10 +44,10 @@
         @if (app()->environment('local'))
             @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
         @else
-            <link rel="stylesheet" href="/build/assets/app-CsXH4EdO.css">
+            <link rel="stylesheet" href="/build/assets/app-D2fCoA4a.css">
             <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
             <script src="/build/assets/webcam-C5f4CeFM.js" defer></script>
-            <script src="/build/assets/test-monitoring-Dh4F1Uta.js" defer></script>
+            <script src="/build/assets/test-monitoring-CddogY1a.js" defer></script>
         @endif
 
         @livewireStyles

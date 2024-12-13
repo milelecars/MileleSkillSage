@@ -11,6 +11,7 @@ class TestMonitoring {
             this.testId = testId;
             this.candidateId = candidateId;
             this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            this.metrics = {};
             
             console.log('TestMonitoring initialized with:', {
                 testId: this.testId,
@@ -43,17 +44,29 @@ class TestMonitoring {
         if (event) {
             event.preventDefault();
         }
-        console.log(`⚠️ ${message}`);
         
-        // Convert metric name to flag type
+        // Increment local metric
+        this.metrics[metricName] = (this.metrics[metricName] || 0) + 1;
+        const currentCount = this.metrics[metricName];
+        
+        // Log to console and UI
+        console.log(`⚠️ ${message} (Count: ${currentCount})`);
+        this.updateViolationLog(`${message} (${currentCount})`);
+        
+        // Log to backend
         const flagType = this.getFlagTypeFromMetric(metricName);
-        this.logSuspiciousBehavior(flagType);
+        this.logSuspiciousBehavior(flagType, currentCount);
+    }
+
+    updateViolationLog(message) {
+        const logDiv = document.getElementById('violation-log');
+        if (logDiv) {
+            logDiv.textContent = message;
+        }
     }
 
     getFlagTypeFromMetric(metricName) {
-        // First add spaces before capital letters
         const withSpaces = metricName.replace(/([A-Z])/g, ' $1');
-        // Capitalize the first letter, make rest lowercase, and trim spaces
         return withSpaces.charAt(0).toUpperCase() + 
                withSpaces.slice(1).toLowerCase().trim();
     }
@@ -96,22 +109,32 @@ class TestMonitoring {
         });
     }
 
-    async logSuspiciousBehavior(flagType) {
+    async logSuspiciousBehavior(flagType, occurrences) {
         try {
-            const livewireEl = document.querySelector('[wire\\:id]');
-            if (!livewireEl || !window.Livewire) {
-                console.warn('Livewire not initialized');
-                return;
+            const response = await fetch('/flag', {  // Changed from '/api/flags' to '/flag'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    candidateId: this.candidateId,
+                    testId: this.testId,
+                    flagType: flagType,
+                    occurrences: occurrences,
+                    isFlagged: true
+                })
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-
-            const component = window.Livewire.find(livewireEl.getAttribute('wire:id'));
-            if (component) {
-                await component.dispatch('logSuspiciousBehavior', [flagType]);
-                console.log('Suspicious behavior logged:', flagType);
-            }
+    
+            const data = await response.json();
+            console.log('Violation logged to backend:', data);
         } catch (error) {
-            console.warn('Error logging suspicious behavior:', error);
-            console.error(error);
+            console.error('Error logging violation:', error);
         }
     }
 }
