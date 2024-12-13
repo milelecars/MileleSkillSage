@@ -59,14 +59,13 @@ class TestReportService
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
     
-        // Get location data and ensure it's properly formatted as a string
         $locationData = $ip ? $this->getLocationFromIP($ip) : ['formatted_address' => 'No IP recorded'];
         $locationString = is_array($locationData) ? ($locationData['formatted_address'] ?? 'Location not available') : 'Location not available';
         Log::info('Location result:', ['location' => $locationString]);
-    
+
         $antiCheatData = [
             ['label' => 'Device used', 'value' => 'Desktop'],
-            ['label' => 'Location', 'value' => $location],
+            ['label' => 'Location', 'value' => $locationString], 
             ['label' => 'IP Address', 'value' => $ip ?? 'Not available'],
             ['label' => 'Filled out only once from IP address?', 'value' => 'Yes'],
             ['label' => 'Webcam enabled?', 'value' => 'Yes'],
