@@ -81,7 +81,7 @@ class InvitationController extends Controller
 
         if (!$existingAttempt) {
             $candidate->tests()->attach($invitation->test_id, [
-                'status' => 'in progress'  
+                'status' => 'not started'  
             ]);
         }
         

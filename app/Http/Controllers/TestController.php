@@ -699,9 +699,10 @@ class TestController extends Controller
             ];
             
             $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->exists();
-            if (!$existingAttempt) {
+            if ($existingAttempt) {
                 $candidate->tests()->attach($id, [
                     'started_at' => $startTime,
+                    'status' => 'in progress'  
                 ]);
             }
         } else {
@@ -747,11 +748,11 @@ class TestController extends Controller
             ->wherePivot('test_id', $id)
             ->first();
     
-        if (!$testAttempt) {
-            $candidate->tests()->attach($id, [
-                'started_at' => now(),
-            ]);
-        }
+        // if (!$testAttempt) {
+        //     $candidate->tests()->attach($id, [
+        //         'started_at' => now(),
+        //     ]);
+        // }
     
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
