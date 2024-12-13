@@ -111,7 +111,7 @@ class TestMonitoring {
 
     async logSuspiciousBehavior(flagType, occurrences) {
         try {
-            const response = await fetch('/flag', {  // Changed from '/api/flags' to '/flag'
+            const response = await fetch('/flag', { 
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
