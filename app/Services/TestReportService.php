@@ -42,6 +42,15 @@ class TestReportService
 
         $candidate = Candidate::findOrFail($candidateId);
         $test = Test::findOrFail($testId);
+    
+        // Move this query up before using $candidateFlags
+        $candidateFlags = CandidateFlag::where([
+            'test_id' => $testId,
+            'candidate_id' => $candidateId
+        ])
+        ->join('flag_types', 'candidate_flags.flag_type_id', '=', 'flag_types.id')
+        ->select('flag_types.name', 'candidate_flags.occurrences', 'candidate_flags.is_flagged')
+        ->get();
 
         $totalQuestions = DB::table('questions')
             ->where('test_id', $testId)
@@ -55,20 +64,20 @@ class TestReportService
         $locationString = is_array($locationData) ? ($locationData['formatted_address'] ?? 'Location not available') : 'Location not available';
         Log::info('Location result:', ['location' => $locationString]);
     
-        // Update antiCheatData to ensure location is a string
         $antiCheatData = [
             ['label' => 'Device used', 'value' => 'Desktop'],
-            ['label' => 'Location', 'value' => $locationString],
+            ['label' => 'Location', 'value' => $location],
             ['label' => 'IP Address', 'value' => $ip ?? 'Not available'],
             ['label' => 'Filled out only once from IP address?', 'value' => 'Yes'],
             ['label' => 'Webcam enabled?', 'value' => 'Yes'],
             ['label' => 'Full-screen mode always active?', 'value' => 'Yes'],
             ['label' => 'Mouse always in assessment window?', 'value' => 'Yes'],
         ];
-
+    
         $tabSwitches = $candidateFlags->first(function ($flag) {
             return $flag->name === 'Tab Switches';
         });
+    
         if ($tabSwitches && $tabSwitches->occurrences > 0) {
             $antiCheatData[5]['value'] = 'No';
         }
