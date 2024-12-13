@@ -30,15 +30,14 @@ class TestReportService
     public function generatePDF($candidateId, $testId)
     {
         $this->debugIpHeaders();
-        
+    
         $candidateTest = DB::table('candidate_test')
-        ->where('candidate_id', $candidateId)
-        ->where('test_id', $testId)
-        ->first();
+            ->where('candidate_id', $candidateId)
+            ->where('test_id', $testId)
+            ->first();
         
         if (!$candidateTest) {
             abort(404, 'Test data for the candidate not found.');
-
         }
 
         $candidate = Candidate::findOrFail($candidateId);
@@ -50,22 +49,16 @@ class TestReportService
 
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
-
-        $location = $ip ? $this->getLocationFromIP($ip) : 'No IP recorded';
-        Log::info('Location result:', ['location' => $location]);
-
-        // Fetch anti-cheat data
-        $candidateFlags = CandidateFlag::where([
-            'test_id' => $testId,
-            'candidate_id' => $candidateId
-        ])
-        ->join('flag_types', 'candidate_flags.flag_type_id', '=', 'flag_types.id')
-        ->select('flag_types.name', 'candidate_flags.occurrences', 'candidate_flags.is_flagged')
-        ->get();
-
+    
+        // Get location data and ensure it's properly formatted as a string
+        $locationData = $ip ? $this->getLocationFromIP($ip) : ['formatted_address' => 'No IP recorded'];
+        $locationString = is_array($locationData) ? ($locationData['formatted_address'] ?? 'Location not available') : 'Location not available';
+        Log::info('Location result:', ['location' => $locationString]);
+    
+        // Update antiCheatData to ensure location is a string
         $antiCheatData = [
             ['label' => 'Device used', 'value' => 'Desktop'],
-            ['label' => 'Location', 'value' => $location],
+            ['label' => 'Location', 'value' => $locationString],
             ['label' => 'IP Address', 'value' => $ip ?? 'Not available'],
             ['label' => 'Filled out only once from IP address?', 'value' => 'Yes'],
             ['label' => 'Webcam enabled?', 'value' => 'Yes'],

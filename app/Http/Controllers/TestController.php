@@ -865,6 +865,10 @@ class TestController extends Controller
 
         if ($nextIndex >= $questions->count()) {
             return $this->submitTest($request, $id);
+            // -----------
+            return redirect()->action([TestController::class, 'submitTest'], ['id' => $id])
+                ->withInput()
+                ->with('_method', 'POST');
         }
 
         session()->put('test_session', $testSession);
