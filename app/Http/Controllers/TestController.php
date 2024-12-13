@@ -698,13 +698,12 @@ class TestController extends Controller
                 'total_questions' => count($allQuestionIds)
             ];
             
-            $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->exists();
-            if ($existingAttempt) {
-                $candidate->tests()->attach($id, [
-                    'started_at' => $startTime,
-                    'status' => 'in progress'  
-                ]);
-            }
+            $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
+            $candidate->tests()->updateExistingPivot($id, [
+                'started_at' => $startTime,
+                'status' => 'in progress'
+            ]);
+            
         } else {
             $startTime = Carbon::parse($testSession['start_time']);
             $endTime = $startTime->copy()->addMinutes($test->duration);
