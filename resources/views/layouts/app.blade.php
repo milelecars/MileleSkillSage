@@ -19,25 +19,40 @@
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet">
 
+        <!-- Initialize monitoring data before any scripts -->
+        <script>
+            window.monitoringData = {
+                metrics: {
+                    tabSwitches: 0,
+                    windowBlurs: 0,
+                    mouseExits: 0,
+                    copyCutAttempts: 0,
+                    rightClicks: 0,
+                    keyboardShortcuts: 0,
+                    warningCount: 0
+                }
+            };
+        </script>
+
         <!-- External Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
-        <script src="https://unpkg.com/alpinejs" defer></script>
+        <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
         <!-- Application Assets -->
         @if (app()->environment('local'))
             @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
         @else
-            <link rel="stylesheet" href="/build/assets/app-D9vhX6dF.css">
+            <link rel="stylesheet" href="/build/assets/app-CsXH4EdO.css">
             <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
             <script src="/build/assets/webcam-C5f4CeFM.js" defer></script>
-            <script src="/build/assets/test-monitoring-BRUg4LBc.js " defer></script>
+            <script src="/build/assets/test-monitoring-Dh4F1Uta.js" defer></script>
         @endif
 
         @livewireStyles
-
     </head>
+
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
             @include('layouts.navigation')

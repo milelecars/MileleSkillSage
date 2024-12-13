@@ -176,8 +176,6 @@ if (isset($__slots)) unset($__slots);
             </div>
         </div>
     </div>
-    
-    <script src="/build/assets/test-monitoring-BRUg4LBc.js " defer></script>
     <!-- <script>
         document.addEventListener('DOMContentLoaded', function() {
             disableCopyPaste();

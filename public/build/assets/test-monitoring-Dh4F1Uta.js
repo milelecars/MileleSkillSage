@@ -1,6 +1,21 @@
+window.monitoringData = {
+  metrics: {
+    tabSwitches: 0,
+    windowBlurs: 0,
+    mouseExits: 0,
+    copyCutAttempts: 0,
+    rightClicks: 0,
+    keyboardShortcuts: 0,
+    warningCount: 0
+  }
+};
 class TestMonitoring {
   constructor(testId, candidateId) {
     var _a;
+    if (window.testMonitoring) {
+      console.log("TestMonitoring already initialized, returning existing instance");
+      return window.testMonitoring;
+    }
     window.testMonitoring = this;
     try {
       this.testId = testId;
@@ -15,6 +30,7 @@ class TestMonitoring {
         keyboardShortcuts: 0,
         warningCount: 0
       };
+      window.monitoringData.metrics = { ...this.metrics };
       this.flags = {};
       console.log("TestMonitoring initialized with:", {
         testId: this.testId,
@@ -23,9 +39,67 @@ class TestMonitoring {
       });
       this.setupEventListeners();
       this.startPeriodicSync();
+      this.preventUserSelection();
     } catch (error) {
       console.error("Error initializing TestMonitoring:", error);
     }
+  }
+  preventUserSelection() {
+    document.body.style.userSelect = "none";
+    document.body.style.webkitUserSelect = "none";
+    document.body.style.msUserSelect = "none";
+    document.body.style.mozUserSelect = "none";
+    document.querySelectorAll("input, textarea").forEach((element) => {
+      element.style.userSelect = "text";
+      element.style.webkitUserSelect = "text";
+      element.style.msUserSelect = "text";
+      element.style.mozUserSelect = "text";
+    });
+  }
+  // Helper method to safely update metrics
+  updateMetric(metricName, value) {
+    this.metrics[metricName] = value;
+    window.monitoringData.metrics[metricName] = value;
+    this.checkIfFlagged();
+    this.updateDisplay();
+  }
+  // Helper method to handle violations
+  handleViolation(event, metricName, message) {
+    if (event) {
+      event.preventDefault();
+    }
+    this.updateMetric(metricName, this.metrics[metricName] + 1);
+    console.log(`⚠️ ${message}`, this.metrics[metricName]);
+    this.logSuspiciousBehavior(metricName);
+  }
+  setupEventListeners() {
+    document.addEventListener("visibilitychange", (e) => {
+      if (document.hidden) {
+        this.handleViolation(e, "tabSwitches", "Tab Switching Detected!");
+      }
+    });
+    window.addEventListener("blur", (e) => {
+      this.handleViolation(e, "windowBlurs", "Window focus lost!");
+    });
+    document.addEventListener("mouseleave", (e) => {
+      this.handleViolation(e, "mouseExits", "Mouse exit detected!");
+    });
+    ["copy", "cut"].forEach((eventType) => {
+      document.addEventListener(eventType, (e) => {
+        this.handleViolation(e, "copyCutAttempts", `${eventType} is not allowed!`);
+      });
+    });
+    document.addEventListener("contextmenu", (e) => {
+      this.handleViolation(e, "rightClicks", "Right clicking is not allowed!");
+    });
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "f12"].includes(e.key.toLowerCase())) {
+        this.handleViolation(e, "keyboardShortcuts", `Keyboard shortcut detected: ${e.key}`);
+      }
+      if (e.key === "F12" || (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "C")) {
+        this.handleViolation(e, "keyboardShortcuts", "Developer Tools shortcut detected!");
+      }
+    });
   }
   async logSuspiciousBehavior(flagType) {
     try {
@@ -54,70 +128,6 @@ class TestMonitoring {
       console.warn("Error logging behavior:", error);
     }
   }
-  setupEventListeners() {
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        this.metrics.tabSwitches++;
-        window.monitoringData.metrics.tabSwitches = this.metrics.tabSwitches;
-        this.checkIfFlagged();
-        console.log("⚠️ Tab Switching Detected!", this.metrics.tabSwitches);
-        this.updateDisplay();
-        this.logSuspiciousBehavior("Tab Switches");
-      }
-    });
-    window.addEventListener("blur", () => {
-      this.metrics.windowBlurs++;
-      window.monitoringData.metrics.windowBlurs = this.metrics.windowBlurs;
-      this.checkIfFlagged();
-      console.log("⚠️ Window focus lost!", this.metrics.windowBlurs);
-      this.updateDisplay();
-      this.logSuspiciousBehavior("Window Blurs");
-    });
-    document.addEventListener("mouseleave", () => {
-      this.metrics.mouseExits++;
-      window.monitoringData.metrics.mouseExits = this.metrics.mouseExits;
-      this.checkIfFlagged();
-      console.log("⚠️ Mouse exit detected!", this.metrics.mouseExits);
-      this.updateDisplay();
-      this.logSuspiciousBehavior("Mouse Exits");
-    });
-    document.addEventListener("copy", (e) => {
-      e.preventDefault();
-      this.metrics.copyCutAttempts++;
-      window.monitoringData.metrics.copyCutAttempts = this.metrics.copyCutAttempts;
-      this.checkIfFlagged();
-      console.log("⚠️ Copying is not allowed!", this.metrics.copyCutAttempts);
-      this.updateDisplay();
-      this.logSuspiciousBehavior("Copy/Cut Attempts");
-    });
-    document.addEventListener("cut", (e) => {
-      e.preventDefault();
-      this.metrics.copyCutAttempts++;
-      window.monitoringData.metrics.copyCutAttempts = this.metrics.copyCutAttempts;
-      this.checkIfFlagged();
-      console.log("⚠️ Cutting is not allowed!", this.metrics.copyCutAttempts);
-      this.updateDisplay();
-      this.logSuspiciousBehavior("Copy/Cut Attempts");
-    });
-    document.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      this.metrics.rightClicks++;
-      console.log("⚠️ Right clicking is not allowed!", this.metrics.rightClicks);
-      this.updateDisplay();
-      this.logSuspiciousBehavior("Right Clicks");
-    });
-    document.addEventListener("keydown", (e) => {
-      if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "p"].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-        this.metrics.keyboardShortcuts++;
-        window.monitoringData.metrics.keyboardShortcuts = this.metrics.keyboardShortcuts;
-        this.checkIfFlagged();
-        console.log("⚠️ Keyboard shortcut detected!", e.key, this.metrics.keyboardShortcuts);
-        this.updateDisplay();
-        this.logSuspiciousBehavior("Keyboard Shortcuts");
-      }
-    });
-  }
   updateDisplay() {
     const summaryDiv = document.querySelector(".monitoring-summary");
     if (summaryDiv) {
@@ -136,8 +146,6 @@ class TestMonitoring {
           flagElement.className = isThisMetricFlagged ? "text-red-600" : "text-green-600";
         }
       });
-    } else {
-      console.log("Monitoring summary div not found");
     }
   }
   checkIfFlagged() {
@@ -148,7 +156,7 @@ class TestMonitoring {
       this.flags[metric] = isThisMetricFlagged;
       if (isThisMetricFlagged) {
         anyFlagged = true;
-        this.sendFlagData();
+        this.logSuspiciousBehavior(metric);
       }
     }
     return anyFlagged;
@@ -173,17 +181,29 @@ class TestMonitoring {
     }, 1e3);
   }
   showWarning(message) {
-    this.metrics.warningCount++;
+    this.updateMetric("warningCount", this.metrics.warningCount + 1);
     const warningDiv = document.createElement("div");
     warningDiv.className = "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-5 right-5 z-50";
     warningDiv.role = "alert";
     warningDiv.innerHTML = message;
     document.body.appendChild(warningDiv);
-    this.updateDisplay();
     setTimeout(() => {
       warningDiv.remove();
     }, 3e3);
   }
+}
+if (!window.monitoringData) {
+  window.monitoringData = {
+    metrics: {
+      tabSwitches: 0,
+      windowBlurs: 0,
+      mouseExits: 0,
+      copyCutAttempts: 0,
+      rightClicks: 0,
+      keyboardShortcuts: 0,
+      warningCount: 0
+    }
+  };
 }
 document.addEventListener("DOMContentLoaded", () => {
   try {
