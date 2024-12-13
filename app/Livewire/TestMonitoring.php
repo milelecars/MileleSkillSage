@@ -16,6 +16,11 @@ class TestMonitoring extends Component
     public $testSessionId;
     protected $flagTypes = null;
 
+    protected $listeners = [
+        'logSuspiciousBehavior',
+        'refreshMetrics' => '$refresh'
+    ];
+
     public function mount($testSessionId)
     {
         try {
@@ -23,11 +28,8 @@ class TestMonitoring extends Component
             $this->flags = FlagType::all();
             $this->flagTypes = $this->flags->pluck('id', 'name')->all();
             
-            // Initialize metrics
-            foreach ($this->flags as $flagType) {
-                $metricKey = $this->getMetricKey($flagType->name);
-                $this->metrics[$metricKey] = 0;
-            }
+            // Load initial metrics from database
+            $this->loadMetricsFromDatabase();
 
             Log::info('TestMonitoring initialized', [
                 'testSessionId' => $this->testSessionId,
@@ -40,6 +42,29 @@ class TestMonitoring extends Component
                 'testSessionId' => $testSessionId
             ]);
             throw $e;
+        }
+    }
+
+    protected function loadMetricsFromDatabase()
+    {
+        // Initialize metrics with zeros
+        foreach ($this->flags as $flagType) {
+            $metricKey = $this->getMetricKey($flagType->name);
+            $this->metrics[$metricKey] = 0;
+        }
+
+        // Load actual values from database
+        $candidateFlags = CandidateFlag::where([
+            'test_id' => $this->testSessionId,
+            'candidate_id' => auth()->guard('candidate')->id()
+        ])->get();
+
+        foreach ($candidateFlags as $flag) {
+            $flagType = $this->flags->find($flag->flag_type_id);
+            if ($flagType) {
+                $metricKey = $this->getMetricKey($flagType->name);
+                $this->metrics[$metricKey] = $flag->occurrences;
+            }
         }
     }
     
@@ -56,10 +81,16 @@ class TestMonitoring extends Component
                 return;
             }
 
-            $flagTypeModel = $this->flags->firstWhere('name', $flagType);
+            // Case-insensitive search for flag type
+            $flagTypeModel = $this->flags->first(function($flag) use ($flagType) {
+                return strcasecmp($flag->name, $flagType) === 0;
+            });
             
             if (!$flagTypeModel) {
-                Log::warning('Unknown flag type', ['flagType' => $flagType]);
+                Log::warning('Unknown flag type', [
+                    'flagType' => $flagType,
+                    'availableTypes' => $this->flags->pluck('name')->toArray()
+                ]);
                 return;
             }
 
@@ -79,10 +110,15 @@ class TestMonitoring extends Component
 
             $candidateFlag->increment('occurrences');
             
+            // Reload metrics from database after update
+            $this->loadMetricsFromDatabase();
+            
             Log::info("Violation logged", [
                 'flagType' => $flagType,
+                'flagTypeId' => $flagTypeModel->id,
                 'testId' => $this->testSessionId,
-                'candidateId' => $candidateId
+                'candidateId' => $candidateId,
+                'occurrences' => $candidateFlag->occurrences
             ]);
             
             if ($candidateFlag->occurrences > $flagTypeModel->threshold) {
@@ -92,13 +128,16 @@ class TestMonitoring extends Component
         } catch (Exception $e) {
             Log::error('Error logging suspicious behavior', [
                 'error' => $e->getMessage(),
-                'flagType' => $flagType
+                'trace' => $e->getTraceAsString(),
+                'flagType' => $flagType ?? 'unknown'
             ]);
         }
     }
 
     public function render()
     {
+        // Reload metrics before every render
+        $this->loadMetricsFromDatabase();
         return view('livewire.test-monitoring');
     }
 }

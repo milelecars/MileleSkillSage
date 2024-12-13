@@ -1,16 +1,3 @@
-// Initialize global monitoring state immediately
-window.monitoringData = {
-    metrics: {
-        tabSwitches: 0,
-        windowBlurs: 0,
-        mouseExits: 0,
-        copyCutAttempts: 0,
-        rightClicks: 0,
-        keyboardShortcuts: 0,
-        warningCount: 0
-    }
-};
-
 class TestMonitoring {
     constructor(testId, candidateId) {
         if (window.testMonitoring) {
@@ -25,41 +12,17 @@ class TestMonitoring {
             this.candidateId = candidateId;
             this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            // Initialize metrics from the Livewire component's state
-            this.metrics = { ...window.monitoringData.metrics };
-            
-            // Load initial metrics from DOM
-            this.loadMetricsFromDOM();
-            
-            // Sync with global state
-            window.monitoringData.metrics = { ...this.metrics };
-            
-            this.flags = {};
-            
             console.log('TestMonitoring initialized with:', {
                 testId: this.testId,
                 candidateId: this.candidateId,
-                csrfToken: !!this.csrfToken,
-                metrics: this.metrics
+                csrfToken: !!this.csrfToken
             });
 
             this.setupEventListeners();
-            this.startPeriodicSync();
             this.preventUserSelection();
         } catch (error) {
             console.error('Error initializing TestMonitoring:', error);
         }
-    }
-
-    loadMetricsFromDOM() {
-        // Load metrics from the Livewire-rendered DOM elements
-        const metricElements = document.querySelectorAll('[data-metric]');
-        metricElements.forEach(element => {
-            const metricName = element.dataset.metric;
-            const value = parseInt(element.textContent) || 0;
-            this.metrics[metricName] = value;
-            window.monitoringData.metrics[metricName] = value;
-        });
     }
 
     preventUserSelection() {
@@ -76,28 +39,23 @@ class TestMonitoring {
         });
     }
 
-    updateMetric(metricName, value) {
-        this.metrics[metricName] = value;
-        window.monitoringData.metrics[metricName] = value;
-        
-        // Update Livewire component state through Alpine.js
-        const livewireComponent = document.querySelector('[wire\\:id]')?.__livewire;
-        if (livewireComponent) {
-            livewireComponent.set('metrics.' + metricName, value);
-        }
-        
-        this.checkIfFlagged();
-        this.updateDisplay();
-    }
-
     handleViolation(event, metricName, message) {
         if (event) {
             event.preventDefault();
         }
-        const newValue = this.metrics[metricName] + 1;
-        this.updateMetric(metricName, newValue);
-        console.log(`⚠️ ${message}`, newValue);
-        this.logSuspiciousBehavior(metricName);
+        console.log(`⚠️ ${message}`);
+        
+        // Convert metric name to flag type
+        const flagType = this.getFlagTypeFromMetric(metricName);
+        this.logSuspiciousBehavior(flagType);
+    }
+
+    getFlagTypeFromMetric(metricName) {
+        // First add spaces before capital letters
+        const withSpaces = metricName.replace(/([A-Z])/g, ' $1');
+        // Capitalize the first letter, make rest lowercase, and trim spaces
+        return withSpaces.charAt(0).toUpperCase() + 
+               withSpaces.slice(1).toLowerCase().trim();
     }
 
     setupEventListeners() {
@@ -136,105 +94,25 @@ class TestMonitoring {
                 this.handleViolation(e, 'keyboardShortcuts', 'Developer Tools shortcut detected!');
             }
         });
-
-        // Listen for Livewire updates
-        document.addEventListener('livewire:initialized', () => {
-            this.loadMetricsFromDOM();
-        });
     }
 
     async logSuspiciousBehavior(flagType) {
         try {
-            if (!this.csrfToken || !this.testId) {
-                console.warn('Missing required data for logging:', {
-                    csrfToken: !!this.csrfToken,
-                    testId: this.testId
-                });
+            const livewireEl = document.querySelector('[wire\\:id]');
+            if (!livewireEl || !window.Livewire) {
+                console.warn('Livewire not initialized');
                 return;
             }
 
-            // Call Livewire component's method directly
-            const livewireComponent = document.querySelector('[wire\\:id]')?.__livewire;
-            if (livewireComponent) {
-                await livewireComponent.call('logSuspiciousBehavior', flagType);
+            const component = window.Livewire.find(livewireEl.getAttribute('wire:id'));
+            if (component) {
+                await component.dispatch('logSuspiciousBehavior', [flagType]);
+                console.log('Suspicious behavior logged:', flagType);
             }
-
         } catch (error) {
-            console.warn('Error logging behavior:', error);
+            console.warn('Error logging suspicious behavior:', error);
+            console.error(error);
         }
-    }
-
-    updateDisplay() {
-        const summaryDiv = document.querySelector('.monitoring-summary');
-        if (summaryDiv) {
-            Object.entries(this.metrics).forEach(([key, value]) => {
-                const element = document.querySelector(`[data-metric="${key}"]`);
-                if (element) {
-                    element.textContent = value;
-                    const threshold = this.getThreshold(key);
-                    element.className = value > threshold ? 'text-red-600' : 'text-gray-600';
-                }
-
-                const flagElement = document.querySelector(`[data-metric-flag="${key}"]`);
-                if (flagElement) {
-                    const isThisMetricFlagged = value > this.getThreshold(key);
-                    this.flags[key] = isThisMetricFlagged;
-                    flagElement.textContent = isThisMetricFlagged ? 'Yes' : 'No';
-                    flagElement.className = isThisMetricFlagged ? 'text-red-600' : 'text-green-600';
-                }
-            });
-        }
-    }
-
-    checkIfFlagged() {
-        const thresholds = this.getThresholds();
-        let anyFlagged = false;
-        
-        for (const [metric, threshold] of Object.entries(thresholds)) {
-            const isThisMetricFlagged = this.metrics[metric] > threshold;
-            this.flags[metric] = isThisMetricFlagged;
-            if (isThisMetricFlagged) {
-                anyFlagged = true;
-            }
-        }
-        
-        return anyFlagged;
-    }
-
-    getThreshold(metric) {
-        return this.getThresholds()[metric] || 0;
-    }
-
-    getThresholds() {
-        return {
-            tabSwitches: 3,
-            windowBlurs: 5,
-            mouseExits: 5,
-            copyCutAttempts: 2,
-            rightClicks: 3,
-            keyboardShortcuts: 3,
-            warningCount: 3
-        };
-    }
-
-    startPeriodicSync() {
-        setInterval(() => {
-            this.updateDisplay();
-        }, 1000);
-    }
-
-    showWarning(message) {
-        this.updateMetric('warningCount', this.metrics.warningCount + 1);
-        
-        const warningDiv = document.createElement('div');
-        warningDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-5 right-5 z-50';
-        warningDiv.role = 'alert';
-        warningDiv.innerHTML = message;
-        document.body.appendChild(warningDiv);
-        
-        setTimeout(() => {
-            warningDiv.remove();
-        }, 3000);
     }
 }
 

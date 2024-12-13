@@ -8,42 +8,6 @@
 <?php $attributes = $attributes->except(\App\View\Components\AppLayout::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
-    <!-- <style>
-        /* selection prevention */
-        body {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        /* Allow selection for specific elements where needed (e.g., form inputs) */
-        input, textarea {
-            -webkit-user-select: te xt;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
-        }
-
-        /* Additional protection against selection */
-        .no-select {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        /* Prevent drag-and-drop */
-        * {
-            -webkit-user-drag: none;
-            -khtml-user-drag: none;
-            -moz-user-drag: none;
-            -o-user-drag: none;
-            user-drag: none;
-        }
-    </style> -->
     
     <div class="min-h-screen bg-gray-100">
         <input type="hidden" id="test-id" value="<?php echo e($test->id); ?>">
@@ -176,62 +140,6 @@ if (isset($__slots)) unset($__slots);
             </div>
         </div>
     </div>
-    <!-- <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            disableCopyPaste();
-            // disableRightClick();
-            disableKeyboardShortcuts();
-        });
-    
-        function disableCopyPaste() {
-            document.addEventListener('copy', function(e) {
-                e.preventDefault();
-            });
-    
-            document.addEventListener('cut', function(e) {
-                e.preventDefault();
-            });
-    
-            document.addEventListener('paste', function(e) {
-                e.preventDefault();
-            });
-        }
-
-        // function disableRightClick() {
-        //     document.addEventListener('contextmenu', function(e) {
-        //         e.preventDefault();
-        //     });
-        // }
-
-        function disableKeyboardShortcuts() {
-            document.addEventListener('keydown', function(e) {
-                // Prevent Ctrl+C, Ctrl+V, Ctrl+X
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
-                    e.preventDefault();
-                }
-                
-                // Prevent F12 key (Developer Tools)
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                }
-
-                // Prevent Ctrl+Shift+I (Developer Tools)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'i') {
-                    e.preventDefault();
-                }
-
-                // Prevent Ctrl+Shift+C (Developer Tools Element Inspector)
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'c') {
-                    e.preventDefault();
-                }
-
-                // Prevent Alt+Text Selection
-                if (e.altKey) {
-                    e.preventDefault();
-                }
-            });
-        }
-    </script> -->
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
