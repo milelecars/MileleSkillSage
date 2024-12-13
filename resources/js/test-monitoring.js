@@ -18,7 +18,6 @@ class TestMonitoring {
             return window.testMonitoring;
         }
 
-        // Make the instance available globally right away
         window.testMonitoring = this;
         
         try {
@@ -26,16 +25,11 @@ class TestMonitoring {
             this.candidateId = candidateId;
             this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             
-            // Initialize metrics object first
-            this.metrics = {
-                tabSwitches: 0,
-                windowBlurs: 0,
-                mouseExits: 0,
-                copyCutAttempts: 0,
-                rightClicks: 0,
-                keyboardShortcuts: 0,
-                warningCount: 0
-            };
+            // Initialize metrics from the Livewire component's state
+            this.metrics = { ...window.monitoringData.metrics };
+            
+            // Load initial metrics from DOM
+            this.loadMetricsFromDOM();
             
             // Sync with global state
             window.monitoringData.metrics = { ...this.metrics };
@@ -45,18 +39,27 @@ class TestMonitoring {
             console.log('TestMonitoring initialized with:', {
                 testId: this.testId,
                 candidateId: this.candidateId,
-                csrfToken: !!this.csrfToken
+                csrfToken: !!this.csrfToken,
+                metrics: this.metrics
             });
 
-            // Setup after initialization
             this.setupEventListeners();
             this.startPeriodicSync();
-
-            // Add user selection prevention
             this.preventUserSelection();
         } catch (error) {
             console.error('Error initializing TestMonitoring:', error);
         }
+    }
+
+    loadMetricsFromDOM() {
+        // Load metrics from the Livewire-rendered DOM elements
+        const metricElements = document.querySelectorAll('[data-metric]');
+        metricElements.forEach(element => {
+            const metricName = element.dataset.metric;
+            const value = parseInt(element.textContent) || 0;
+            this.metrics[metricName] = value;
+            window.monitoringData.metrics[metricName] = value;
+        });
     }
 
     preventUserSelection() {
@@ -65,7 +68,6 @@ class TestMonitoring {
         document.body.style.msUserSelect = 'none';
         document.body.style.mozUserSelect = 'none';
 
-        // Allow selection for inputs and textareas
         document.querySelectorAll('input, textarea').forEach(element => {
             element.style.userSelect = 'text';
             element.style.webkitUserSelect = 'text';
@@ -74,66 +76,70 @@ class TestMonitoring {
         });
     }
 
-    // Helper method to safely update metrics
     updateMetric(metricName, value) {
         this.metrics[metricName] = value;
         window.monitoringData.metrics[metricName] = value;
+        
+        // Update Livewire component state through Alpine.js
+        const livewireComponent = document.querySelector('[wire\\:id]')?.__livewire;
+        if (livewireComponent) {
+            livewireComponent.set('metrics.' + metricName, value);
+        }
+        
         this.checkIfFlagged();
         this.updateDisplay();
     }
 
-    // Helper method to handle violations
     handleViolation(event, metricName, message) {
         if (event) {
             event.preventDefault();
         }
-        this.updateMetric(metricName, this.metrics[metricName] + 1);
-        console.log(`⚠️ ${message}`, this.metrics[metricName]);
+        const newValue = this.metrics[metricName] + 1;
+        this.updateMetric(metricName, newValue);
+        console.log(`⚠️ ${message}`, newValue);
         this.logSuspiciousBehavior(metricName);
     }
 
     setupEventListeners() {
-        // Tab Switching
         document.addEventListener('visibilitychange', (e) => {
             if (document.hidden) {
                 this.handleViolation(e, 'tabSwitches', 'Tab Switching Detected!');
             }
         });
     
-        // Window Blur 
         window.addEventListener('blur', (e) => {
             this.handleViolation(e, 'windowBlurs', 'Window focus lost!');
         });
     
-        // Mouse Leaving the window 
         document.addEventListener('mouseleave', (e) => {
             this.handleViolation(e, 'mouseExits', 'Mouse exit detected!');
         });
     
-        // Detect copy/cut attempts
         ['copy', 'cut'].forEach(eventType => {
             document.addEventListener(eventType, (e) => {
                 this.handleViolation(e, 'copyCutAttempts', `${eventType} is not allowed!`);
             });
         });
     
-        // Right Click Attempt 
         document.addEventListener('contextmenu', (e) => {
             this.handleViolation(e, 'rightClicks', 'Right clicking is not allowed!');
         });
     
-        // Detect keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && 
                 ['c', 'v', 'x', 'a', 'p', 'f12'].includes(e.key.toLowerCase())) {
                 this.handleViolation(e, 'keyboardShortcuts', `Keyboard shortcut detected: ${e.key}`);
             }
             
-            // Prevent F12 and other dev tools shortcuts
             if (e.key === 'F12' || 
                 ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'C'))) {
                 this.handleViolation(e, 'keyboardShortcuts', 'Developer Tools shortcut detected!');
             }
+        });
+
+        // Listen for Livewire updates
+        document.addEventListener('livewire:initialized', () => {
+            this.loadMetricsFromDOM();
         });
     }
 
@@ -147,21 +153,12 @@ class TestMonitoring {
                 return;
             }
 
-            const response = await fetch('/flag', { 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': this.csrfToken
-                },
-                body: JSON.stringify({
-                    flag_type: flagType,
-                    test_session_id: this.testId
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            // Call Livewire component's method directly
+            const livewireComponent = document.querySelector('[wire\\:id]')?.__livewire;
+            if (livewireComponent) {
+                await livewireComponent.call('logSuspiciousBehavior', flagType);
             }
+
         } catch (error) {
             console.warn('Error logging behavior:', error);
         }
@@ -171,7 +168,6 @@ class TestMonitoring {
         const summaryDiv = document.querySelector('.monitoring-summary');
         if (summaryDiv) {
             Object.entries(this.metrics).forEach(([key, value]) => {
-                // Update metric value
                 const element = document.querySelector(`[data-metric="${key}"]`);
                 if (element) {
                     element.textContent = value;
@@ -179,7 +175,6 @@ class TestMonitoring {
                     element.className = value > threshold ? 'text-red-600' : 'text-gray-600';
                 }
 
-                // Update flag status
                 const flagElement = document.querySelector(`[data-metric-flag="${key}"]`);
                 if (flagElement) {
                     const isThisMetricFlagged = value > this.getThreshold(key);
@@ -200,7 +195,6 @@ class TestMonitoring {
             this.flags[metric] = isThisMetricFlagged;
             if (isThisMetricFlagged) {
                 anyFlagged = true;
-                this.logSuspiciousBehavior(metric);
             }
         }
         
@@ -244,21 +238,6 @@ class TestMonitoring {
     }
 }
 
-// Initialize the global object before anything else
-if (!window.monitoringData) {
-    window.monitoringData = {
-        metrics: {
-            tabSwitches: 0,
-            windowBlurs: 0,
-            mouseExits: 0,
-            copyCutAttempts: 0,
-            rightClicks: 0,
-            keyboardShortcuts: 0,
-            warningCount: 0
-        }
-    };
-}
-
 // Initialize monitoring when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -281,5 +260,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Make TestMonitoring available globally
 window.TestMonitoring = TestMonitoring;
