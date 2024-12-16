@@ -80,7 +80,7 @@
 
                     <?php if(isset($test)): ?>
                         <div class="mb-6">
-                            <?php if($testAttempt && optional($testAttempt->pivot)->completed_at): ?>
+                            <?php if($testAttempt && $testAttempt->pivot->status == "completed"): ?>
                                 
                                 <div class="flex justify-between items-center bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
                                     <p class="text-green-700">You have completed this test.</p>
@@ -89,7 +89,7 @@
                                         View Results
                                     </a>
                                 </div>
-                            <?php elseif($testAttempt && optional($testAttempt->pivot)->started_at): ?>
+                            <?php elseif($testAttempt && $testAttempt->pivot->status == "in progress"): ?>
                                 
                                 <div class="flex justify-between items-center bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
                                     <p class="text-blue-700">You have a test in progress.</p>

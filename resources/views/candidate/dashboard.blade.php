@@ -70,7 +70,7 @@
 
                     @if(isset($test))
                         <div class="mb-6">
-                            @if($testAttempt && optional($testAttempt->pivot)->completed_at)
+                            @if($testAttempt && $testAttempt->pivot->status == "completed")
                                 {{-- Test completed --}}
                                 <div class="flex justify-between items-center bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
                                     <p class="text-green-700">You have completed this test.</p>
@@ -79,7 +79,7 @@
                                         View Results
                                     </a>
                                 </div>
-                            @elseif($testAttempt && optional($testAttempt->pivot)->started_at)
+                            @elseif($testAttempt && $testAttempt->pivot->status == "in progress")
                                 {{-- Test in progress --}}
                                 <div class="flex justify-between items-center bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
                                     <p class="text-blue-700">You have a test in progress.</p>

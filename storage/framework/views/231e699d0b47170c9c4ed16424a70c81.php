@@ -142,23 +142,23 @@
                                     <li><strong>Webcam Monitoring:</strong> Your webcam and audio may be monitored. Ensure it's enabled and you're alone.</li>
                                 </ul>
                             </div>
-                            <div class="mt-8 p-2 flex items-center space-x-2">
-                                <input type="checkbox" name="agreement" id="agreement" class="rounded border-black" required>
-                                <label for="agreement" class="text-sm text-gray-600">
-                                    I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">
-                                        Guidelines
-                                    </a>
-                                </label>
-                            </div>
-                            <div class="flex justify-end mt-8">
-                                <a href="<?php echo e(route('tests.start', $test->id)); ?>" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md">
-                                    Start Test
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                </a>
-                            </div>
-
+                            <form action="<?php echo e(route('tests.start', $test->id)); ?>" method="POST" class="mt-8">
+                                <?php echo csrf_field(); ?>
+                                <div class="p-2 flex items-center space-x-2">
+                                    <input type="checkbox" name="agreement" id="agreement" class="rounded border-black" required>
+                                    <label for="agreement" class="text-sm text-gray-600">
+                                        I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">Guidelines</a>
+                                    </label>
+                                </div>
+                                <div class="flex justify-end mt-8">
+                                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        Start Test
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </form>
                             <!-- <div x-data="{ agreed: false }">
                                 <div class="mt-5 p-2 flex items-center space-x-2">
                                     <input type="checkbox" 

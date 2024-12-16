@@ -540,8 +540,8 @@ class TestController extends Controller
                 
                 $testAttempt = $candidate->tests()->find($id);
         
-                $isTestStarted = $testAttempt && $testAttempt->pivot->started_at;
-                $isTestCompleted = $testAttempt && $testAttempt->pivot->completed_at;
+                $isTestStarted = $testAttempt && $testAttempt->pivot->status == "in progress";
+                $isTestCompleted = $testAttempt && $testAttempt->pivot->status == "completed";
                 $isInvitationExpired = $invitation->expiration_date < now();
         
                 $remainingTime = null;
@@ -653,14 +653,19 @@ class TestController extends Controller
             return redirect()->route('invitation.candidate-auth')
                 ->with('error', 'Unauthorized access to the test.');
         }
+
+        if ($request->isMethod('post')) {
+            $request->validate([
+                'agreement' => 'required|accepted',
+            ], [
+                'agreement.required' => 'You must agree to the terms and guidelines to proceed.',
+                'agreement.accepted' => 'You must agree to the terms and guidelines to proceed.'
+            ]);
+        }
     
         $candidate = Auth::guard('candidate')->user();
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
         $questions = $test->questions;
-
-        // $request->validate([
-        //     'agreement' => 'required|accepted',
-        // ]);
         
         $isCompleted = $candidate->tests()
             ->wherePivot('test_id', $id)
@@ -680,13 +685,16 @@ class TestController extends Controller
             $endTime = $startTime->copy()->addMinutes($test->duration);
             
             $allQuestionIds = $questions->pluck('id')->toArray();
-            // Generate a cryptographically secure random order
-            $questionOrder = $allQuestionIds;
-            for ($i = count($questionOrder) - 1; $i > 0; $i--) {
+
+            $indices = range(0, count($allQuestionIds) - 1);
+            for ($i = count($indices) - 1; $i > 0; $i--) {
                 $j = random_int(0, $i);
-                // Swap elements
-                [$questionOrder[$i], $questionOrder[$j]] = [$questionOrder[$j], $questionOrder[$i]];
+                [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
             }
+            
+            $questionOrder = array_map(function($index) use ($allQuestionIds) {
+                return $allQuestionIds[$index];
+            }, $indices);
             
             $testSession = [
                 'test_id' => $test->id,
@@ -694,9 +702,9 @@ class TestController extends Controller
                 'end_time' => $endTime->toDateTimeString(),
                 'current_question' => 0,
                 'answers' => [],
-                'question_order' => $questionOrder,  // Use the randomized order here
+                'question_order' => $questionOrder,
                 'total_questions' => count($allQuestionIds)
-            ];
+            ];        
             
             $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
             $candidate->tests()->updateExistingPivot($id, [
@@ -717,32 +725,44 @@ class TestController extends Controller
             // Validate and repair question order if necessary
             if (!isset($testSession['question_order']) || 
                 count($testSession['question_order']) !== $questions->count() ||
+                count(array_unique($testSession['question_order'])) !== count($testSession['question_order']) || 
                 array_diff($questions->pluck('id')->toArray(), $testSession['question_order'])) {
                 
-                // Regenerate question order if invalid
-                $allQuestionIds = $questions->pluck('id')->toArray();
-                $questionOrder = $allQuestionIds;
-                for ($i = count($questionOrder) - 1; $i > 0; $i--) {
+                $allQuestionIds = $questions->pluck('id')->unique()->toArray();
+                
+                $indices = range(0, count($allQuestionIds) - 1);
+                // Shuffle 
+                for ($i = count($indices) - 1; $i > 0; $i--) {
                     $j = random_int(0, $i);
-                    [$questionOrder[$i], $questionOrder[$j]] = [$questionOrder[$j], $questionOrder[$i]];
+                    [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
                 }
+                
+                // Create the question order using the shuffled indices
+                $questionOrder = array_map(function($index) use ($allQuestionIds) {
+                    return $allQuestionIds[$index];
+                }, $indices);
                 
                 $testSession['question_order'] = $questionOrder;
                 $testSession['total_questions'] = count($allQuestionIds);
             }
         }
     
-        // Sort questions according to the random order
         $questions = $questions->sortBy(function($question) use ($testSession) {
             return array_search($question->id, $testSession['question_order']);
         })->values();
          
-        // Validate current question index
         if (!isset($testSession['current_question']) || 
             $testSession['current_question'] >= count($questions)) {
             $testSession['current_question'] = 0;
         }
-    
+        
+        Log::info('Question order established', [
+            'test_id' => $test->id,
+            'question_order' => $testSession['question_order'],
+            'unique_count' => count(array_unique($testSession['question_order'])),
+            'total_count' => count($testSession['question_order'])
+        ]);
+       
         $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->first();
