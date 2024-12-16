@@ -747,11 +747,13 @@ class TestController extends Controller
             ->wherePivot('test_id', $id)
             ->first();
     
-        // if (!$testAttempt) {
-        //     $candidate->tests()->attach($id, [
-        //         'started_at' => now(),
-        //     ]);
-        // }
+        if (!$testAttempt) {
+            $candidate->tests()->attach($id, [
+                'started_at' => now(),
+                'status' => 'in progress'
+            ]);
+            Log::info("in test");
+        }
     
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
@@ -792,12 +794,7 @@ class TestController extends Controller
         }
 
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
-        $questions = $test->questions;
-
-        Log::info('Loaded test questions', [
-            'test_id' => $id,
-            'question_count' => $questions->count()
-        ]);
+    
         Log::info('Request data before validation', $request->all());
 
 
@@ -806,18 +803,19 @@ class TestController extends Controller
             'answer' => 'nullable|exists:question_choices,id', 
         ]);
 
-        Log::info('hi');
-
         $testSession = session('test_session');
         if (!$testSession || $testSession['test_id'] != $id) {
             return redirect()->route('tests.start', ['id' => $id])
                 ->with('error', 'Invalid test session.');
         }
 
+        $questions = $test->questions->sortBy(function($question) use ($testSession) {
+            return array_search($question->id, $testSession['question_order']);
+        })->values();
+
         $currentIndex = $request->input('current_index');
         $choiceId = intval($request->input('answer', null)); 
-        $answerText = QuestionChoice::findOrFail($choiceId)->choice_text ?? null;
-        $currentQuestion = $questions[$request->input('current_index')];
+        $currentQuestion = $questions[$currentIndex];
 
         if (!$currentQuestion) {
             Log::error('Invalid question index', [
@@ -828,31 +826,27 @@ class TestController extends Controller
                 ->with('error', 'Invalid question index.');
         }
 
-        Log::info('Processing answer', [
-            'candidate_id' => $candidate->id,
-            'question_id' => $currentQuestion->id,
-            'choiceId' => $choiceId ?? 'Unanswered '
-        ]);
-
-        $testSession['answers'][$currentIndex] = $choiceId ?? 'Unanswered ';
-        
-        try {
-            Answer::create([
-                'candidate_id' => $candidate->id,
-                'question_id' => $currentQuestion->id,
-                'answer_text' => $answerText, 
-            ]);
-            Log::info('Answer saved successfully', [
-                'candidate_id' => $candidate->id,
-                'question_id' => $currentQuestion->id,
-                'answer_text' => $answerText ?? 'Unanswered ',
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to save answer', [
-                'candidate_id' => $candidate->id,
-                'question_id' => $currentQuestion->id,
-                'error' => $e->getMessage(),
-            ]);
+        if ($choiceId) {
+            $answerText = QuestionChoice::findOrFail($choiceId)->choice_text;
+            
+            try {
+                Answer::create([
+                    'candidate_id' => $candidate->id,
+                    'question_id' => $currentQuestion->id,  
+                    'answer_text' => $answerText, 
+                ]);
+                Log::info('Answer saved successfully', [
+                    'candidate_id' => $candidate->id,
+                    'question_id' => $currentQuestion->id,
+                    'answer_text' => $answerText,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to save answer', [
+                    'candidate_id' => $candidate->id,
+                    'question_id' => $currentQuestion->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         $nextIndex = $currentIndex + 1;
@@ -910,63 +904,33 @@ class TestController extends Controller
     
             $testSession = session('test_session');
             if (!$testSession || $testSession['test_id'] != $id) {
-                Log::error('Invalid test session during submission', [
-                    'test_id' => $id,
-                    'session_data' => $testSession
-                ]);
                 throw new \Exception('Invalid test session');
             }
+
+            $questions = $test->questions->sortBy(function($question) use ($testSession) {
+                return array_search($question->id, $testSession['question_order']);
+            })->values();
     
             $currentIndex = $request->input('current_index');
             $choiceId = intval($request->input('answer', null)); 
-            $answerText = QuestionChoice::findOrFail($choiceId)->choice_text ?? null;
             $currentQuestion = $questions[$currentIndex];
-      
-            
-            if (!$currentQuestion) {
-                Log::error('Invalid question index', [
-                    'current_index' => $currentIndex,
-                    'test_id' => $id
+
+            if ($choiceId) {
+                $answerText = QuestionChoice::findOrFail($choiceId)->choice_text;
+           
+                Answer::create([
+                    'candidate_id' => $candidate->id,
+                    'question_id' => $currentQuestion->id, 
+                    'answer_text' => $answerText,
                 ]);
-                return redirect()->route('tests.start', ['id' => $id])
-                ->with('error', 'Invalid question index.');
             }
-            
-            Log::info('Processing answer', [
-                'current_index' => $currentIndex,
-                'candidate_id' => $candidate->id,
-                'question_id' => $currentQuestion->id,
-                'choiceId' => $choiceId ?? 'Unanswered '
-            ]);
 
-            // try {
-            //     Answer::create([
-            //         'candidate_id' => $candidate->id,
-            //         'question_id' => $currentQuestion->id,
-            //         'answer_text' => $answerText, 
-            //     ]);
-            //     Log::info('Answer saved successfully', [
-            //         'candidate_id' => $candidate->id,
-            //         'question_id' => $currentQuestion->id,
-            //         'answer_text' => $answerText ?? 'Unanswered ',
-            //     ]);
-            // } catch (\Exception $e) {
-            //     Log::error('Failed to save answer', [
-            //         'candidate_id' => $candidate->id,
-            //         'question_id' => $currentQuestion->id,
-            //         'error' => $e->getMessage(),
-            //     ]);
-            // }
-
-            // $testSession['answers'][$currentIndex] = $choiceId ?? 'Unanswered ';
-
-            // Calculate the score efficiently
             $answers = Answer::where('candidate_id', $candidate->id)
                 ->whereIn('question_id', $questions->pluck('id'))
                 ->get();
 
             $score = 0;
-            foreach ($questions as $question) {
+            foreach ($questions as $question) { 
                 if ($question->question_type === 'MCQ') {
                     $correctChoice = $question->choices->firstWhere('is_correct', true);
                     $userAnswer = $answers->firstWhere('question_id', $question->id);
@@ -1037,23 +1001,23 @@ class TestController extends Controller
         
         $testSession = session('test_session');
         $test = Test::with(['questions.choices'])->findOrFail($test->id);
-        $questions = $test->questions;
+        
+        $questions = $test->questions->sortBy(function($question) use ($testSession) {
+            return array_search($question->id, $testSession['question_order']);
+        })->values();
+
         $candidate = Auth::guard('candidate')->user();
 
         $answers = Answer::where('candidate_id', $candidate->id)
-        ->whereIn('question_id', $questions->pluck('id')) 
-        ->get();
-        Log::info('answers', $answers->toArray());
-        
-        
+            ->whereIn('question_id', $questions->pluck('id'))
+            ->get();
+
         $score = 0;
-        foreach ($questions as $question) {
+        foreach ($questions as $question) { 
             if ($question->question_type === 'MCQ') {
                 $correctChoice = $question->choices->firstWhere('is_correct', true);
                 $userAnswer = $answers->firstWhere('question_id', $question->id);
-                
-                Log::info($userAnswer->answer_text ?? []);
-                Log::info($correctChoice->choice_text ?? []);
+
                 if ($correctChoice && $userAnswer && $userAnswer->answer_text == $correctChoice->choice_text) {
                     $score++;
                 }
