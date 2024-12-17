@@ -82,6 +82,11 @@ class Test extends Model
         ->withTimestamps();
     }
 
+    public function answers()
+    {
+        return $this->hasMany(Answer::class);
+    }
+
     public function admin()
     {
         return $this->belongsTo(Admin::class, 'admin_id');

@@ -77,6 +77,7 @@ entity "Answers" {
   * id : int
   --
   * candidate_id : int
+  * test_id : int
   * question_id : int
   * answer_text : text
   * created_at : datetime

@@ -11,6 +11,7 @@ class Answer extends Model
 
     protected $fillable = [
         'candidate_id', 
+        'test_id', 
         'question_id', 
         'answer_text'
     ];
@@ -18,6 +19,11 @@ class Answer extends Model
     public function candidate()
     {
         return $this->belongsTo(Candidate::class);
+    }
+    
+    public function test()
+    {
+        return $this->belongsTo(Test::class);
     }
 
     public function question()

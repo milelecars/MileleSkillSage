@@ -852,17 +852,20 @@ class TestController extends Controller
             try {
                 Answer::create([
                     'candidate_id' => $candidate->id,
+                    'test_id' => $test->id,
                     'question_id' => $currentQuestion->id,  
                     'answer_text' => $answerText, 
                 ]);
                 Log::info('Answer saved successfully', [
                     'candidate_id' => $candidate->id,
+                    'test_id' => $test->id,
                     'question_id' => $currentQuestion->id,
                     'answer_text' => $answerText,
                 ]);
             } catch (\Exception $e) {
                 Log::error('Failed to save answer', [
                     'candidate_id' => $candidate->id,
+                    'test_id' => $test->id,
                     'question_id' => $currentQuestion->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -940,12 +943,13 @@ class TestController extends Controller
            
                 Answer::create([
                     'candidate_id' => $candidate->id,
+                    'test_id' => $test->id,
                     'question_id' => $currentQuestion->id, 
                     'answer_text' => $answerText,
                 ]);
             }
 
-            $answers = Answer::where('candidate_id', $candidate->id)
+            $answers = Answer::where('candidate_id', $candidate->id)->where('test_id', $test->id)
                 ->whereIn('question_id', $questions->pluck('id'))
                 ->get();
 
@@ -1028,7 +1032,7 @@ class TestController extends Controller
 
         $candidate = Auth::guard('candidate')->user();
 
-        $answers = Answer::where('candidate_id', $candidate->id)
+        $answers = Answer::where('candidate_id', $candidate->id)->where('test_id', $test->id)
             ->whereIn('question_id', $questions->pluck('id'))
             ->get();
 
