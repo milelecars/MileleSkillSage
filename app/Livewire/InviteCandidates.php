@@ -6,9 +6,9 @@ use App\Models\Test;
 use Livewire\Component;
 use App\Mail\InvitationEmail;
 use App\Models\Invitation;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 class InviteCandidates extends Component
 {
@@ -26,16 +26,16 @@ class InviteCandidates extends Component
 
     public function addEmail()
     {
-        $this->validate([
+        $this->validateOnly('newEmail', [
             'newEmail' => 'required|email'
         ]);
-    
+
         $email = $this->newEmail;
         
         $existingInvitation = Invitation::where('test_id', $this->testId)
             ->whereJsonContains('invited_emails', $email)
             ->exists();
-    
+
         if ($existingInvitation) {
             $this->addError('newEmail', 'This email has already been invited.');
             return;
@@ -47,10 +47,7 @@ class InviteCandidates extends Component
         }
         
         $this->emailList[] = $email;
-        $this->dispatch('reset-input');
-        $this->reset('newEmail');
-        $this->newEmail ='';        
-
+        $this->newEmail = '';
         
         session(["test_{$this->testId}_emails" => $this->emailList]);
         $this->dispatch('email-added', email: $email);
@@ -66,10 +63,7 @@ class InviteCandidates extends Component
     public function submitInvitations()
     {
         try {
-            DB::beginTransaction();
-            
             $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
-            $test = Test::findOrFail($this->testId);
             
             // Ensure invited_emails is an array
             $existingEmails = is_array($invitation->invited_emails) ? $invitation->invited_emails : [];
@@ -79,19 +73,10 @@ class InviteCandidates extends Component
                 return;
             }
 
-            $failedEmails = [];
+            // Try to send emails first
+            $failedEmails = $this->sendInvitationEmails($invitation);
             
-            foreach ($this->emailList as $email) {
-                try {
-                    Mail::to($email)->send(new InvitationEmail($invitation->invitation_link, $test->title));
-                } catch (\Exception $e) {
-                    Log::error("Failed to send invitation email to {$email}: " . $e->getMessage());
-                    $failedEmails[] = $email;
-                }
-            }
-
             if (!empty($failedEmails)) {
-                DB::rollBack();
                 $failedEmailsList = implode(', ', $failedEmails);
                 $this->addError('email_error', "Failed to send emails to: {$failedEmailsList}");
                 return;
@@ -103,8 +88,6 @@ class InviteCandidates extends Component
                 'invited_emails' => $allEmails
             ]);
     
-            DB::commit();
-            
             session()->forget("test_{$this->testId}_emails");
             $this->emailList = [];
     
@@ -112,11 +95,71 @@ class InviteCandidates extends Component
             $this->dispatch('invitations-sent');
     
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Failed to process invitations: " . $e->getMessage());
+            \Log::error("Failed to process invitations: " . $e->getMessage());
             session()->forget('success');
             $this->addError('submission', 'Failed to process invitations. Please try again.');
         }
+    }
+    
+    private function sendInvitationEmails(Invitation $invitation)
+    {
+        $test = Test::findOrFail($this->testId);
+        $failedEmails = [];
+        
+        try {
+            $mail = new PHPMailer(true);
+            
+            // Server settings
+            $mail->SMTPDebug = 0;
+            $mail->isSMTP();
+            $mail->Host = 'smtp.office365.com';
+            $mail->SMTPAuth = true;
+            $mail->Username = 'no-reply@milelematrix.com';
+            $mail->Password = 'pass';
+            $mail->SMTPSecure = 'STARTTLS';
+            $mail->Port = 587;
+            
+            // Additional settings for SSL/TLS
+            $mail->SMTPOptions = [
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
+                ]
+            ];
+            
+            $mail->setFrom('no-reply@milelematrix.com', 'Milele SkillSage');
+            $mail->isHTML(true);
+            $mail->Subject = 'Invitation to Take a Test for Milele Motors';
+
+            $emailTemplate = view('emails.invitation-email-template', [
+                'invitationLink' => $invitation->invitation_link,
+                'testName' => $test->title
+            ])->render();
+
+            $mail->Body = $emailTemplate;
+            
+            foreach ($this->emailList as $email) {
+                try {
+                    $mail->clearAddresses();
+                    $mail->addAddress($email);
+                    
+                    if (!$mail->send()) {
+                        \Log::error("Failed to send invitation email to {$email}: " . $mail->ErrorInfo);
+                        $failedEmails[] = $email;
+                    }
+                } catch (\Exception $e) {
+                    \Log::error("Error sending to {$email}: " . $e->getMessage());
+                    $failedEmails[] = $email;
+                }
+            }
+    
+        } catch (\Exception $e) {
+            \Log::error("SMTP Configuration Error: " . $e->getMessage());
+            $failedEmails = $this->emailList;
+        }
+    
+        return $failedEmails;
     }
 
     public function render()

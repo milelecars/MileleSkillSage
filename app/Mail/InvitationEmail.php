@@ -4,24 +4,43 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class InvitationEmail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $invitationLink;
-    public $testName;
+    /**
+     * Create a new message instance.
+     */
+    public function __construct(
+        public string $invitationLink,
+        public string $testName
+    ) {}
 
-    public function __construct($invitationLink, $testName)
+    /**
+     * Get the message envelope.
+     */
+    public function envelope(): Envelope
     {
-        $this->invitationLink = $invitationLink;
-        $this->testName = $testName;
+        return new Envelope(
+            subject: 'Invitation to Take a Test for Milele Motors'
+        );
     }
 
-    public function build()
+    /**
+     * Get the message content definition.
+     */
+    public function content(): Content
     {
-        return $this->subject('Invitation to Take a Test for Milele Motors')
-                    ->view('emails.invitation-email-template');
+        return new Content(
+            view: 'emails.invitation-email-template',
+            with: [
+                'invitationLink' => $this->invitationLink,
+                'testName' => $this->testName
+            ]
+        );
     }
 }
