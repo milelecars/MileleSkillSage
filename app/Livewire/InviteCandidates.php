@@ -26,16 +26,16 @@ class InviteCandidates extends Component
 
     public function addEmail()
     {
-        $this->validate([
+        $this->validateOnly('newEmail', [
             'newEmail' => 'required|email'
         ]);
-    
+
         $email = $this->newEmail;
         
         $existingInvitation = Invitation::where('test_id', $this->testId)
             ->whereJsonContains('invited_emails', $email)
             ->exists();
-    
+
         if ($existingInvitation) {
             $this->addError('newEmail', 'This email has already been invited.');
             return;
@@ -47,10 +47,7 @@ class InviteCandidates extends Component
         }
         
         $this->emailList[] = $email;
-        $this->dispatch('reset-input');
-        $this->reset('newEmail');
-        $this->newEmail ='';        
-
+        $this->newEmail = '';
         
         session(["test_{$this->testId}_emails" => $this->emailList]);
         $this->dispatch('email-added', email: $email);
@@ -78,18 +75,19 @@ class InviteCandidates extends Component
                 session()->flash('info', 'No emails to send invitations to.');
                 return;
             }
-
+    
             $failedEmails = [];
             
             foreach ($this->emailList as $email) {
                 try {
-                    Mail::to($email)->send(new InvitationEmail($invitation->invitation_link, $test->title));
+                    $invitationEmail = new InvitationEmail($invitation->invitation_link, $test->title);
+                    Mail::to($email)->send($invitationEmail);
                 } catch (\Exception $e) {
                     Log::error("Failed to send invitation email to {$email}: " . $e->getMessage());
                     $failedEmails[] = $email;
                 }
             }
-
+    
             if (!empty($failedEmails)) {
                 DB::rollBack();
                 $failedEmailsList = implode(', ', $failedEmails);

@@ -48,6 +48,22 @@
                 <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
             @enderror
         </div>
+       
+        <div class="mb-6">
+            <label for="OTP" class="block text-gray-700 text-sm font-bold mb-2">OTP</label>
+            <input 
+                id="OTP" 
+                type="text" 
+                name="OTP" 
+                required 
+                autocomplete="current-OTP" 
+                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline
+                    @error('OTP') border-red-500 @enderror"
+            >
+            @error('OTP')
+                <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
+            @enderror
+        </div>
 
         @if ($errors->has('authentication'))
             <div class="mb-4 text-red-500 text-sm">
