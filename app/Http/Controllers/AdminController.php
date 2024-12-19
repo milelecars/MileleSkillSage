@@ -19,11 +19,19 @@ use App\Mail\RejectionEmail;
 
 class AdminController extends Controller
 {
+    private function getCompletedStatuses()
+    {
+        return ['completed', 'rejected', 'accepted'];
+    }
+
     public function dashboard()
     {
         $stats = [
             'totalCandidates' => Candidate::count(),
-            'completedTests' => DB::table('candidate_test')->where('status', 'completed')->distinct('candidate_id')->count(),
+            'completedTests' => DB::table('candidate_test')
+                ->whereIn('status', $this->getCompletedStatuses())
+                ->distinct('candidate_id')
+                ->count(),
             'activeTests' => Test::count(),
             'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
         ];
@@ -282,7 +290,7 @@ class AdminController extends Controller
             ->select(
                 'tests.id',
                 'tests.title',
-                DB::raw('COUNT(DISTINCT CASE WHEN candidate_test.status = "completed" THEN candidate_test.candidate_id END) as completed_count'),
+                DB::raw('COUNT(DISTINCT CASE WHEN candidate_test.status IN ("' . implode('","', $this->getCompletedStatuses()) . '") THEN candidate_test.candidate_id END) as completed_count'),
                 DB::raw('COUNT(DISTINCT CASE WHEN candidate_test.report_path IS NOT NULL THEN candidate_test.candidate_id END) as total_reports')
             )
             ->leftJoin('candidate_test', 'tests.id', '=', 'candidate_test.test_id')
@@ -308,7 +316,7 @@ class AdminController extends Controller
             'totalTests' => Test::count(),
             'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
             'totalCandidatesParticipated' => DB::table('candidate_test')
-                ->where('status', 'completed')
+                ->whereIn('status', $this->getCompletedStatuses())
                 ->distinct('candidate_id')
                 ->count()
         ]);

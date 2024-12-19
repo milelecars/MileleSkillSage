@@ -19,10 +19,23 @@ class AuthenticatedSessionController extends Controller
     
     public function store(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required',
+            'OTP' => 'required|string'
         ]);
+
+        // First check OTP
+        if ($request->OTP !== "24681357") {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'OTP' => 'Invalid OTP code.',
+                ]);
+        }
+
+        // Create credentials without OTP for database authentication
+        $credentials = $request->only('email', 'password');
 
         Log::info('Login credentials check', [
             'email' => $credentials['email'],
@@ -46,11 +59,10 @@ class AuthenticatedSessionController extends Controller
             'stored_hash' => $admin->password,
             'hash_check_result' => Hash::check($credentials['password'], $admin->password) ? 'true' : 'false'
         ]);
-
         
         // Try both direct hash check and Auth attempt
         $hashCheck = Hash::check($credentials['password'], $admin->password);
-        $authAttempt = Auth::guard('web')->attempt($credentials);
+        $authAttempt = Auth::guard('web')->attempt($credentials); // Now only using email and password
 
         Log::info('Authentication attempts', [
             'hash_check' => $hashCheck ? 'passed' : 'failed',

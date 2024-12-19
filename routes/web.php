@@ -17,13 +17,7 @@ use App\Http\Controllers\ScreenshotController;
 
 // Root route
 Route::get('/', function () {
-    if (Auth::guard('web')->check()) {
-        return redirect()->route('admin.dashboard');
-    } elseif (Auth::guard('candidate')->check()) {
-        return redirect()->route('candidate.dashboard');
-    } else {
-        return redirect()->route('welcome');
-    }
+    return redirect()->route('welcome');
 });
 
 // Welcome route

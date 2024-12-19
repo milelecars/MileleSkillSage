@@ -19,11 +19,15 @@ class RegisteredAdminController extends Controller
 
     public function store(Request $request)
     {
+
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:admins',
-            'password' => 'required|string|confirmed|min:8',
+            'email' => ['required', 'email', 'regex:/^[a-zA-Z0-9._%+-]+@milele\.com$/'],
+            'password' => 'required|min:8|confirmed',
+        ], [
+            'email.regex' => 'The email must be a valid @milele.com address.',
         ]);
+
 
         // Log the registration attempt
         Log::info('Attempting admin registration', [
