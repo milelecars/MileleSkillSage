@@ -22,6 +22,10 @@
                     <a href="{{ route('register') }}" class="text-slate-900 bg-slate-200 hover:bg-slate-50 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Register</a>
                 @endif
             </div>
+            <!-- <form method="POST" action="/logout">
+                @csrf
+                <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded">Logout</button>
+            </form> -->
         </div>  
     </div>
 </body>
