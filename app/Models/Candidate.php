@@ -31,6 +31,5 @@ class Candidate extends Authenticatable
         ->withTimestamps();
     }
 
-    
 }
 

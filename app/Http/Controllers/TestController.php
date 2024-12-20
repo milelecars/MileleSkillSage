@@ -507,6 +507,43 @@ class TestController extends Controller
         }
     }
 
+    public function setup($id)
+    {
+        $candidate = Auth::guard('candidate')->user();
+        if (!$candidate) {
+            return redirect()->route('invitation.candidate-auth');
+        }
+
+        // Get the test by ID
+        $test = Test::with('questions')->findOrFail($id);
+        
+        // Check if this candidate has access to this test
+        $hasAccess = $candidate->tests()->where('test_id', $id)->exists() || 
+                    Invitation::where('test_id', $id)
+                            ->whereJsonContains('invited_emails', $candidate->email)
+                            ->exists();
+        
+        if (!$hasAccess) {
+            return redirect()->route('candidate.dashboard')
+                            ->with('error', 'You do not have access to this test.');
+        }
+
+        // Get test attempt if exists
+        $testAttempt = $candidate->tests()
+                                ->where('test_id', $id)
+                                ->first();
+
+        $invitation = $this->validateSession();
+
+        // Check if test is already completed
+        if ($testAttempt && in_array($testAttempt->pivot->status, ['completed', 'accepted', 'rejected'])) {
+            return redirect()->route('tests.result', $id)
+                            ->with('info', 'This test has already been completed.');
+        }
+        
+        return view('tests.setup', compact('test', 'testAttempt', 'invitation'));
+    }
+
     public function show($id)
     {
         if (Auth::guard('web')->check()) {
@@ -722,7 +759,6 @@ class TestController extends Controller
                 $endTime = Carbon::parse($testSession['end_time']);
             }
     
-            // Validate and repair question order if necessary
             if (!isset($testSession['question_order']) || 
                 count($testSession['question_order']) !== $questions->count() ||
                 count(array_unique($testSession['question_order'])) !== count($testSession['question_order']) || 
@@ -731,13 +767,11 @@ class TestController extends Controller
                 $allQuestionIds = $questions->pluck('id')->unique()->toArray();
                 
                 $indices = range(0, count($allQuestionIds) - 1);
-                // Shuffle 
                 for ($i = count($indices) - 1; $i > 0; $i--) {
                     $j = random_int(0, $i);
                     [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
                 }
                 
-                // Create the question order using the shuffled indices
                 $questionOrder = array_map(function($index) use ($allQuestionIds) {
                     return $allQuestionIds[$index];
                 }, $indices);

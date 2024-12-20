@@ -165,6 +165,7 @@ class AdminController extends Controller
     
         return view('admin.manage-candidates', array_merge(compact('candidates', 'search'), $stats));
     }
+    
     public function getPrivateScreenshot($testId, $candidateId, $filename)
     {
         $path = "screenshots/{$testId}/{$candidateId}/{$filename}";
