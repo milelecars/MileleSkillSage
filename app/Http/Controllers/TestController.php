@@ -463,9 +463,8 @@ class TestController extends Controller
     public function restore($id)
     {
         try {
-            $test = Test::withTrashed()->findOrFail($id);
-            
-            $test->restore();
+            $test = Test::withTrashed()->where('id', $id)->first();
+            Test::withTrashed()->where('id', $id)->restore();
     
             if ($test->invitation) {
                 $test->invitation->update([
