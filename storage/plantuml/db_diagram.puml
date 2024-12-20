@@ -18,6 +18,8 @@ entity "Tests" {
   * duration : int (minutes)
   * admin_id : int
   * overall_results_pdf_path : varchar
+  * deleted_by : int "FK to Admins"
+  * deleted_at : datetime "Soft delete timestamp"
   * created_at : datetime
   * updated_at : datetime
 }
@@ -139,6 +141,8 @@ entity "Invitations" {
 "Questions" ||--|{ "Answers" : has many  
 "Flag Types" ||--|{ "Candidate Flags" : many types used by
 "Admins" ||--|{ "Tests" : manages many
+"Admins" ||--o{ "Tests" : "soft deletes many"
 "Candidate Test" ||--|{ "Candidate Test Screenshots" : "has many screenshots"
+
 
 @enduml

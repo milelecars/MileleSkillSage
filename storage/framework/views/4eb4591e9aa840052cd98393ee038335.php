@@ -14,9 +14,9 @@
 
     <form wire:submit.prevent="addEmail" class="flex gap-2">
         <input type="email" 
-            wire:model="newEmail" 
-            class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
-            placeholder="Enter email address">
+               wire:model.live="newEmail" 
+               class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
+               placeholder="Enter email address">
         
         <button type="submit" 
                 class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded inline-flex items-center"
@@ -35,7 +35,7 @@
             </span>
         </button>
     </form>
-    
+
     <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['newEmail'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -87,12 +87,4 @@ $message = $__bag->first($__errorArgs[0]); ?>
 if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
-</div>
-
-<script>
-    Livewire.on('reset-input', () => {
-        const inputField = document.querySelector('input[type="email"]');
-        if (inputField) inputField.value = '';
-    });
-</script>
-<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/invite-candidates.blade.php ENDPATH**/ ?>
+</div><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/invite-candidates.blade.php ENDPATH**/ ?>

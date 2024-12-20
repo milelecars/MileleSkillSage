@@ -25,7 +25,9 @@ Route::get('/welcome', function () {
     return view('welcome');
 })->name('welcome');
 
-
+Route::get('/check', function() {
+    dd(Auth::check(), Auth::guard('web')->check(), Auth::guard('candidate')->check());
+});
 Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
 Route::post('/camera-permission', [CameraController::class, 'updatePermission'])->name('camera.update');
 Route::get('/camera-permission', [CameraController::class, 'checkPermission'])->name('camera.check');
@@ -70,11 +72,12 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/tests', [TestController::class, 'store'])->name('tests.store');
     Route::get('/tests/{id}/edit', [TestController::class, 'edit'])->name('tests.edit');
     Route::put('/tests/{id}', [TestController::class, 'update'])->name('tests.update');
-    Route::delete('/tests/{id}', [TestController::class, 'destroy'])->name('tests.destroy');
+    Route::delete('/tests/{id}', [TestController::class, 'destroy'])->name('tests.destroy'); // Archives a test
+    Route::get('/tests/archived', [TestController::class, 'archived'])->name('tests.archived');
+    Route::patch('/tests/{id}/restore', [TestController::class, 'restore'])->name('tests.restore'); 
     Route::get('/tests/{id}/invite', [TestController::class, 'invite'])->name('tests.invite');
 
 });
-
 
 
 // Candidate authenticated routes

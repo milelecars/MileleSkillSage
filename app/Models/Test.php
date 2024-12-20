@@ -1,65 +1,31 @@
 <?php
 
-// namespace App\Models;
-
-// use App\Models\User;
-// use App\Models\Candidate;
-// use App\Models\Invitation;
-// use Illuminate\Database\Eloquent\Model;
-// use Illuminate\Database\Eloquent\Factories\HasFactory;
-
-// class Test extends Model
-// {
-//     use HasFactory;
-
-//     protected $fillable = ['name', 'duration', 'description',  'questions_image_url'];
-
-//     public function invitation()
-//     {
-//         return $this->hasOne(Invitation::class);
-//     }
-
-//     public function users()
-//     {
-//         return $this->belongsToMany(User::class, 'test_user')->withTimestamps();
-//     }
-
-//     public function candidates()
-//     {
-//         return $this->belongsToMany(Candidate::class, 'test_candidate')
-//             ->withTimestamps()
-//             ->withPivot(['started_at', 'completed_at', 'answers', 'score']);
-//     }
-
-//     protected static function boot()
-//     {
-//         parent::boot();
-//         static::deleting(function ($test) {
-//             $test->invitation()->delete();
-//             $test->candidates()->detach();
-//         });
-//     }
-
-//     public function calculateEndTime($startTime)
-//     {
-//         return Carbon::parse($startTime)->addMinutes($this->duration);
-//     }
-// }
-
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Test extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'title', 'description', 'duration', 'admin_id', 'overall_results_pdf_path'
+        'title', 
+        'description', 
+        'duration', 
+        'admin_id', 
+        'overall_results_pdf_path',
+        'deleted_by'  // Add this to track who deleted the test
     ];
 
+    protected $dates = [
+        'deleted_at',
+        'created_at',
+        'updated_at'
+    ];
+
+    // Existing relationships
     public function questions()
     {
         return $this->hasMany(Question::class);
@@ -78,8 +44,8 @@ class Test extends Model
     public function candidates()
     {
         return $this->belongsToMany(Candidate::class, 'candidate_test')
-        ->withPivot(['started_at', 'completed_at', 'score','ip_address', 'status'])
-        ->withTimestamps();
+            ->withPivot(['started_at', 'completed_at', 'score', 'ip_address', 'status'])
+            ->withTimestamps();
     }
 
     public function answers()
@@ -97,4 +63,46 @@ class Test extends Model
         return $this->hasOne(Invitation::class);
     }
 
+    // Add relationship to track who deleted the test
+    public function deletedBy()
+    {
+        return $this->belongsTo(Admin::class, 'deleted_by');
+    }
+
+    // Scopes for easy querying
+    public function scopeActive($query)
+    {
+        return $query->whereNull('deleted_at');
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('deleted_at');
+    }
+
+    // Helper methods
+    public function isArchived()
+    {
+        return $this->deleted_at !== null;
+    }
+
+    public function archive($adminId)
+    {
+        $this->update([
+            'deleted_by' => $adminId
+        ]);
+        $this->delete(); // This will set deleted_at
+    }
+
+    public function restore($force = false)
+    {
+        if ($force) {
+            $this->update([
+                'deleted_at' => null,
+                'deleted_by' => null
+            ]);
+        } else {
+            parent::restore();
+        }
+    }
 }

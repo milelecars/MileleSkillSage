@@ -20,8 +20,26 @@
                         </div>
                     <?php endif; ?>
 
-                    <h1 class="text-2xl font-extrabold mb-4 text-gray-900"><?php echo e($test->title); ?></h1>
-                    <p class="text-lg mb-8 text-gray-700 leading-relaxed">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="flex flex-col justify-between">
+                            <h1 class="text-2xl font-extrabold text-gray-900"><?php echo e($test->title); ?></h1>
+                            
+                        </div>  
+                        <a href="<?php echo e(route('tests.invite', $test->id)); ?>" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="19" height="19" class="mr-2">
+                                <path fill="#ffffff" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                            </svg>    
+                            Invite
+                        </a>
+                    </div>
+                    <div class="flex items-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="#666666" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
+                        </svg>
+                        Duration: <?php echo e($test->duration); ?>
+
+                    </div>
+                    <p class="text-lg mb-8 text-gray-700 leading-relaxed text-justify">
                         <?php echo e($test->description); ?>
 
                     </p>
@@ -29,19 +47,16 @@
                     
                     <?php if(Auth::guard('web')->check()): ?>
                         <div class="flex justify-end space-x-4 my-6">
-                            <a href="<?php echo e(route('tests.edit', $test->id)); ?>" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
+                            <a href="<?php echo e(route('tests.edit', $test->id)); ?>" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
                                 Edit
                             </a>
-                            <form action="<?php echo e(route('tests.destroy', $test->id)); ?>" method="POST" onsubmit="return confirm('Are you sure you want to delete this test?');">
+                            <form action="<?php echo e(route('tests.destroy', $test->id)); ?>" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to archive this test? All existing data will be preserved.');">
                                 <?php echo csrf_field(); ?>
                                 <?php echo method_field('DELETE'); ?>
-                                <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
-                                    Delete
+                                <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
+                                    Archive
                                 </button>
                             </form>
-                            <a href="<?php echo e(route('tests.invite', $test->id)); ?>" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out">
-                                Invite
-                            </a>
                         </div>
                 
                     

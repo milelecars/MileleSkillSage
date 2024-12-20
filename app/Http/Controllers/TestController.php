@@ -407,68 +407,89 @@ class TestController extends Controller
     
     public function destroy($id)
     {
-        Log::info('Starting test deletion process', [
+        Log::info('Starting test soft deletion process', [
             'test_id' => $id,
             'admin_id' => auth()->id()
         ]);
-    
+
         try {
-            $test = Test::with(['questions', 'invitation'])->findOrFail($id);
+            $test = Test::findOrFail($id);
             
-            Log::info('Found test for deletion', [
-                'test_id' => $id,
-                'question_count' => $test->questions->count(),
-                'has_invitation' => $test->invitation ? true : false
+            // Update the deleted_by first
+            $test->update([
+                'deleted_by' => auth()->id()
             ]);
-    
-            // Get all question IDs
-            $questionIds = $test->questions->pluck('id')->toArray();
-    
-            // Log related data counts before deletion
-            $relatedCounts = [
-                'choices' => QuestionChoice::whereIn('question_id', $questionIds)->count(),
-                'media' => QuestionMedia::whereIn('question_id', $questionIds)->count(),
-                'questions' => count($questionIds)
-            ];
-    
-            Log::info('Deleting related data', [
-                'test_id' => $id,
-                'related_counts' => $relatedCounts
-            ]);
-    
-            // Delete related data
-            QuestionChoice::whereIn('question_id', $questionIds)->delete();
-            Log::info('Question choices deleted', ['test_id' => $id]);
-    
-            QuestionMedia::whereIn('question_id', $questionIds)->delete();
-            Log::info('Question media deleted', ['test_id' => $id]);
-    
-            Question::whereIn('id', $questionIds)->delete();
-            Log::info('Questions deleted', ['test_id' => $id]);
-    
-            // Delete invitation if exists
-            if ($test->invitation) {
-                $test->invitation->delete();
-                Log::info('Test invitation deleted', ['test_id' => $id]);
-            }
             
-            // Delete the test
+            // Then call delete() which will set deleted_at automatically
             $test->delete();
-            Log::info('Test deleted successfully', ['test_id' => $id]);
-    
+
+            Log::info('Test soft deleted successfully', [
+                'test_id' => $id,
+                'deleted_at' => $test->deleted_at,
+                'deleted_by' => $test->deleted_by
+            ]);
+
+            // Update invitation status if exists
+            if ($test->invitation) {
+                $test->invitation->update([
+                    'status' => 'inactive'
+                ]);
+            }
+
             return redirect()->route('tests.index')
-                ->with('success', 'Test and all associated data deleted successfully!');
-    
+                ->with('success', 'Test has been archived successfully!');
+
         } catch (\Exception $e) {
             Log::error('Error in test deletion process', [
                 'test_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Error archiving test: ' . $e->getMessage());
+        }
+    }
+    
+    public function archived()
+    {
+        $archivedTests = Test::with(['admin', 'deletedBy'])
+                             ->onlyTrashed()
+                             ->get();
+    
+        return view('tests.archived', compact('archivedTests'));
+    }
+    
+    public function restore($id)
+    {
+        try {
+            $test = Test::withTrashed()->findOrFail($id);
+            
+            $test->restore();
+    
+            if ($test->invitation) {
+                $test->invitation->update([
+                    'status' => 'active'
+                ]);
+            }
+    
+            Log::info('Test restored successfully', [
+                'test_id' => $id,
                 'admin_id' => auth()->id()
             ]);
     
+            return redirect()->route('tests.index')
+                ->with('success', 'Test has been restored successfully!');
+    
+        } catch (\Exception $e) {
+            Log::error('Error restoring test', [
+                'test_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+    
             return redirect()->back()
-                ->with('error', 'Error deleting test: ' . $e->getMessage());
+                ->with('error', 'Error restoring test: ' . $e->getMessage());
         }
     }
 
