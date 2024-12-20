@@ -80,5 +80,9 @@
                 Need an account?
             </a>
         </div>
+        <!-- <form method="POST" action="/logout">
+            @csrf
+            <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded">Logout</button>
+        </form> -->
     </form>
 </x-guest-layout>

@@ -22,16 +22,14 @@
                             <?php $__empty_1 = true; $__currentLoopData = $archivedTests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <li class="p-4 hover:bg-gray-100 transition duration-150 ease-in-out rounded-lg">
                                     <div class="flex justify-between items-center">
-                                        <a href="<?php echo e(route('tests.show', ['id' => $test->id])); ?>">
-                                            <div class="flex-grow">
-                                                <h3 class="text-lg font-semibold text-gray-700"><?php echo e($test->title); ?></h3>
-                                                <p class="text-base text-gray-600 mt-2"><?php echo e(Str::limit($test->description, 100)); ?></p>
-                                                <div class="flex items-center mt-4 text-sm text-gray-500">
-                                                    <span class="mr-4">Archived by: <?php echo e($test->deletedBy->name); ?></span>
-                                                    <span>Archived on: <?php echo e($test->deleted_at->format('M d, Y')); ?></span>
-                                                </div>
-                                            </div>        
-                                        </a>
+                                        <div class="flex-grow">
+                                            <h3 class="text-lg font-semibold text-gray-700"><?php echo e($test->title); ?></h3>
+                                            <p class="text-base text-gray-600 mt-2"><?php echo e(Str::limit($test->description, 100)); ?></p>
+                                            <div class="flex items-center mt-4 text-sm text-gray-500">
+                                                <span class="mr-4">Archived by: <?php echo e($test->deletedBy->name); ?></span>
+                                                <span>Archived on: <?php echo e($test->deleted_at->format('M d, Y')); ?></span>
+                                            </div>
+                                        </div>        
                                         <div class="flex space-x-2">
                                             <form action="<?php echo e(route('tests.restore', $test->id)); ?>" method="POST" class="inline">
                                                 <?php echo csrf_field(); ?>
