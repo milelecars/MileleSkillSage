@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to My App</title>
+    <title>Milele SkillSage</title>
     <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
 </head>
 <body class="antialiased font-sans">
@@ -41,10 +41,10 @@
                     <a href="<?php echo e(route('register')); ?>" class="text-slate-900 bg-slate-200 hover:bg-slate-50 font-bold py-2 px-4 rounded text-center focus:outline-none focus:shadow-outline">Register</a>
                 <?php endif; ?>
             </div>
-            <form method="POST" action="/logout">
+            <!-- <form method="POST" action="/logout">
                 <?php echo csrf_field(); ?>
                 <button type="submit" class="px-4 py-2 bg-red-500 text-white rounded">Logout</button>
-            </form>
+            </form> -->
         </div>  
     </div>
 </body>

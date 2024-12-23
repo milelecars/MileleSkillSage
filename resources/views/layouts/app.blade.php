@@ -12,7 +12,7 @@
         <meta http-equiv="ScreenOrientation" content="autoRotate:disabled">
 
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'Milele SkillSage') }}</title>
 
         <!-- Fonts and External CSS -->
         <link rel="preconnect" href="https://fonts.bunny.net">
