@@ -36,7 +36,7 @@ entity "Candidate Test" {
   * status : enam
 }
 
-entity "Screenshots" {
+entity "Candidate Test Screenshots" {
   * id : int
   --
   * candidate_test_id : int
@@ -55,7 +55,7 @@ entity "Questions" {
   * updated_at : datetime
 }
 
-entity "Choices" {
+entity "Question Choices" {
   * id : int
   --
   * question_id : int
@@ -65,7 +65,7 @@ entity "Choices" {
   * updated_at : datetime
 }
 
-entity "Medias" {
+entity "Question Media" {
   * id : int
   --
   * question_id : int
@@ -96,7 +96,7 @@ entity "Admins" {
   * updated_at : datetime
 }
 
-entity "Types" {
+entity "Flag Types" {
   * id : int
   --
   * name : varchar
@@ -106,7 +106,7 @@ entity "Types" {
   * updated_at : datetime
 }
 
-entity "Flags" {
+entity "Candidate Flags" {
   * id : int
   --
   * candidate_id : int
@@ -131,17 +131,17 @@ entity "Invitations" {
 }
 
 ' Relationships
-"Candidates" ||--|{ "Candidate Test" : takes many tests
 "Candidates" ||--|{ "Answers" : has many
-"Candidates" ||--|{ "Flags" : has many
+"Candidates" ||--|{ "Candidate Flags" : has many
+"Candidates" ||--|{ "Candidate Test" : takes many tests
 "Tests" ||--|{ "Questions" : has many
 "Tests" ||--o| "Invitations" : has one
-"Questions" ||--|{ "Choices" : has many
-"Questions" ||--o| "Medias" : has one
+"Questions" ||--|{ "Question Choices" : has many
+"Questions" ||--o| "Question Media" : has one
 "Questions" ||--|{ "Answers" : has many  
-"Types" ||--|{ "Flags" : many types used by
+"Flag Types" ||--|{ "Candidate Flags" : many types used by
 "Admins" ||--|{ "Tests" : manages many
-"Candidate Test" ||--|{ "Screenshots" : "has many screenshots"
+"Candidate Test" ||--|{ "Candidate Test Screenshots" : "has many screenshots"
 
 
 @enduml
