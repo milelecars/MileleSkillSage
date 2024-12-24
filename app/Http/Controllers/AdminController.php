@@ -168,30 +168,59 @@ class AdminController extends Controller
     
     public function getPrivateScreenshot($testId, $candidateId, $filename)
     {
-        $path = "screenshots/{$testId}/{$candidateId}/{$filename}";
-        Log::info('Constructed path', ['path' => $path]);
-
-        if (!Storage::disk('private')->exists($path)) {
-            Log::error('File not found in private storage', [
-                'path' => $path,
-                'fullPath' => Storage::disk('private')->path($path),
+        try {
+            // Find the screenshot record with the correct table name
+            $screenshot = DB::table('candidate_test_screenshots')
+                ->where('test_id', $testId)
+                ->where('candidate_id', $candidateId)
+                ->where('screenshot_path', 'like', '%' . $filename)
+                ->first();
+    
+            Log::info('Screenshot query result', [
+                'screenshot' => $screenshot,
+                'testId' => $testId,
+                'candidateId' => $candidateId,
+                'filename' => $filename
             ]);
-            abort(404);
+    
+            if (!$screenshot) {
+                Log::error('Screenshot not found in database');
+                abort(404);
+            }
+    
+            $fullPath = storage_path("app/private/" . $screenshot->screenshot_path);
+            
+            Log::info('File path check', [
+                'fullPath' => $fullPath,
+                'exists' => file_exists($fullPath)
+            ]);
+    
+            if (!file_exists($fullPath)) {
+                Log::error('File not found on disk', [
+                    'path' => $fullPath
+                ]);
+                abort(404);
+            }
+    
+            return response()->file($fullPath, [
+                'Content-Type' => mime_content_type($fullPath),
+                'Cache-Control' => 'private, no-cache, no-store, must-revalidate'
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Screenshot error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
         }
-
-        $fullPath = Storage::disk('private')->path($path);
-        $mimeType = mime_content_type($fullPath);
-
-        return response()->file($fullPath, [
-            'Content-Type' => $mimeType,
-            'Cache-Control' => 'no-store, no-cache, must-revalidate',
-            'Pragma' => 'no-cache',
-        ]);
     }
 
-    public function candidateResult(Candidate $candidate)
+    public function candidateResult(Test $test, Candidate $candidate )
     {
         $test = $candidate->tests()
+            ->where('candidate_test.test_id', $test->id)
+            ->where('candidate_test.candidate_id', $candidate->id)
             ->with(['questions.choices', 'questions.media'])
             ->withPivot('started_at', 'completed_at', 'score', 'ip_address', 'status')
             ->first();

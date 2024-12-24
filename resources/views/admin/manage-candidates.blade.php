@@ -82,10 +82,10 @@
                                     <tr>
                                         <td class="px-2 py-4">
                                             @if($candidate['has_started'])
-                                                <a href="{{ route('admin.candidate-result', ['candidate' => $candidate['id']]) }}" class="hover:text-blue-600">
-                                                    <div class="text">{{ $candidate['name'] }}</div>
-                                                    <div class="text-xs text-gray-500">{{ $candidate['email'] }}</div>
-                                                </a>
+                                            <a href="{{ route('admin.candidate-result', ['test' => $candidate['test_id'], 'candidate' => $candidate['id']]) }}" class="hover:text-blue-600">
+                                                <div class="text">{{ $candidate['name'] }}</div>
+                                                <div class="text-xs text-gray-500">{{ $candidate['email'] }}</div>
+                                            </a>
                                             @else
                                                 <div class="text-xs text-gray-500">{{ $candidate['email'] }}</div>
                                             @endif
