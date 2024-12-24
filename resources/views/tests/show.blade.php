@@ -16,19 +16,23 @@
                             <h1 class="text-2xl font-extrabold text-gray-900">{{$test->title}}</h1>
                             
                         </div>  
-                        <a href="{{ route('tests.invite', $test->id) }}" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="19" height="19" class="mr-2">
-                                <path fill="#ffffff" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                            </svg>    
-                            Invite
-                        </a>
+                        @if(Auth::guard('web')->check())
+                            <a href="{{ route('tests.invite', $test->id) }}" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="19" height="19" class="mr-2">
+                                    <path fill="#ffffff" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                                </svg>    
+                                Invite
+                            </a>
+                        @endif
                     </div>
-                    <div class="flex items-center mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" viewBox="0 0 24 24" width="18" height="18">
-                            <path fill="#666666" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
-                        </svg>
-                        Duration: {{$test->duration}}
-                    </div>
+                    @if(Auth::guard('web')->check())
+                        <div class="flex items-center mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" viewBox="0 0 24 24" width="18" height="18">
+                                <path fill="#666666" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
+                            </svg>
+                            Duration: {{$test->duration}}
+                        </div>
+                    @endif
                     <p class="text-lg mb-8 text-gray-700 leading-relaxed text-justify">
                         {{$test->description}}
                     </p>
