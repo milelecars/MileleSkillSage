@@ -50,7 +50,6 @@ class InvitationController extends Controller
             'test' => $invitation->test,
         ]);
     }
-    
 
    public function validateEmail(Request $request, $token)
    {

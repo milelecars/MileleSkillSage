@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\AcceptanceEmail;
 use App\Mail\RejectionEmail;
-
+use App\Mail\InvitationEmail;
 
 class AdminController extends Controller
 {
@@ -37,6 +37,106 @@ class AdminController extends Controller
         ];
         
         return view('admin.dashboard', $stats);
+    }
+
+    public function inviteCandidate()
+    {
+        $tests = Test::all();
+        $allTestIds = $tests->pluck('id')->toArray();
+        
+        $emailToTestIds = Invitation::whereJsonLength('invited_emails', '>', 0)
+            ->get()
+            ->flatMap(function ($invitation) {
+                $invitedEmailsList = is_string($invitation->invited_emails) 
+                    ? json_decode($invitation->invited_emails, true) 
+                    : $invitation->invited_emails;
+                
+                return collect($invitedEmailsList)->map(function ($email) use ($invitation) {
+                    return [
+                        'email' => $email,
+                        'test_id' => $invitation->test_id
+                    ];
+                });
+            })
+            ->groupBy('email')
+            ->map(function ($group) {
+                return $group->pluck('test_id')->unique()->values()->toArray();
+            });
+
+            
+        // Create the opposite mapping (uninvited tests for each email)
+        $emailToUninvitedTestIds = $emailToTestIds->map(function ($invitedTestIds) use ($allTestIds) {
+            return array_values(array_diff($allTestIds, $invitedTestIds));
+        });
+
+
+        return view('admin.invite', compact('emailToTestIds', 'emailToUninvitedTestIds', 'tests'));
+    }
+
+    public function sendInvitation(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $emailTestMap = $request->input('email_test_map');
+            
+            // try to send all emails
+            foreach ($emailTestMap as $email => $testIds) {
+                if (empty($testIds)) continue;
+
+                foreach ($testIds as $testId) {
+                    $invitation = Invitation::where('test_id', $testId)->firstOrFail();
+                    $test = Test::findOrFail($testId);
+
+                    try {
+                        $invitationEmail = new InvitationEmail($invitation->invitation_link, $test->title);
+                        Mail::to($email)->send($invitationEmail);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        Log::error("Failed to send invitation email to {$email} for test {$testId}: " . $e->getMessage());
+                        
+                        return redirect()
+                            ->back()
+                            ->withErrors(['email_error' => "Failed to send email to: {$email}"]);
+                    }
+                }
+            }
+
+            // all emails were sent successfully
+            foreach ($emailTestMap as $email => $testIds) {
+                if (empty($testIds)) continue;
+
+                foreach ($testIds as $testId) {
+                    $invitation = Invitation::where('test_id', $testId)->firstOrFail();
+                    
+                    $existingEmails = is_array($invitation->invited_emails) 
+                        ? $invitation->invited_emails 
+                        : (json_decode($invitation->invited_emails, true) ?: []);
+
+                    if (!in_array($email, $existingEmails)) {
+                        $existingEmails[] = $email;
+                        
+                        $invitation->update([
+                            'invited_emails' => $existingEmails
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+            
+            return redirect()
+                ->route('admin.select-candidate', ['selected_email' => array_key_first($emailTestMap)])
+                ->with('success', 'Invitations sent successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Failed to process invitations: " . $e->getMessage());
+            
+            return redirect()
+                ->back()
+                ->withErrors(['submission' => 'Failed to process invitations. Please try again.']);
+        }
     }
 
     private function getQuestions($test)

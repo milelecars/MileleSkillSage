@@ -84,7 +84,6 @@ class CandidateController extends Controller
         }
     }
 
-
     private function validateSession()
     {
         $invitationLink = session('invitation_link');

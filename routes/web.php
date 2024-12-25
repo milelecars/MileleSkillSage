@@ -66,6 +66,12 @@ Route::middleware('auth:web')->group(function () {
         ->name('candidate.accept');
     Route::put('/candidates/{candidate}/reject', [AdminController::class, 'rejectCandidate'])
         ->name('candidate.reject');
+        
+    Route::get('/admin/invite', [AdminController::class, 'inviteCandidate'])->name('admin.invite');
+    Route::get('/admin/select-candidate', [AdminController::class, 'inviteCandidate'])
+    ->name('admin.select-candidate');
+    Route::post('/admin/send', [AdminController::class, 'sendInvitation'])
+    ->name('admin.send');
 
     Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'streamPDF'])->name('reports.candidate-report');
     Route::get('/admin/manage-reports', [AdminController::class, 'manageReports'])->name('admin.manage-reports');
