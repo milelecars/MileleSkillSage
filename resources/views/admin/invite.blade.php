@@ -2,13 +2,17 @@
     <div class="py-12 text-theme bg-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             @if(session('success'))
-                <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
+                <div class="mb-4 p-4 pl-6 bg-green-100 border border-green-400 text-green-700 rounded-lg">
                     {{ session('success') }}
                 </div>
             @endif
             @if($errors->any())
                 <div class="mb-4 p-4 bg-red-50 border border-red-500 text-red-700 rounded-lg">
-                    {{ $error }}   
+                    <ul class="pl-5">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 
