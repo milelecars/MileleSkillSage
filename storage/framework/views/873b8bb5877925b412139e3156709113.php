@@ -18,14 +18,10 @@
             <?php endif; ?>
             <?php if($errors->any()): ?>
                 <div class="mb-4 p-4 bg-red-50 border border-red-500 text-red-700 rounded-lg">
-                    <ul class="list-disc">
-                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <li><?php echo e($error); ?></li>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </ul>
+                    <?php echo e($error); ?>   
                 </div>
             <?php endif; ?>
-            
+
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-8">
                     

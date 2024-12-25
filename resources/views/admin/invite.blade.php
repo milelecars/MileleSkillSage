@@ -8,14 +8,10 @@
             @endif
             @if($errors->any())
                 <div class="mb-4 p-4 bg-red-50 border border-red-500 text-red-700 rounded-lg">
-                    <ul class="list-disc">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                    {{ $error }}   
                 </div>
             @endif
-            
+
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-8">
                     {{-- Header Section --}}
