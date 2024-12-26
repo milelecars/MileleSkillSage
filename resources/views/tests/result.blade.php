@@ -3,7 +3,7 @@
         x-data="{ show: @if(session('warning')) true @else false @endif }"
         x-show="show"
         x-init="setTimeout(() => { show = false }, 5000)"
-        class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded shadow-lg"
+        class="fixed top-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg shadow-lg"
         style="z-index: 50;"
     >
         <div class="flex">
