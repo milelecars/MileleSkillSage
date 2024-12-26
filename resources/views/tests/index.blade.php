@@ -74,7 +74,7 @@
                     <div class="rounded-lg  bg-gray-50">
                         <ul class="divide-y divide-gray-200 rounded-lg shadow-inner">
                             @forelse ($tests as $test)
-                                <li class="p-5 hover:bg-gray-100 hover:rounded-lg transition duration-150 ease-in-out ">
+                                <li class="p-5 hover:bg-gray-100 hover:rounded-lg s transition duration-150 ease-in-out ">
                                     <div class="flex justify-between items-center">
                                         <a href="{{ route('tests.show', ['id' => $test->id]) }}" class="flex-grow">
                                             <h3 class="text-xl font-semibold text-blue-700">{{ $test->title }}</h3>

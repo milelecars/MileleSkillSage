@@ -83,7 +83,7 @@
                     <div class="rounded-lg  bg-gray-50">
                         <ul class="divide-y divide-gray-200 rounded-lg shadow-inner">
                             <?php $__empty_1 = true; $__currentLoopData = $tests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                                <li class="p-5 hover:bg-gray-100 hover:rounded-lg transition duration-150 ease-in-out ">
+                                <li class="p-5 hover:bg-gray-100 hover:rounded-lg s transition duration-150 ease-in-out ">
                                     <div class="flex justify-between items-center">
                                         <a href="<?php echo e(route('tests.show', ['id' => $test->id])); ?>" class="flex-grow">
                                             <h3 class="text-xl font-semibold text-blue-700"><?php echo e($test->title); ?></h3>
