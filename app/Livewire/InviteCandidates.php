@@ -50,7 +50,6 @@ class InviteCandidates extends Component
         $this->newEmail = '';
         
         session(["test_{$this->testId}_emails" => $this->emailList]);
-        $this->dispatch('email-added', email: $email);
     }
 
     public function removeEmail($index)

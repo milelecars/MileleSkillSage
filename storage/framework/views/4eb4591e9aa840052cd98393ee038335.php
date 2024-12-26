@@ -1,15 +1,15 @@
 <div>
     <div class="space-y-4 mb-4">
-        @foreach($emailList as $index => $email)
+        <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $emailList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $email): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
-                <span class="text-gray-700">{{ $email }}</span>
-                <button wire:click="removeEmail({{ $index }})" class="text-gray-400 hover:text-gray-600">
+                <span class="text-gray-700"><?php echo e($email); ?></span>
+                <button wire:click="removeEmail(<?php echo e($index); ?>)" class="text-gray-400 hover:text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                     </svg>
                 </button>
             </div>
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
     </div>
 
     <form wire:submit.prevent="addEmail" class="flex gap-2">
@@ -36,17 +36,25 @@
         </button>
     </form>
 
-    @error('newEmail') 
-        <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-    @enderror
+    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['newEmail'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+        <span class="text-red-500 text-sm mt-1"><?php echo e($message); ?></span>
+    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
 
-    @if (session()->has('success'))
+    <!--[if BLOCK]><![endif]--><?php if(session()->has('success')): ?>
         <div class="mb-4 mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    @if($emailList)
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    <!--[if BLOCK]><![endif]--><?php if($emailList): ?>
         <div class="mt-6">
             <button wire:click="submitInvitations" 
                     wire:loading.attr="disabled"
@@ -64,12 +72,21 @@
                 </span>
             </button>
         </div>
-    @endif
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
-    @error('submission') 
+    <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['submission'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
         <div class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-            {{ $message }}
+            <?php echo e($message); ?>
+
         </div>
-    @enderror
+    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
 </div>
 
+<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/invite-candidates.blade.php ENDPATH**/ ?>
