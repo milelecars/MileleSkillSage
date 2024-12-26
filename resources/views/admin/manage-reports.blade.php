@@ -3,7 +3,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-6">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Manage Reports</h1>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-6">Manage Reports</h1>
 
                     @if(session('success'))
                         <div class="bg-amber-50 border-l-4 border-amber-200 text-amber-800 p-4 mb-4 rounded-lg">

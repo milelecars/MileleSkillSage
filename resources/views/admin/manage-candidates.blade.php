@@ -5,7 +5,7 @@
                 <div class="p-6">
                     
                     <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-3xl font-bold text-gray-900">Manage Candidates</h1>
+                        <h1 class="text-2xl font-bold text-gray-900">Manage Candidates</h1>
                         
                         <!-- search functionality  -->
                         <form method="GET" action="{{ route('admin.manage-candidates') }}" class="flex gap-2">
@@ -15,7 +15,7 @@
                                     name="search"
                                     value="{{ $search ?? '' }}"
                                     placeholder="Search by name or email..."
-                                    class="w-64 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    class="w-64 h-9 border text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                 >
                                 @if($search)
                                     <a href="{{ route('admin.manage-candidates') }}" 
@@ -27,7 +27,7 @@
                                     </a>
                                 @endif
                             </div>
-                            <button type="submit" class="px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <button type="submit" class="px-3 h-9 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
                                 Search
                             </button>
                         </form>
@@ -44,22 +44,18 @@
                         <div class="bg-blue-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-blue-700">Total Invited</h3>
                             <p class="text-2xl font-bold text-blue-900">{{ $totalInvited }}</p>
-                            <p class="text-sm text-blue-600 mt-1">Total invitations sent</p>
                         </div>
                         <div class="bg-green-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-green-700">Completed Tests</h3>
                             <p class="text-2xl font-bold text-green-900">{{ $completedTestsCount }}</p>
-                            <p class="text-sm text-green-600 mt-1">Tests finished by candidates</p>
                         </div>
                         <div class="bg-purple-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-purple-700">Active Tests</h3>
                             <p class="text-2xl font-bold text-purple-900">{{ $activeTests }}</p>
-                            <p class="text-sm text-purple-600 mt-1">Currently active tests</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-700">Total Reports</h3>
                             <p class="text-2xl font-bold text-gray-900">{{ $totalReports }}</p>
-                            <p class="text-sm text-gray-600 mt-1">Generated test reports</p>
                         </div>
                     </div>
 

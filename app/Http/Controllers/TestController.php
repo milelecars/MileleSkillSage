@@ -35,12 +35,23 @@ class TestController extends Controller
         $this->testReportService = $testReportService;
     }
     
-    public function index()
+    public function index(Request $request)
     {
-        $tests = Test::all();
-        Log::info("web ", Auth::guard('web')->check()===TRUE? ["t"]:["f"]);
-        return view('tests.index', compact('tests'));
-
+        $search = $request->input('search');
+        
+        $query = Test::query();
+        
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+        
+        $tests = $query->orderBy('created_at', 'desc')
+                    ->paginate(10);
+        
+        return view('tests.index', compact('tests', 'search'));
     }
 
     public function create()
