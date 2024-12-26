@@ -17,12 +17,22 @@
                             
                         </div>  
                         @if(Auth::guard('web')->check())
-                            <a href="{{ route('tests.invite', $test->id) }}" class="inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="19" height="19" class="mr-2">
-                                    <path fill="#ffffff" d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                                </svg>    
-                                Invite
-                            </a>
+                            <div class="flex space-x-1">
+                                <a href="{{ route('tests.edit', $test->id) }}" class="text-yellow-500 hover:text-yellow-600 p-2 rounded-full hover:bg-yellow-100 transition duration-150 ease-in-out" title="Edit Test">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                    </svg>
+                                </a>
+                                <form action="{{ route('tests.destroy', $test->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to archive this test? All existing data will be preserved.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-orange-500 hover:text-orange-600 p-2 rounded-full hover:bg-orange-100 transition duration-150 ease-in-out" title="Archive Test">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
                         @endif
                     </div>
                     @if(Auth::guard('web')->check())
@@ -33,30 +43,27 @@
                             Duration: {{$test->duration}}
                         </div>
                     @endif
-                    <p class="text-lg mb-8 text-gray-700 leading-relaxed text-justify">
-                        {{$test->description}}
-                    </p>
-                
-                    {{-- actions for admin users --}}
-                    @if(Auth::guard('web')->check())
-                        <div class="flex justify-end space-x-4 my-6">
-                            <a href="{{ route('tests.edit', $test->id) }}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
-                                Edit
+                    <div class="mb-10">
+                        <p class="text-lg text-gray-700 leading-relaxed text-justify">
+                            {{$test->description}}
+                        </p>
+
+                        @if(Auth::guard('web')->check())
+                            <a href="{{ route('tests.invite', $test->id) }}" class="mt-4 inline-flex items-center bg-green-600 hover:bg-green-500 text-white font-semibold px-4 py-2 rounded-md text-xs  active:bg-green-700 focus:outline-none focus:border-green-700 focus:ring focus:ring-green-300 disabled:opacity-25 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="19" height="19" class="mr-2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                </svg>  
+                                Invite
                             </a>
-                            <form action="{{ route('tests.destroy', $test->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to archive this test? All existing data will be preserved.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-md text-sm transition duration-300 ease-in-out">
-                                    Archive
-                                </button>
-                            </form>
-                        </div>
-                
-                    
-                        {{-- test preview for admin users --}}
+                        @endif
+
+                    </div>
+
+                    {{-- test preview for admin users --}}
+                    @if(Auth::guard('web')->check())
                         @if($questions->count() > 0)
-                            <div class="mt-8 space-y-8">
-                                <h2 class="text-2xl font-bold text-gray-800 mb-4">Test Preview</h2>
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Test Preview</h2>
+                            <div class=" space-y-8">
                                 @foreach ($questions->take(10) as $index => $question)
                                     <div class="bg-gray-50 p-6 rounded-lg shadow">
                                         <p class="text-lg mb-4 font-medium text-gray-800">

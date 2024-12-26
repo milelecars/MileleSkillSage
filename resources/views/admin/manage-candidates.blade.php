@@ -92,7 +92,7 @@
                                         </td>
                                         <td class="px-2 py-4 text-sm">{{ $candidate['test_title'] }}</td>
                                         @if(!$candidate['has_started'])
-                                            <td class="px-2 py-4 text-sm" colspan="6">
+                                            <td class="px-2 py-4 text-sm">
                                                 <span class="text-gray-800 bg-gray-100 px-2 py-1 rounded-full">Not Started</span>
                                             </td>
                                         @else
