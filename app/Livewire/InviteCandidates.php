@@ -32,19 +32,13 @@ class InviteCandidates extends Component
 
     private function checkAccessToken()
     {
-        $accessToken = session('access_token');
-        $expiresIn = session('expires_in');
-    
-        if (!$accessToken || now()->greaterThan($expiresIn)) {
-            // Try refreshing first
-            $oauthController = new OAuthController();
-            $newToken = $oauthController->refreshToken();
-            
-            if (!$newToken) {
-                Log::info('Access token expired and refresh failed. Redirecting to Google login.');
-                session()->flash('info', 'Your session has expired. Please log in again.');
-                return redirect()->route('google.login', ['testId' => $this->testId]);
-            }
+        try {
+            $oAuthController = new OAuthController();
+            $client = $oAuthController->getClient();
+        } catch (\Exception $e) {
+            Log::info('Access token check failed. Redirecting to Google login.');
+            session()->flash('info', 'Please authenticate with Google to send emails.');
+            return redirect()->route('google.login', ['testId' => $this->testId]);
         }
     }
 
@@ -214,15 +208,13 @@ class InviteCandidates extends Component
         try {
             DB::beginTransaction();
             
+            $oAuthController = new OAuthController();
             try {
-                $oAuthController = new OAuthController();
                 $client = $oAuthController->getClient();
-                Log::debug('Successfully got Google client');
             } catch (\Exception $e) {
-                Log::debug('Authentication required, redirecting to Google login');
                 return redirect()->route('google.login', ['testId' => $this->testId]);
             }
-    
+
             $service = new Gmail($client);
             
             $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
@@ -230,19 +222,9 @@ class InviteCandidates extends Component
             
             $existingEmails = is_array($invitation->invited_emails) ? $invitation->invited_emails : [];
             $failedEmails = [];
-    
-            
-            $template = file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'));
-            
+
             foreach ($this->emailList as $email) {
                 try {
-                    // Replace variables in template
-                    $htmlContent = str_replace(
-                        ['{{ $testName }}', '{{ $invitationLink }}'],
-                        [$test->title, $invitation->invitation_link],
-                        $template
-                    );
-    
                     $message = new \Google\Service\Gmail\Message();
                     
                     $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
@@ -250,8 +232,8 @@ class InviteCandidates extends Component
                     $rawMessage .= 'Subject: =?utf-8?B?' . base64_encode("Invitation to Take a Test for Milele Motors") . "?=\r\n";
                     $rawMessage .= "MIME-Version: 1.0\r\n";
                     $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
-                    $rawMessage .= $htmlContent;
-    
+                    $rawMessage .= "Hello, you have been invited to take a test. Click here: {$invitation->invitation_link}";
+
                     $message->setRaw(base64_encode($rawMessage));
                     
                     $service->users_messages->send('me', $message);
@@ -261,18 +243,17 @@ class InviteCandidates extends Component
                     $failedEmails[] = $email;
                 }
             }
-    
+
             if (!empty($failedEmails)) {
                 DB::rollBack();
                 $failedEmailsList = implode(', ', $failedEmails);
                 $this->addError('email_error', "Failed to send emails to: {$failedEmailsList}");
                 return;
             }
-    
-            // Update database only if all emails were sent
+
             $allEmails = array_unique(array_merge($existingEmails, $this->emailList));
             $invitation->update(['invited_emails' => $allEmails]);
-    
+
             DB::commit();
             
             session()->flash('success', 'Invitations sent successfully!');

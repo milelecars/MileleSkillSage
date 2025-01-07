@@ -40,41 +40,6 @@ class OAuthController extends Controller
         return $client;
     }
 
-    public function refreshToken()
-    {
-        try {
-            $tokenPath = storage_path('app/token.json');
-            if (!file_exists($tokenPath)) {
-                Log::error('Token file not found');
-                return null;
-            }
-
-            $client = new Client();
-            $client->setApplicationName('Milele SkillSage');
-            $client->setScopes(Gmail::MAIL_GOOGLE_COM);
-            $client->setAuthConfig(storage_path('app/client_secret.json'));
-            $client->setAccessType('offline');
-            $client->setPrompt('select_account consent');
-
-            $accessToken = json_decode(file_get_contents($tokenPath), true);
-            $client->setAccessToken($accessToken);
-
-            if ($client->isAccessTokenExpired()) {
-                if ($client->getRefreshToken()) {
-                    $newAccessToken = $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-                    file_put_contents($tokenPath, json_encode($newAccessToken));
-                    return $newAccessToken['access_token'];
-                }
-            }
-
-            Log::error('No refresh token available');
-            return null;
-        } catch (\Exception $e) {
-            Log::error('Failed to refresh token: ' . $e->getMessage());
-            return null;
-        }
-    }
-
     public function redirectToGoogle($testId)
     {
         session(['test_id' => $testId]);
