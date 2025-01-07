@@ -1,26 +1,7 @@
 <?php
 
 return [
-    'default' => env('MAIL_MAILER', 'log'),
-
-   /*
-    |--------------------------------------------------------------------------
-    | Mailer Configurations
-    |--------------------------------------------------------------------------
-    |
-    | Here you may configure all of the mailers used by your application plus
-    | their respective settings. Several examples have been configured for
-    | you and you are free to add your own as your application requires.
-    |
-    | Laravel supports a variety of mail "transport" drivers that can be used
-    | when delivering an email. You may specify which one you're using for
-    | your mailers below. You may also add additional mailers if needed.
-    |
-    | Supported: "smtp", "sendmail", "mailgun", "ses", "ses-v2",
-    |            "postmark", "resend", "log", "array",
-    |            "failover", "roundrobin"
-    |
-    */
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     'mailers' => [
         // 'smtp' => [
@@ -37,17 +18,21 @@ return [
         //     'verify_peer' => false,
         //     'verify_peer_name' => false,
         // ],
-
         'smtp' => [
             'transport' => 'smtp',
-            'url' => null,
             'host' => 'smtp.gmail.com',
             'port' => 587,
             'encryption' => 'tls',
-            'username' => 'skillsage.milele@gmail.com',
-            'password' => "rbpamzmdbrantplm",
+            'username' => 'mileleskillsage@gmail.com',
+            'password' => 'nrnccamdshesmulk', 
+            'auth_mode' => null,
             'timeout' => null,
             'local_domain' => null,
+            'verify_peer' => false,
+        ],
+        
+        'gmail' => [
+            'transport' => 'gmail',
         ],
 
         'ses' => [
@@ -86,8 +71,8 @@ return [
     ],
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'skillsage.milele@gmail.com'),
-        'name' => env('MAIL_FROM_NAME', 'Milele SkillSage'),
+        'address' => 'mileleskillsage@gmail.com',
+        'name' => 'Milele SkillSage',
     ],
 
 ];

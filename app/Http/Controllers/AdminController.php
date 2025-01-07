@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\AcceptanceEmail;
 use App\Mail\RejectionEmail;
 use App\Mail\InvitationEmail;
+use Google\Client;
+use Google\Service\Gmail;
+
 
 class AdminController extends Controller
 {
@@ -79,18 +82,48 @@ class AdminController extends Controller
             DB::beginTransaction();
             
             $emailTestMap = $request->input('email_test_map');
+            $oAuthController = new OAuthController();
             
-            // try to send all emails
+            try {
+                $client = $oAuthController->getClient();
+                $service = new Gmail($client);
+            } catch (\Exception $e) {
+                return redirect()->route('google.login', ['testId' => array_values($emailTestMap)[0][0] ?? null]);
+            }
+    
+            // Get email template
+            $template = file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'));
+            
+            // Try to send all emails
             foreach ($emailTestMap as $email => $testIds) {
                 if (empty($testIds)) continue;
-
+    
                 foreach ($testIds as $testId) {
-                    $invitation = Invitation::where('test_id', $testId)->firstOrFail();
-                    $test = Test::findOrFail($testId);
-
                     try {
-                        $invitationEmail = new InvitationEmail($invitation->invitation_link, $test->title);
-                        Mail::to($email)->send($invitationEmail);
+                        $invitation = Invitation::where('test_id', $testId)->firstOrFail();
+                        $test = Test::findOrFail($testId);
+    
+                        // Replace variables in template
+                        $htmlContent = str_replace(
+                            ['{{ $testName }}', '{{ $invitationLink }}'],
+                            [$test->title, $invitation->invitation_link],
+                            $template
+                        );
+    
+                        $message = new \Google\Service\Gmail\Message();
+                        
+                        $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
+                        $rawMessage .= "To: <{$email}>\r\n";
+                        $rawMessage .= 'Subject: =?utf-8?B?' . base64_encode("Invitation to Take a Test for Milele Motors") . "?=\r\n";
+                        $rawMessage .= "MIME-Version: 1.0\r\n";
+                        $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
+                        $rawMessage .= $htmlContent;
+    
+                        $message->setRaw(base64_encode($rawMessage));
+                        
+                        $service->users_messages->send('me', $message);
+                        Log::info("Email sent successfully to {$email} for test {$testId}");
+                        
                     } catch (\Exception $e) {
                         DB::rollBack();
                         Log::error("Failed to send invitation email to {$email} for test {$testId}: " . $e->getMessage());
@@ -101,18 +134,18 @@ class AdminController extends Controller
                     }
                 }
             }
-
-            // all emails were sent successfully
+    
+            // All emails were sent successfully, update database
             foreach ($emailTestMap as $email => $testIds) {
                 if (empty($testIds)) continue;
-
+    
                 foreach ($testIds as $testId) {
                     $invitation = Invitation::where('test_id', $testId)->firstOrFail();
                     
                     $existingEmails = is_array($invitation->invited_emails) 
                         ? $invitation->invited_emails 
                         : (json_decode($invitation->invited_emails, true) ?: []);
-
+    
                     if (!in_array($email, $existingEmails)) {
                         $existingEmails[] = $email;
                         
@@ -122,13 +155,13 @@ class AdminController extends Controller
                     }
                 }
             }
-
+    
             DB::commit();
             
             return redirect()
                 ->route('admin.select-candidate', ['selected_email' => array_key_first($emailTestMap)])
                 ->with('success', 'Invitations sent successfully!');
-
+    
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Failed to process invitations: " . $e->getMessage());
@@ -368,50 +401,106 @@ class AdminController extends Controller
         ));
     }
 
+    private function sendEmailWithGmail($candidate, $template, $subject)
+    {
+        try {
+            $oAuthController = new OAuthController();
+            $client = $oAuthController->getClient();
+            $service = new Gmail($client);
+
+            // Get email template and replace variables
+            $template = file_get_contents(resource_path("views/emails/{$template}.blade.php"));
+            $htmlContent = str_replace(
+                '{{ $candidate->name }}',
+                $candidate->name,
+                $template
+            );
+
+            $message = new \Google\Service\Gmail\Message();
+            
+            $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
+            $rawMessage .= "To: <{$candidate->email}>\r\n";
+            $rawMessage .= 'Subject: =?utf-8?B?' . base64_encode($subject) . "?=\r\n";
+            $rawMessage .= "MIME-Version: 1.0\r\n";
+            $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
+            $rawMessage .= $htmlContent;
+
+            $message->setRaw(base64_encode($rawMessage));
+            
+            $service->users_messages->send('me', $message);
+            Log::info("Status email sent successfully to {$candidate->email}");
+            
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Failed to send status email to {$candidate->email}: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
     public function acceptCandidate(Candidate $candidate)
     {
         try {
-        DB::beginTransaction();
-        
-        $testId = request('test_id');
-        
-        $candidate->tests()
-            ->wherePivot('test_id', $testId)
-            ->updateExistingPivot($testId, ['status' => 'accepted']);
+            DB::beginTransaction();
             
-        Mail::to($candidate->email)->send(new AcceptanceEmail($candidate));
-        
-        DB::commit();
-        return redirect()->back()->with('success', 'Candidate accepted and notified successfully.');
-        
+            // First try to send the email
+            $emailSent = $this->sendEmailWithGmail(
+                $candidate, 
+                'candidate-acceptance-template',
+                'Your Application Status - Milele Motors'
+            );
+    
+            // Only if email was sent successfully, update the database
+            if ($emailSent) {
+                $testId = request('test_id');
+                $candidate->tests()
+                    ->wherePivot('test_id', $testId)
+                    ->updateExistingPivot($testId, ['status' => 'accepted']);
+                    
+                DB::commit();
+                return redirect()->back()->with('success', 'Candidate accepted and notified successfully.');
+            } else {
+                DB::rollback();
+                return redirect()->back()->with('error', 'Failed to send notification email. Status not updated.');
+            }
+            
         } catch (\Exception $e) {
             DB::rollback();
             Log::error('Failed to accept candidate: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to accept candidate. Please try again.');
+            return redirect()->back()->with('error', 'Failed to process acceptance. Please try again.');
         }
     }
 
     public function rejectCandidate(Candidate $candidate)
     {
-    try {
-        DB::beginTransaction();
-        
-        $testId = request('test_id');
-        
-        $candidate->tests()
-            ->wherePivot('test_id', $testId)
-            ->updateExistingPivot($testId, ['status' => 'rejected']);
+        try {
+            DB::beginTransaction();
             
-        Mail::to($candidate->email)->send(new RejectionEmail($candidate));
-        
-        DB::commit();
-        return redirect()->back()->with('success', 'Candidate rejected and notified successfully.');
-        
-    } catch (\Exception $e) {
-        DB::rollback();
-        Log::error('Failed to reject candidate: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Failed to reject candidate. Please try again.');
-    }
+            // First try to send the email
+            $emailSent = $this->sendEmailWithGmail(
+                $candidate, 
+                'candidate-rejection-template',
+                'Your Application Status - Milele Motors'
+            );
+    
+            // Only if email was sent successfully, update the database
+            if ($emailSent) {
+                $testId = request('test_id');
+                $candidate->tests()
+                    ->wherePivot('test_id', $testId)
+                    ->updateExistingPivot($testId, ['status' => 'rejected']);
+                    
+                DB::commit();
+                return redirect()->back()->with('success', 'Candidate rejected and notified successfully.');
+            } else {
+                DB::rollback();
+                return redirect()->back()->with('error', 'Failed to send notification email. Status not updated.');
+            }
+            
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Failed to reject candidate: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to process rejection. Please try again.');
+        }
     }
 
     public function manageReports()

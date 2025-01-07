@@ -14,6 +14,10 @@ use App\Http\Controllers\DescriptionController;
 use App\Http\Controllers\Auth\RegisteredAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ScreenshotController;
+use App\Http\Controllers\OAuthController;
+
+Route::get('/google/login/{testId}', [OAuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/oauth2/callback', [OAuthController::class, 'handleGoogleCallback']);
 
 // Root route
 Route::get('/', function () {
