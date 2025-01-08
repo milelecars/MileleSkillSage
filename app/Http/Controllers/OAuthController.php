@@ -42,7 +42,8 @@ class OAuthController extends Controller
 
     public function redirectToGoogle($testId)
     {
-        session(['test_id' => $testId]);
+        session()->put('test_id', $testId); 
+        Log::debug('Storing test_id in session', ['test_id' => $testId]);
 
         $client = new Client();
         $client->setApplicationName('Milele SkillSage');
@@ -59,7 +60,10 @@ class OAuthController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         try {
-            Log::debug('Handling OAuth callback', ['code' => $request->code]);
+            Log::debug('Handling OAuth callback', [
+                'code' => $request->code,
+                'stored_test_id' => session('test_id')  
+            ]);
             
             $client = new Client();
             $client->setApplicationName('Milele SkillSage');
@@ -91,12 +95,19 @@ class OAuthController extends Controller
             file_put_contents($tokenPath, json_encode($accessToken));
             chmod($tokenPath, 0600);
 
-            Log::debug('OAuth flow completed successfully');
-            return redirect()->to('/tests/' . session('test_id') . '/invite');
+            $testId = session('test_id');
+            if (!$testId) {
+                Log::error('Test ID not found in session');
+                throw new \Exception('Test ID not found in session');
+            }
+
+            Log::debug('OAuth flow completed successfully', ['test_id' => $testId]);
+            return redirect()->to("/tests/{$testId}/invite");
 
         } catch (\Exception $e) {
             Log::error('OAuth callback error: ' . $e->getMessage());
-            return redirect()->route('google.login', ['testId' => session('test_id')])
+            $testId = session('test_id') ?? 'default';
+            return redirect()->route('google.login', ['testId' => $testId])
                            ->with('error', 'Authentication failed. Please try again.');
         }
     }

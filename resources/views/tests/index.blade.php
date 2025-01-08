@@ -43,7 +43,7 @@
                                 
                                     <div x-show="open" 
                                         @click.away="open = false"
-                                        class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+                                        class="fixed right-[372px] mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
                                         style="display: none;">
                                         <div class="py-1">
                                             <a href="{{ route('tests.create') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">

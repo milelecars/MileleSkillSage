@@ -189,12 +189,17 @@ class AdminController extends Controller
     public function manageCandidates(Request $request)
     {
         $search = $request->input('search');
-    
+        $testFilter = $request->input('test_filter'); // Add test filter
+
         $activeTestCandidates = Candidate::with(['tests' => function ($query) {
             $query->select('tests.id', 'title', 'description', 'duration')
                 ->withPivot('started_at', 'completed_at', 'score', 'ip_address', 'status');
         }])
-        ->whereHas('tests')
+        ->whereHas('tests', function($query) use ($testFilter) {
+            if ($testFilter) {
+                $query->where('tests.id', $testFilter);
+            }
+        })
         ->select('id', 'name', 'email', 'created_at', 'updated_at')
         ->when($search, function($query) use ($search) {
             return $query->where(function($q) use ($search) {
@@ -218,13 +223,14 @@ class AdminController extends Controller
                     'total_questions' => $test->questions->count(),
                     'has_started' => true,
                     'sort_order' => $test->pivot->status === 'completed' ? 1 : 
-                                   ($test->pivot->status === 'in_progress' ? 2 : 
-                                   ($test->pivot->status === 'accepted' ? 3 : 
-                                   ($test->pivot->status === 'rejected' ? 4 : 5)))
+                                ($test->pivot->status === 'in_progress' ? 2 : 
+                                ($test->pivot->status === 'accepted' ? 3 : 
+                                ($test->pivot->status === 'rejected' ? 4 : 5)))
                 ];
             });
         });
-    
+
+        // Modified invitedEmails query to respect test filter
         $takenTests = DB::table('candidate_test')
             ->join('candidates', 'candidates.id', '=', 'candidate_test.candidate_id')
             ->select('candidates.email', 'candidate_test.test_id')
@@ -234,15 +240,18 @@ class AdminController extends Controller
                 return $items->pluck('test_id')->toArray();
             })
             ->toArray();
-    
-        $invitedEmails = Invitation::whereJsonLength('invited_emails', '>', 0)
+
+        $invitedEmails = Invitation::when($testFilter, function($query) use ($testFilter) {
+                return $query->where('test_id', $testFilter);
+            })
+            ->whereJsonLength('invited_emails', '>', 0)
             ->with('test:id,title')
             ->get()
             ->flatMap(function ($invitation) use ($search, $takenTests) {
                 $invitedEmailsList = is_string($invitation->invited_emails) 
                     ? json_decode($invitation->invited_emails, true) 
                     : $invitation->invited_emails;
-    
+
                 return collect($invitedEmailsList)->map(function ($email) use ($invitation, $search, $takenTests) {
                     if ((!$search || str_contains(strtolower($email), strtolower($search))) 
                         && (!isset($takenTests[$email]) || !in_array($invitation->test_id, $takenTests[$email]))) {
@@ -259,8 +268,15 @@ class AdminController extends Controller
                     return null;
                 })->filter();
             });
-    
-        $totalInvited = Invitation::whereJsonLength('invited_emails', '>', 0)
+
+        // Get all available tests for the filter dropdown
+        $availableTests = Test::select('id', 'title')->get();
+
+        // Rest of the stats calculations...
+        $totalInvited = Invitation::when($testFilter, function($query) use ($testFilter) {
+                return $query->where('test_id', $testFilter);
+            })
+            ->whereJsonLength('invited_emails', '>', 0)
             ->get()
             ->sum(function ($invitation) {
                 $emails = is_string($invitation->invited_emails) 
@@ -268,35 +284,46 @@ class AdminController extends Controller
                     : $invitation->invited_emails;
                 return count($emails);
             });
-    
+
         $completedByTest = DB::table('candidate_test')
+            ->when($testFilter, function($query) use ($testFilter) {
+                return $query->where('test_id', $testFilter);
+            })
             ->select('test_id', DB::raw('COUNT(*) as completed_count'))
             ->where('status', 'completed')
             ->groupBy('test_id')
             ->pluck('completed_count', 'test_id')
             ->toArray();
-    
+
         $allCandidates = $activeTestCandidates->concat($invitedEmails)
             ->sortBy('sort_order');
-    
+
         $candidates = new \Illuminate\Pagination\LengthAwarePaginator(
             $allCandidates->forPage(request()->get('page', 1), 10),
             $allCandidates->count(),
             10,
             request()->get('page', 1)
         );
-    
+
         $candidates->withPath(request()->url());
-    
+
         $stats = [
             'totalInvited' => $totalInvited,
             'completedTestsCount' => array_sum($completedByTest),
             'completedByTest' => $completedByTest,
             'activeTests' => Test::count(),
-            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
+            'totalReports' => DB::table('candidate_test')
+                ->when($testFilter, function($query) use ($testFilter) {
+                    return $query->where('test_id', $testFilter);
+                })
+                ->whereNotNull('report_path')
+                ->count(),
         ];
-    
-        return view('admin.manage-candidates', array_merge(compact('candidates', 'search'), $stats));
+
+        return view('admin.manage-candidates', array_merge(
+            compact('candidates', 'search', 'availableTests', 'testFilter'), 
+            $stats
+        ));
     }
     
     public function getPrivateScreenshot($testId, $candidateId, $filename)

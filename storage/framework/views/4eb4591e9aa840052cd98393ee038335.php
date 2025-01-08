@@ -14,7 +14,7 @@
 
     <form wire:submit.prevent="addEmail" class="flex gap-2">
         <input type="email" 
-               wire:model.defer="newEmail"
+               wire:model="newEmail"
                class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" 
                placeholder="Enter email address">
         

@@ -65,6 +65,7 @@ class InviteCandidates extends Component
         }
 
         $this->emailList[] = $email;
+        $this->reset('newEmail');
         $this->newEmail = '';
 
         session(["test_{$this->testId}_emails" => $this->emailList]);
@@ -77,131 +78,13 @@ class InviteCandidates extends Component
         session(["test_{$this->testId}_emails" => $this->emailList]);
     }
 
-    
-    // public function submitInvitations()
-    // {
-    //     $accessToken = session('access_token');
-    //     if (!$accessToken) {
-    //         return redirect()->route('google.login', ['testId' => $this->testId]);
-    //     }
-    
-    //     $client = new Client();
-    //     $client->setAccessToken($accessToken);
-    
-    //     if ($client->isAccessTokenExpired()) {
-    //         $oauthController = new OAuthController();
-    //         $newToken = $oauthController->refreshToken();
-    //         if (!$newToken) {
-    //             return redirect()->route('google.login', ['testId' => $this->testId]);
-    //         }
-    //         $client->setAccessToken($newToken);
-    //     }
-    
-    //     // Step 3: Create Gmail API Service
-    //     $service = new Gmail($client);
-    
-    //     $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
-    //     $test = Test::findOrFail($this->testId);
-    
-    //     $failedEmails = [];
-    
-    //     foreach ($this->emailList as $email) {
-    //         try {
-    //             Log::info('Attempting to send email', [
-    //                 'to' => $email,
-    //                 'token_status' => $client->getAccessToken(),
-    //                 'token_expiry' => session('expires_in')
-    //             ]);
-    //             // Step 4: Build the Email
-    //             $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
-    //             $rawMessage .= "To: <$email>\r\n";
-    //             $rawMessage .= "Subject: Invitation to Take a Test for Milele Motors\r\n\r\n";
-    //             $rawMessage .= "Hello, you have been invited to take a test. Click here: {$invitation->invitation_link}";
-    
-    //             $encodedMessage = base64_encode($rawMessage);
-    //             $encodedMessage = str_replace(['+', '/', '='], ['-', '_', ''], $encodedMessage); // Make it URL-safe
-    
-    //             $message = new Gmail\Message();
-    //             $message->setRaw($encodedMessage);
-    
-    //             // Step 5: Send the Email
-    //             $service->users_messages->send('me', $message);
-    //         } catch (\Exception $e) {
-    //             Log::error("Failed to send invitation email to {$email}: " . $e->getMessage());
-    //             $failedEmails[] = $email;
-    //         }
-    //     }
-    
-    //     if (!empty($failedEmails)) {
-    //         $failedEmailsList = implode(', ', $failedEmails);
-    //         $this->addError('email_error', "Failed to send emails to: {$failedEmailsList}");
-    //     } else {
-    //         session()->flash('success', 'Invitations have been sent successfully!');
-    //     }
-    // }
+    private function resetForm()
+    {
+        $this->newEmail = '';
+        $this->emailList = [];
+        session()->forget("test_{$this->testId}_emails");
+    }
 
-    // public function submitInvitations()
-    // {
-    //     try {
-    //         DB::beginTransaction();
-        
-    //         try {
-    //             $oAuthController = new OAuthController();
-    //             $client = $oAuthController->getClient();
-    //             Log::debug('Successfully got Google client');
-    //         } catch (\Exception $e) {
-    //             Log::debug('Authentication required, redirecting to Google login');
-    //             return redirect()->route('google.login', ['testId' => $this->testId]);
-    //         }
-    
-    //         $service = new Gmail($client);
-    
-    //         $invitation = Invitation::where('test_id', $this->testId)->firstOrFail();
-    //         $test = Test::findOrFail($this->testId);
-            
-    //         $existingEmails = is_array($invitation->invited_emails) ? $invitation->invited_emails : [];
-    //         $failedEmails = [];
-    
-    //         foreach ($this->emailList as $email) {
-    //             try {
-    //                 $message = new \Google\Service\Gmail\Message();
-                    
-    //                 $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
-    //                 $rawMessage .= "To: <$email>\r\n";
-    //                 $rawMessage .= 'Subject: =?utf-8?B?' . base64_encode("Invitation to Take a Test for Milele Motors") . "?=\r\n";
-    //                 $rawMessage .= "MIME-Version: 1.0\r\n";
-    //                 $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
-    //                 $rawMessage .= "Hello, you have been invited to take a test. Click here: {$invitation->invitation_link}";
-    
-    //                 $message->setRaw(base64_encode($rawMessage));
-                    
-    //                 $service->users_messages->send('me', $message);
-    //                 Log::info("Email sent successfully to {$email}");
-    //             } catch (\Exception $e) {
-    //                 Log::error("Failed to send to {$email}: " . $e->getMessage());
-    //                 $failedEmails[] = $email;
-    //             }
-    //         }
-    
-    //         if (!empty($failedEmails)) {
-    //             DB::rollBack();
-    //             $failedEmailsList = implode(', ', $failedEmails);
-    //             $this->addError('email_error', "Failed to send emails to: {$failedEmailsList}");
-    //             return;
-    //         }
-    
-    //         $allEmails = array_unique(array_merge($existingEmails, $this->emailList));
-    //         $invitation->update(['invited_emails' => $allEmails]);
-    
-    //         DB::commit();
-            
-    //         session()->flash('success', 'Invitations sent successfully!');
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::error("Failed to process invitations: " . $e->getMessage());
-    //         $this->addError('email_error', "Failed to process invitations");
-    //     }
-    // }
     
     public function submitInvitations()
     {
@@ -223,16 +106,25 @@ class InviteCandidates extends Component
             $existingEmails = is_array($invitation->invited_emails) ? $invitation->invited_emails : [];
             $failedEmails = [];
 
+            $template = file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'));
+        
             foreach ($this->emailList as $email) {
                 try {
                     $message = new \Google\Service\Gmail\Message();
+                    
+                    $emailContent = str_replace(
+                        ['{{ $testName }}', '{{ $invitationLink }}'],
+                        [$test->title, $invitation->invitation_link],
+                        $template
+                    );
                     
                     $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
                     $rawMessage .= "To: <$email>\r\n";
                     $rawMessage .= 'Subject: =?utf-8?B?' . base64_encode("Invitation to Take a Test for Milele Motors") . "?=\r\n";
                     $rawMessage .= "MIME-Version: 1.0\r\n";
-                    $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
-                    $rawMessage .= "Hello, you have been invited to take a test. Click here: {$invitation->invitation_link}";
+                    $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n";
+                    $rawMessage .= "Content-Transfer-Encoding: base64\r\n\r\n";
+                    $rawMessage .= chunk_split(base64_encode($emailContent));
 
                     $message->setRaw(base64_encode($rawMessage));
                     
@@ -243,6 +135,7 @@ class InviteCandidates extends Component
                     $failedEmails[] = $email;
                 }
             }
+
 
             if (!empty($failedEmails)) {
                 DB::rollBack();
@@ -255,8 +148,13 @@ class InviteCandidates extends Component
             $invitation->update(['invited_emails' => $allEmails]);
 
             DB::commit();
-            
+
+            $this->reset('newEmail'); 
+            $this->emailList = [];   
+            session()->forget("test_{$this->testId}_emails");  
             session()->flash('success', 'Invitations sent successfully!');
+            $this->dispatch('refresh');
+    
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Failed to process invitations: " . $e->getMessage());
