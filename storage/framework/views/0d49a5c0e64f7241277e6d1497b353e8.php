@@ -18,6 +18,16 @@
                         
                         <!-- search functionality  -->
                         <form method="GET" action="<?php echo e(route('admin.manage-candidates')); ?>" class="flex gap-2">
+                            <select name="test_filter" class="w-48 h-9 border text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">All Tests</option>
+                                <?php $__currentLoopData = $availableTests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($test->id); ?>" <?php echo e($testFilter == $test->id ? 'selected' : ''); ?>>
+                                        <?php echo e($test->title); ?>
+
+                                    </option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+
                             <div class="relative">
                                 <input
                                     type="text"
@@ -36,16 +46,6 @@
                                     </a>
                                 <?php endif; ?>
                             </div>
-                            
-                            <select name="test_filter" class="w-48 h-9 border text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Tests</option>
-                                <?php $__currentLoopData = $availableTests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($test->id); ?>" <?php echo e($testFilter == $test->id ? 'selected' : ''); ?>>
-                                        <?php echo e($test->title); ?>
-
-                                    </option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
 
                             <button type="submit" class="px-3 h-9 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
                                 Search
@@ -106,80 +106,84 @@
                                     <tr>
                                         <td class="px-2 py-4">
                                             <?php if($candidate['has_started']): ?>
-                                            <a href="<?php echo e(route('admin.candidate-result', ['test' => $candidate['test_id'], 'candidate' => $candidate['id']])); ?>" class="hover:text-blue-600">
-                                                <div class="text"><?php echo e($candidate['name']); ?></div>
-                                                <div class="text-xs text-gray-500"><?php echo e($candidate['email']); ?></div>
-                                            </a>
+                                                <a href="<?php echo e(route('admin.candidate-result', ['test' => $candidate['test_id'], 'candidate' => $candidate['id']])); ?>" class="hover:text-blue-600">
+                                                    <div class="text"><?php echo e($candidate['name']); ?></div>
+                                                    <div class="text-xs text-gray-500"><?php echo e($candidate['email']); ?></div>
+                                                </a>
                                             <?php else: ?>
                                                 <div class="text-xs text-gray-500"><?php echo e($candidate['email']); ?></div>
                                             <?php endif; ?>
                                         </td>
                                         <td class="px-2 py-4 text-sm"><?php echo e($candidate['test_title']); ?></td>
-                                        <?php if(!$candidate['has_started']): ?>
-                                            <td class="px-2 py-4 text-sm">
+                                        
+                                        <td class="px-2 py-4 text-sm">
+                                            <?php if($candidate['status'] === 'accepted'): ?>
+                                                <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Accepted</span>
+                                            <?php elseif($candidate['status'] === 'rejected'): ?>
+                                                <span class="text-red-800 bg-red-100 px-2 py-1 rounded-full">Rejected</span>
+                                            <?php elseif($candidate['status'] === 'completed'): ?>
+                                                <span class="text-blue-800 bg-blue-100 px-2 py-1 rounded-full">Completed</span>
+                                            <?php elseif($candidate['status'] === 'in_progress'): ?>
+                                                <span class="text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">In Progress</span>
+                                            <?php elseif($candidate['status'] === 'expired'): ?>
+                                                <span class="text-red-800 bg-red-100 px-2 py-1 rounded-full">Expired</span>
+                                            <?php else: ?>
                                                 <span class="text-gray-800 bg-gray-100 px-2 py-1 rounded-full">Not Started</span>
-                                            </td>
-                                        <?php else: ?>
-                                            <td class="px-2 py-4 text-sm">
-                                                <?php if($candidate['status'] === 'accepted'): ?>
-                                                    <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Accepted</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        
+                                        <td class="py-4 text-xs">
+                                            <?php echo e(isset($candidate['started_at']) ? \Carbon\Carbon::parse($candidate['started_at'])->format('M d, Y H:i') : '-'); ?>
+
+                                        </td>
+                                        <td class="py-4 text-xs">
+                                            <?php echo e(isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('M d, Y H:i') : '-'); ?>
+
+                                        </td>
+                                        <td class="px-2 py-4 text-sm">
+                                            <?php if(isset($candidate['completed_at'])): ?>
+                                                <div><?php echo e($candidate['score']); ?> / <?php echo e($candidate['total_questions']); ?></div>
+                                            <?php else: ?>
+                                                <span>-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        
+                                        <td class="py-4">
+                                            <div class="flex space-x-4 justify-center text-sm">
+                                                <?php if($candidate['status'] === 'completed'): ?>
+                                                    <form action="<?php echo e(route('candidate.accept', $candidate['id'])); ?>" method="POST">
+                                                        <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
+                                                        <input type="hidden" name="test_id" value="<?php echo e($candidate['test_id']); ?>">
+                                                        <button type="submit" class="text-green-600">Accept</button>
+                                                    </form>
+                                                    <form action="<?php echo e(route('candidate.reject', $candidate['id'])); ?>" method="POST">
+                                                        <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
+                                                        <input type="hidden" name="test_id" value="<?php echo e($candidate['test_id']); ?>">
+                                                        <button type="submit" class="text-red-600">Reject</button>
+                                                    </form>
+                                                <?php elseif($candidate['status'] === 'accepted'): ?>
+                                                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
                                                 <?php elseif($candidate['status'] === 'rejected'): ?>
-                                                    <span class="text-red-800 bg-red-100 px-2 py-1 rounded-full">Rejected</span>
-                                                <?php elseif($candidate['status'] === 'completed'): ?> 
-                                                    <span class="text-blue-800 bg-blue-100 px-2 py-1 rounded-full">Completed</span>
-                                                <?php elseif($candidate['status'] === 'in_progress'): ?>
-                                                    <span class="text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">In Progress</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="py-4 text-xs">
-                                                <?php echo e(isset($candidate['started_at']) ? \Carbon\Carbon::parse($candidate['started_at'])->format('M d, Y H:i') : '-'); ?>
-
-                                            </td>
-                                            <td class="py-4 text-xs">
-                                                <?php echo e(isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('M d, Y H:i') : '-'); ?>
-
-                                            </td>
-                                            <td class="px-2 py-4 text-sm">
-                                                <?php if(isset($candidate['completed_at'])): ?>
-                                                    <div><?php echo e($candidate['score']); ?> / <?php echo e($candidate['total_questions']); ?></div>
+                                                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
                                                 <?php else: ?>
-                                                    <span>-</span>
+                                                    <span class="text-gray-400">-</span>
                                                 <?php endif; ?>
-                                            </td>
-                                            <td class="py-4">
-                                                <div class="flex space-x-4 justify-center text-sm">
-                                                    <?php if(!in_array($candidate['status'], ['accepted', 'rejected'])): ?>
-                                                        <form action="<?php echo e(route('candidate.accept', $candidate['id'])); ?>" method="POST">
-                                                            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
-                                                            <input type="hidden" name="test_id" value="<?php echo e($candidate['test_id']); ?>">
-                                                            <button type="submit" class="text-green-600">Accept</button>
-                                                        </form>
-                                                        <form action="<?php echo e(route('candidate.reject', $candidate['id'])); ?>" method="POST">
-                                                            <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
-                                                            <input type="hidden" name="test_id" value="<?php echo e($candidate['test_id']); ?>">
-                                                            <button type="submit" class="text-red-600">Reject</button>
-                                                        </form>
-                                                    <?php elseif($candidate['status'] === 'accepted'): ?>
-                                                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                        </svg>
-                                                    <?php elseif($candidate['status'] === 'rejected'): ?>
-                                                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                        </svg>
-                                                    <?php endif; ?>
-                                                </div>
-                                            </td>
-                                            <td class="flex py-6 items-center justify-center">
-                                                <?php if(isset($candidate['completed_at'])): ?>
-                                                    <a href="<?php echo e(route('reports.candidate-report', ['candidateId' => $candidate['id'], 'testId' => $candidate['test_id']])); ?>">
-                                                        <svg fill="#102141" width="25px" height="25px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#102141" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
-                                                    </a>
-                                                <?php else: ?>
-                                                    <span>-</span>
-                                                <?php endif; ?>
-                                            </td>
-                                        <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        
+                                        <td class="flex py-6 items-center justify-center">
+                                            <?php if(isset($candidate['completed_at'])): ?>
+                                                <a href="<?php echo e(route('reports.candidate-report', ['candidateId' => $candidate['id'], 'testId' => $candidate['test_id']])); ?>">
+                                                    <svg fill="#102141" width="25px" height="25px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#102141" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
+                                                </a>
+                                            <?php else: ?>
+                                                <span>-</span>
+                                            <?php endif; ?>
+                                        </td>
                                     </tr>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>

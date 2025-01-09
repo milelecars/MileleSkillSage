@@ -47,16 +47,13 @@ class AdminController extends Controller
         $tests = Test::all();
         $allTestIds = $tests->pluck('id')->toArray();
         
-        $emailToTestIds = Invitation::whereJsonLength('invited_emails', '>', 0)
+        $emailToTestIds = Invitation::whereJsonLength('invited_emails->invites', '>', 0)
             ->get()
             ->flatMap(function ($invitation) {
-                $invitedEmailsList = is_string($invitation->invited_emails) 
-                    ? json_decode($invitation->invited_emails, true) 
-                    : $invitation->invited_emails;
-                
-                return collect($invitedEmailsList)->map(function ($email) use ($invitation) {
+                $invitedEmails = $invitation->invited_emails['invites'] ?? [];
+                return collect($invitedEmails)->map(function ($inviteData) use ($invitation) {
                     return [
-                        'email' => $email,
+                        'email' => $inviteData['email'],
                         'test_id' => $invitation->test_id
                     ];
                 });
@@ -65,9 +62,8 @@ class AdminController extends Controller
             ->map(function ($group) {
                 return $group->pluck('test_id')->unique()->values()->toArray();
             });
-
             
-        // Create the opposite mapping (uninvited tests for each email)
+        // the opposite mapping (uninvited tests for each email)
         $emailToUninvitedTestIds = $emailToTestIds->map(function ($invitedTestIds) use ($allTestIds) {
             return array_values(array_diff($allTestIds, $invitedTestIds));
         });
@@ -91,10 +87,10 @@ class AdminController extends Controller
                 return redirect()->route('google.login', ['testId' => array_values($emailTestMap)[0][0] ?? null]);
             }
     
-            // Get email template
+            
             $template = file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'));
             
-            // Try to send all emails
+            
             foreach ($emailTestMap as $email => $testIds) {
                 if (empty($testIds)) continue;
     
@@ -103,7 +99,7 @@ class AdminController extends Controller
                         $invitation = Invitation::where('test_id', $testId)->firstOrFail();
                         $test = Test::findOrFail($testId);
     
-                        // Replace variables in template
+                        
                         $htmlContent = str_replace(
                             ['{{ $testName }}', '{{ $invitationLink }}'],
                             [$test->title, $invitation->invitation_link],
@@ -135,22 +131,25 @@ class AdminController extends Controller
                 }
             }
     
-            // All emails were sent successfully, update database
+        
             foreach ($emailTestMap as $email => $testIds) {
                 if (empty($testIds)) continue;
-    
+            
                 foreach ($testIds as $testId) {
                     $invitation = Invitation::where('test_id', $testId)->firstOrFail();
                     
-                    $existingEmails = is_array($invitation->invited_emails) 
-                        ? $invitation->invited_emails 
-                        : (json_decode($invitation->invited_emails, true) ?: []);
-    
-                    if (!in_array($email, $existingEmails)) {
-                        $existingEmails[] = $email;
+                    $currentInvites = $invitation->invited_emails['invites'] ?? [];
+                    
+                    // Check if email already exists
+                    if (!collect($currentInvites)->contains('email', $email)) {
+                        $currentInvites[] = [
+                            'email' => $email,
+                            'invited_at' => now()->toISOString(),
+                            'deadline' => now()->addDays(2)->toISOString() 
+                        ];
                         
                         $invitation->update([
-                            'invited_emails' => $existingEmails
+                            'invited_emails' => ['invites' => $currentInvites]
                         ]);
                     }
                 }
@@ -186,10 +185,20 @@ class AdminController extends Controller
         return $questions;
     }
 
+    private const STATUS_SORT_ORDER = [
+        'completed' => 10,
+        'in_progress' => 20,
+        'accepted' => 30,
+        'rejected' => 40,
+        'not_started' => 50,
+        'expired' => 100
+    ];
+
     public function manageCandidates(Request $request)
     {
+
         $search = $request->input('search');
-        $testFilter = $request->input('test_filter'); // Add test filter
+        $testFilter = $request->input('test_filter');
 
         $activeTestCandidates = Candidate::with(['tests' => function ($query) {
             $query->select('tests.id', 'title', 'description', 'duration')
@@ -210,27 +219,29 @@ class AdminController extends Controller
         ->get()
         ->flatMap(function ($candidate) {
             return $candidate->tests->map(function ($test) use ($candidate) {
+                $status = $test->pivot->status;
+                // If status is "not_started" and we have a record in candidate_test,
+                // this means they've logged in
+                $hasLoggedIn = $status === 'not_started' && $test->pivot->created_at;
+                
                 return [
                     'id' => $candidate->id,
                     'name' => $candidate->name,
                     'email' => $candidate->email,
                     'test_title' => $test->title,
                     'test_id' => $test->id,
-                    'status' => $test->pivot->status,
+                    'status' => $status,
                     'started_at' => $test->pivot->started_at,
                     'completed_at' => $test->pivot->completed_at,
                     'score' => $test->pivot->score,
                     'total_questions' => $test->questions->count(),
                     'has_started' => true,
-                    'sort_order' => $test->pivot->status === 'completed' ? 1 : 
-                                ($test->pivot->status === 'in_progress' ? 2 : 
-                                ($test->pivot->status === 'accepted' ? 3 : 
-                                ($test->pivot->status === 'rejected' ? 4 : 5)))
+                    'has_logged_in' => $hasLoggedIn,
+                    'sort_order' => self::STATUS_SORT_ORDER[$status] ?? 99
                 ];
             });
         });
 
-        // Modified invitedEmails query to respect test filter
         $takenTests = DB::table('candidate_test')
             ->join('candidates', 'candidates.id', '=', 'candidate_test.candidate_id')
             ->select('candidates.email', 'candidate_test.test_id')
@@ -242,49 +253,50 @@ class AdminController extends Controller
             ->toArray();
 
         $invitedEmails = Invitation::when($testFilter, function($query) use ($testFilter) {
-                return $query->where('test_id', $testFilter);
-            })
-            ->whereJsonLength('invited_emails', '>', 0)
-            ->with('test:id,title')
-            ->get()
-            ->flatMap(function ($invitation) use ($search, $takenTests) {
-                $invitedEmailsList = is_string($invitation->invited_emails) 
-                    ? json_decode($invitation->invited_emails, true) 
-                    : $invitation->invited_emails;
+            return $query->where('test_id', $testFilter);
+        })
+        ->whereJsonLength('invited_emails->invites', '>', 0)
+        ->with('test:id,title')
+        ->get()
+        ->flatMap(function ($invitation) use ($search, $takenTests) {
+            $invites = $invitation->invited_emails['invites'] ?? [];
+            
+            return collect($invites)->map(function ($invite) use ($invitation, $search, $takenTests) {
+                $email = $invite['email'];
+                $deadline = Carbon::parse($invite['deadline']);
+                $isExpired = now()->greaterThan($deadline);
+                
+                if ((!$search || str_contains(strtolower($email), strtolower($search))) 
+                    && (!isset($takenTests[$email]) || !in_array($invitation->test_id, $takenTests[$email]))) {
+                    return [
+                        'email' => $email,
+                        'test_title' => $invitation->test->title,
+                        'test_id' => $invitation->test_id,
+                        'status' => $isExpired ? 'expired' : 'invited', // Changed from 'not_started' to 'invited'
+                        'has_started' => false,
+                        'has_logged_in' => false,
+                        'invitation_id' => $invitation->id,
+                        'sort_order' => self::STATUS_SORT_ORDER[$isExpired ? 'expired' : 'invited'] ?? 99
+                    ];
+                }
+                return null;
+            })->filter();
+        });
 
-                return collect($invitedEmailsList)->map(function ($email) use ($invitation, $search, $takenTests) {
-                    if ((!$search || str_contains(strtolower($email), strtolower($search))) 
-                        && (!isset($takenTests[$email]) || !in_array($invitation->test_id, $takenTests[$email]))) {
-                        return [
-                            'email' => $email,
-                            'test_title' => $invitation->test->title,
-                            'test_id' => $invitation->test_id,
-                            'status' => 'not_started',
-                            'has_started' => false,
-                            'invitation_id' => $invitation->id,
-                            'sort_order' => 6
-                        ];
-                    }
-                    return null;
-                })->filter();
-            });
-
-        // Get all available tests for the filter dropdown
         $availableTests = Test::select('id', 'title')->get();
 
-        // Rest of the stats calculations...
         $totalInvited = Invitation::when($testFilter, function($query) use ($testFilter) {
                 return $query->where('test_id', $testFilter);
             })
-            ->whereJsonLength('invited_emails', '>', 0)
+            ->whereJsonLength('invited_emails->invites', '>', 0)
             ->get()
             ->sum(function ($invitation) {
-                $emails = is_string($invitation->invited_emails) 
-                    ? json_decode($invitation->invited_emails, true) 
-                    : $invitation->invited_emails;
-                return count($emails);
+                $invites = is_string($invitation->invited_emails) 
+                    ? json_decode($invitation->invited_emails, true)['invites'] ?? []
+                    : ($invitation->invited_emails['invites'] ?? []);
+                return count($invites);
             });
-
+            
         $completedByTest = DB::table('candidate_test')
             ->when($testFilter, function($query) use ($testFilter) {
                 return $query->where('test_id', $testFilter);
@@ -296,7 +308,14 @@ class AdminController extends Controller
             ->toArray();
 
         $allCandidates = $activeTestCandidates->concat($invitedEmails)
-            ->sortBy('sort_order');
+        ->sortBy(function ($item) {
+            return [
+                $item['sort_order'],                    // Primary sort by status order
+                !($item['has_logged_in'] ?? false),     // Then by whether they've logged in
+                !isset($item['name']),                  // Then by whether they have a name
+                $item['email']                          // Finally by email
+            ];
+        });
 
         $candidates = new \Illuminate\Pagination\LengthAwarePaginator(
             $allCandidates->forPage(request()->get('page', 1), 10),

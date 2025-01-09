@@ -78,7 +78,6 @@ class TestController extends Controller
                 'validated_data' => $validatedData
             ]);
     
-            // Create test
             $test = Test::create([
                 'title' => $validatedData['title'],
                 'description' => $validatedData['description'],
@@ -91,7 +90,6 @@ class TestController extends Controller
                 'test_data' => $test->toArray()
             ]);
     
-            // Parse invitation link
             $urlParts = explode('/', $validatedData['invitation_link']);
             $invitationToken = end($urlParts);
     
@@ -100,7 +98,6 @@ class TestController extends Controller
                 'token' => $invitationToken
             ]);
     
-            // Create invitation
             $invitation = Invitation::create([
                 'test_id' => $test->id,
                 'invited_emails' => json_encode([]),
@@ -544,29 +541,25 @@ class TestController extends Controller
         if (!$candidate) {
             return redirect()->route('invitation.candidate-auth');
         }
-
-        // Get the test by ID
+    
         $test = Test::with('questions')->findOrFail($id);
         
-        // Check if this candidate has access to this test
         $hasAccess = $candidate->tests()->where('test_id', $id)->exists() || 
                     Invitation::where('test_id', $id)
-                            ->whereJsonContains('invited_emails', $candidate->email)
+                            ->whereJsonContains('invited_emails->invites', ['email' => $candidate->email])
                             ->exists();
         
         if (!$hasAccess) {
             return redirect()->route('candidate.dashboard')
                             ->with('error', 'You do not have access to this test.');
         }
-
-        // Get test attempt if exists
+    
         $testAttempt = $candidate->tests()
                                 ->where('test_id', $id)
                                 ->first();
-
+    
         $invitation = $this->validateSession();
-
-        // Check if test is already completed
+    
         if ($testAttempt && in_array($testAttempt->pivot->status, ['completed', 'accepted', 'rejected'])) {
             return redirect()->route('tests.result', $id)
                             ->with('info', 'This test has already been completed.');
@@ -595,16 +588,24 @@ class TestController extends Controller
 
         } elseif (Auth::guard('candidate')->check()) {
             try {
-
+                $candidate = Auth::guard('candidate')->user();
+                
                 $invitation = Invitation::with(['test.questions.choices', 'test.questions.media'])
                     ->where('test_id', $id)
                     ->where('expiration_date', '>', now())
                     ->firstOrFail();
                 
+                // Check candidate's individual deadline
+                $invites = $invitation->invited_emails['invites'] ?? [];
+                $candidateInvite = collect($invites)->firstWhere('email', $candidate->email);
+                
+                if ($candidateInvite && now()->greaterThan(new Carbon($candidateInvite['deadline']))) {
+                    return redirect()->route('login')
+                        ->with('error', 'Your test deadline has expired.');
+                }
+                
                 $test = $invitation->test;
                 $questions = $test->questions;
-                
-                $candidate = Auth::guard('candidate')->user();
                 
                 $testAttempt = $candidate->tests()->find($id);
         
@@ -1179,14 +1180,27 @@ class TestController extends Controller
     {
         $invitationLink = session('invitation_link');
         $candidateEmail = session('candidate_email');
-
+    
         if (!$invitationLink || !$candidateEmail) {
             return null;
         }
-
-        return Invitation::where('invitation_link', $invitationLink)
+    
+        $invitation = Invitation::where('invitation_link', $invitationLink)
             ->where('expiration_date', '>', now())
             ->first();
+    
+        if (!$invitation) {
+            return null;
+        }
+    
+        $invites = $invitation->invited_emails['invites'] ?? [];
+        $candidateInvite = collect($invites)->firstWhere('email', $candidateEmail);
+        
+        if ($candidateInvite && now()->greaterThan(new Carbon($candidateInvite['deadline']))) {
+            return null;
+        }
+    
+        return $invitation;
     }
 
     private function checkTimeUp($testAttempt)

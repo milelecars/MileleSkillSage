@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Invitation;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class InvitationController extends Controller
 {
@@ -16,35 +17,27 @@ class InvitationController extends Controller
         $invitation = Invitation::with('test')
             ->where('invitation_token', $token)
             ->firstOrFail();
-    
+        
         session([
             'invitation_token' => $invitation->invitation_token,
             'test_id' => $invitation->test_id,
             'test' => $invitation->test, 
         ]);
-    
-        if (now()->greaterThan($invitation->expiration_date)) {
-            return redirect()->route('invitation.expired');
-        }
-    
+
         if (Auth::guard('candidate')->check()) {
             $candidate = Auth::guard('candidate')->user();
             $testAttempt = $candidate->tests()
                 ->where('test_id', $invitation->test_id)
                 ->first();
-    
-    
+
             if ($testAttempt) {
                 $this->setCandidateSession($candidate, $invitation->test_id);
             }
-    
-            return view('candidate.dashboard', [
-                'invitation' => $invitation,
-                'test' => $invitation->test,
-                'testAttempt' => $testAttempt,
-            ]);
+
+            // Redirect to dashboard instead of rendering the view
+            return redirect()->route('candidate.dashboard');
         }
-    
+
         return view('invitation.candidate-auth', [
             'invitation' => $invitation,
             'test' => $invitation->test,
@@ -61,13 +54,11 @@ class InvitationController extends Controller
         $invitation = Invitation::with('test')
             ->where('invitation_token', $token)
             ->firstOrFail();
-            
-        if (now()->greaterThan($invitation->expiration_date)) {
-            return redirect()->route('invitation.expired');
-        }
 
-        $invitedEmails = $invitation->invited_emails;
-        if (!in_array($validatedData['email'], $invitedEmails)) {
+        $invites = $invitation->invited_emails['invites'] ?? [];
+        $candidateInvite = collect($invites)->firstWhere('email', $validatedData['email']);
+        
+        if (!$candidateInvite) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
 
@@ -117,10 +108,5 @@ class InvitationController extends Controller
        }
 
        session($sessionData);
-   }
-
-   public function expired()
-   {
-       return view('invitation.expired');
    }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\OAuthController;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 use Google\Client;
 use Google\Service\Gmail;
 
@@ -51,7 +52,7 @@ class InviteCandidates extends Component
         $email = $this->newEmail;
 
         $existingInvitation = Invitation::where('test_id', $this->testId)
-            ->whereJsonContains('invited_emails', $email)
+            ->whereJsonContains('invited_emails->invites', ['email' => $email])
             ->exists();
 
         if ($existingInvitation) {
@@ -70,7 +71,6 @@ class InviteCandidates extends Component
 
         session(["test_{$this->testId}_emails" => $this->emailList]);
     }
-
     public function removeEmail($index)
     {
         unset($this->emailList[$index]);
@@ -144,8 +144,30 @@ class InviteCandidates extends Component
                 return;
             }
 
-            $allEmails = array_unique(array_merge($existingEmails, $this->emailList));
-            $invitation->update(['invited_emails' => $allEmails]);
+            
+            $existingInvites = !empty($invitation->invited_emails) && is_array($invitation->invited_emails['invites']) 
+                ? $invitation->invited_emails['invites'] 
+                : [];
+
+            $existingEmailMap = array_column($existingInvites, null, 'email');
+
+            $newInvites = [];
+            foreach ($this->emailList as $email) {
+                if (!isset($existingEmailMap[$email])) {
+                    $newInvites[] = [
+                        'email' => $email,
+                        'invited_at' => now()->toISOString(),
+                        'deadline' => now()->addDays(2)->toISOString() 
+                    ];
+                }
+            }
+
+            // Combine existing and new invites
+            $allInvites = [
+                'invites' => array_values(array_merge($existingInvites, $newInvites))
+            ];
+
+            $invitation->update(['invited_emails' => $allInvites]);
 
             DB::commit();
 

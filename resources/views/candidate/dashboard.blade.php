@@ -49,6 +49,7 @@
                                                     @if($test['status'] === 'completed') bg-green-100 text-green-800
                                                     @elseif($test['status'] === 'in_progress') bg-yellow-100 text-yellow-800
                                                     @elseif($test['status'] === 'not_started') bg-gray-100 text-gray-800
+                                                    @elseif($test['status'] === 'expired') bg-red-100 text-red-800
                                                     @endif">
                                                     {{ ucfirst(str_replace('_', ' ', $test['status'])) }}
                                                 </span>
@@ -68,14 +69,16 @@
                                             </td>
                                             <td class="px-2 py-4">
                                                 <div class="flex justify-center gap-2">
-                                                    @if(!in_array($test['status'], ['completed', 'accepted', 'rejected']))
-                                                        <a href="{{ route('tests.setup', $test['test_id']) }}"> 
+                                                    @if($test['status'] === 'expired')
+                                                        <span>-</span>
+                                                    @elseif(!in_array($test['status'], ['completed', 'accepted', 'rejected']))
+                                                        <a href="{{ route('tests.setup', $test['test_id']) }}" class="text-blue-600 hover:text-blue-800"> 
                                                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                                                             </svg>
                                                         </a>
                                                     @else
-                                                        <a href="{{ route('tests.result', $test['test_id']) }}">
+                                                        <a href="{{ route('tests.result', $test['test_id']) }}" class="text-blue-600 hover:text-blue-800">
                                                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                                                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
