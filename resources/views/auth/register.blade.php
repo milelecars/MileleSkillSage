@@ -21,12 +21,18 @@
 
         <div class="mb-4">
             <label for="password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
-            <input id="password" type="password" name="password" required autocomplete="new-password" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <input id="password" type="password" name="password" required autocomplete="new-password" 
+                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <p id="passwordError" class="text-red-500 text-xs hidden">
+                Password must be at least 8 characters long and contain at least one letter, one number, and one special character (@$!%*#?&).
+            </p>
         </div>
 
         <div class="mb-6">
             <label for="password_confirmation" class="block text-gray-700 text-sm font-bold mb-2">Confirm Password</label>
-            <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" 
+                class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <p id="confirmError" class="text-red-500 text-xs hidden">Passwords do not match.</p>
         </div>
 
         <div class="flex items-center justify-between">
@@ -52,6 +58,35 @@
         } else {
             emailError.classList.add('hidden');
             emailField.classList.remove('border-red-500');
+        }
+    });
+
+    document.getElementById('password').addEventListener('input', function () {
+        const passwordField = this;
+        const passwordError = document.getElementById('passwordError');
+        const passwordPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
+
+        if (!passwordPattern.test(passwordField.value)) {
+            passwordError.classList.remove('hidden');
+            passwordField.classList.add('border-red-500');
+        } else {
+            passwordError.classList.add('hidden');
+            passwordField.classList.remove('border-red-500');
+        }
+    });
+
+    // Password confirmation validation
+    document.getElementById('password_confirmation').addEventListener('input', function () {
+        const confirmField = this;
+        const passwordField = document.getElementById('password');
+        const confirmError = document.getElementById('confirmError');
+
+        if (confirmField.value !== passwordField.value) {
+            confirmError.classList.remove('hidden');
+            confirmField.classList.add('border-red-500');
+        } else {
+            confirmError.classList.add('hidden');
+            confirmField.classList.remove('border-red-500');
         }
     });
 </script>
