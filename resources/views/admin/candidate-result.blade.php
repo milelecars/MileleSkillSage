@@ -236,7 +236,7 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    @if($test->pivot->status !== 'accepted' && $test->pivot->status !== 'rejected')
+                    <!-- @if($test->pivot->status !== 'accepted' && $test->pivot->status !== 'rejected')
                         <div class="mt-8 flex justify-end space-x-4">
                             <form action="{{ route('candidate.accept', $candidate) }}" method="POST" class="inline">
                                 @csrf
@@ -261,7 +261,7 @@
                                 </button>
                             </form>                                
                         </div>
-                    @endif
+                    @endif -->
                 </div>
             </div>
         </div>

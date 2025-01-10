@@ -7,7 +7,7 @@ use App\Models\Test;
 use App\Models\Invitation;
 use App\Models\Answer;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -259,7 +259,9 @@ class AdminController extends Controller
         ->with('test:id,title')
         ->get()
         ->flatMap(function ($invitation) use ($search, $takenTests) {
-            $invites = $invitation->invited_emails['invites'] ?? [];
+            $invites = is_string($invitation->invited_emails) 
+                ? json_decode($invitation->invited_emails, true)['invites'] ?? []
+                : ($invitation->invited_emails['invites'] ?? []);
             
             return collect($invites)->map(function ($invite) use ($invitation, $search, $takenTests) {
                 $email = $invite['email'];
@@ -272,11 +274,13 @@ class AdminController extends Controller
                         'email' => $email,
                         'test_title' => $invitation->test->title,
                         'test_id' => $invitation->test_id,
-                        'status' => $isExpired ? 'expired' : 'invited', // Changed from 'not_started' to 'invited'
+                        'status' => $isExpired ? 'expired' : 'invited',
                         'has_started' => false,
                         'has_logged_in' => false,
                         'invitation_id' => $invitation->id,
-                        'sort_order' => self::STATUS_SORT_ORDER[$isExpired ? 'expired' : 'invited'] ?? 99
+                        'expiration_date' => $invite['deadline'],
+                        'sort_order' => self::STATUS_SORT_ORDER[$isExpired ? 'expired' : 'invited'] ?? 99,
+                        'is_invitation' => true
                     ];
                 }
                 return null;
@@ -344,7 +348,121 @@ class AdminController extends Controller
             $stats
         ));
     }
-    
+
+    public function deleteCandidate($candidateId, $testId)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $candidate = Candidate::findOrFail($candidateId);
+            
+            Log::info('Starting deletion of candidate test record', [
+                'candidate_id' => $candidateId,
+                'test_id' => $testId,
+                'candidate_email' => $candidate->email
+            ]);
+            
+            // Delete answers
+            $answersDeleted = DB::table('answers')
+                ->where('candidate_id', $candidateId)
+                ->where('test_id', $testId)
+                ->delete();
+                
+            Log::info('Answers deleted', [
+                'count' => $answersDeleted,
+                'candidate_id' => $candidateId,
+                'test_id' => $testId
+            ]);
+            
+            // Delete flags
+            $flagsDeleted = DB::table('candidate_flags')
+                ->where('candidate_id', $candidateId)
+                ->where('test_id', $testId)
+                ->delete();
+                
+            Log::info('Candidate flags deleted', [
+                'count' => $flagsDeleted,
+                'candidate_id' => $candidateId,
+                'test_id' => $testId
+            ]);
+            
+            // Delete screenshots
+            $screenshotsDeleted = DB::table('candidate_test_screenshots')
+                ->join('candidate_test', function($join) use ($candidateId, $testId) {
+                    $join->where('candidate_test.candidate_id', $candidateId)
+                        ->where('candidate_test.test_id', $testId);
+                })
+                ->delete();
+                
+            Log::info('Screenshots deleted', [
+                'count' => $screenshotsDeleted,
+                'candidate_id' => $candidateId,
+                'test_id' => $testId
+            ]);
+            
+            // Delete candidate test record
+            $testRecordDeleted = DB::table('candidate_test')
+                ->where('candidate_id', $candidateId)
+                ->where('test_id', $testId)
+                ->delete();
+                
+            Log::info('Candidate test record deleted', [
+                'count' => $testRecordDeleted,
+                'candidate_id' => $candidateId,
+                'test_id' => $testId
+            ]);
+
+            // Remove the email from invitations JSON
+            $invitation = DB::table('invitations')
+                ->where('test_id', $testId)
+                ->first();
+
+            if ($invitation) {
+                $invitedEmails = json_decode($invitation->invited_emails, true);
+                
+                // Filter out the candidate's email
+                $invitedEmails['invites'] = array_values(array_filter(
+                    $invitedEmails['invites'], 
+                    function($invite) use ($candidate) {
+                        return $invite['email'] !== $candidate->email;
+                    }
+                ));
+                
+                // Update the invitation record
+                DB::table('invitations')
+                    ->where('test_id', $testId)
+                    ->update([
+                        'invited_emails' => json_encode($invitedEmails)
+                    ]);
+                    
+                Log::info('Removed email from invitations', [
+                    'email' => $candidate->email,
+                    'test_id' => $testId
+                ]);
+            }
+            
+            DB::commit();
+            
+            Log::info('Successfully completed deletion of candidate test record', [
+                'candidate_id' => $candidateId,
+                'test_id' => $testId
+            ]);
+            
+            return redirect()->back()->with('success', 'Candidate test record deleted successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to delete candidate test record', [
+                'candidate_id' => $candidateId,
+                'test_id' => $testId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('error', 'Failed to delete candidate test record. Please try again.');
+        }
+    }
+
     public function getPrivateScreenshot($testId, $candidateId, $filename)
     {
         try {
@@ -536,7 +654,7 @@ class AdminController extends Controller
                     ->updateExistingPivot($testId, ['status' => 'rejected']);
                     
                 DB::commit();
-                return redirect()->back()->with('success', 'Candidate rejected and notified successfully.');
+                return redirect()->back()->with('success');
             } else {
                 DB::rollback();
                 return redirect()->back()->with('error', 'Failed to send notification email. Status not updated.');

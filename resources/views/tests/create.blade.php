@@ -10,8 +10,8 @@
                         <input type="text" name="title" id="title" required class="appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the test title" value="{{ old('title') }}">
                     </div>
                     <div class="mr-4">
-                        <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Duration</label>
-                        <input type="text" name="duration" id="duration" required class="appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the duration" value="{{ old('duration') }}">
+                        <label for="duration" class="block text-gray-700 text-md font-bold mb-2">Duration (in minutes)</label>
+                        <input type="number" name="duration" id="duration" required class="appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter the duration" value="{{ old('duration') }}">
                     </div>
                     <div class="ml-4" wire:ignore.self>
                         <label for="invitation_link" class="block text-gray-700 text-md font-bold mb-2">Invitation Link</label>
@@ -25,6 +25,15 @@
                     <div class="col-span-3">
                         <label for="file" class="block text-gray-700 text-md font-bold mb-2">Import Questions</label>
                         <input type="file" name="file" accept=".xlsx,.csv" required class="rounded-lg border border-neutral-500">
+                        <p class="mt-2 text-sm text-gray-600">
+                            Please ensure your Excel file follows the required 
+                            <a href="https://milelemotors-my.sharepoint.com/:x:/g/personal/helia_haghighi_milele_com/EQWDcWUxRxZEvVYBTZ0KvQgB41V2mIJ8uRO_99c2pRg4Mg?e=MzqcJw" 
+                            class="text-blue-600 hover:text-blue-800 underline" 
+                            target="_blank">
+                                template
+                            </a>
+                            format.
+                        </p>
                     </div>
                     <div class="flex items-center justify-center col-span-3 mt-5">
                         <button type="submit" class="text-white bg-blue-700 hover:bg-blue-600 font-bold py-2 px-4 rounded-lg text-center focus:outline-none focus:shadow-outline">Create Test</button>

@@ -4,7 +4,7 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
                 <div class="p-6 border-b border-gray-200">
                     <h1 class="text-2xl font-bold text-gray-800">
-                        Welcome, {{ Auth::guard('web')->user()->name}} !
+                        Welcome, {{ Auth::guard('web')->user()->name}} 👋
                     </h1>
                     <div class="text-sm text-gray-500 mt-1">
                         {{ Auth::guard('web')->user()->email }}

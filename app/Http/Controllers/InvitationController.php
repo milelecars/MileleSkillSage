@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Invitation;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class InvitationController extends Controller
@@ -108,5 +109,71 @@ class InvitationController extends Controller
        }
 
        session($sessionData);
+   }
+
+   public function extendDeadline(Request $request)
+   {
+       $request->validate([
+           'test_id' => 'required|exists:tests,id',
+           'email' => 'required|email',
+           'new_deadline' => 'required|date|after:now'
+       ]);
+   
+       try {
+           DB::beginTransaction();
+   
+           // Find the invitation for this test
+           $invitation = DB::table('invitations')
+               ->where('test_id', $request->test_id)
+               ->first();
+   
+           if (!$invitation) {
+               throw new \Exception('Invitation not found for this test.');
+           }
+   
+           // Get and decode the invited_emails
+           $invitedEmails = json_decode($invitation->invited_emails, true);
+           $invites = $invitedEmails['invites'] ?? [];
+           $updated = false;
+   
+           // Update the deadline for the specific email
+           foreach ($invites as $key => $invite) {
+               if ($invite['email'] === $request->email) {
+                   $invites[$key]['deadline'] = Carbon::parse($request->new_deadline)->format('Y-m-d H:i:s');
+                   $updated = true;
+                   break;
+               }
+           }
+   
+           if (!$updated) {
+               throw new \Exception('Email not found in invitation list.');
+           }
+   
+           // Update the invitation record
+           DB::table('invitations')
+               ->where('test_id', $request->test_id)
+               ->update([
+                   'invited_emails' => json_encode(['invites' => $invites])
+               ]);
+   
+           Log::info('Deadline extended successfully', [
+               'test_id' => $request->test_id,
+               'email' => $request->email,
+               'new_deadline' => $request->new_deadline
+           ]);
+   
+           DB::commit();
+           return redirect()->back()->with('success', 'Deadline extended successfully.');
+       } catch (\Exception $e) {
+           DB::rollBack();
+           
+           Log::error('Failed to extend deadline', [
+               'test_id' => $request->test_id,
+               'email' => $request->email,
+               'error' => $e->getMessage()
+           ]);
+   
+           return redirect()->back()->with('error', 'Failed to extend deadline. ' . $e->getMessage());
+       }
    }
 }

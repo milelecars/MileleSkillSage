@@ -67,10 +67,14 @@ Route::middleware('auth:web')->group(function () {
     Route::get('private-screenshot/{testId}/{candidateId}/{filename}', [AdminController::class, 'getPrivateScreenshot'])
     ->name('private.screenshot');
     Route::put('/candidates/{candidate}/accept', [AdminController::class, 'acceptCandidate'])
-        ->name('candidate.accept');
+    ->name('candidate.accept');
     Route::put('/candidates/{candidate}/reject', [AdminController::class, 'rejectCandidate'])
-        ->name('candidate.reject');
-        
+    ->name('candidate.reject');
+    Route::delete('/candidates/{candidateId}/{testId}/delete', [AdminController::class, 'deleteCandidate'])
+    ->name('candidate.delete');
+    Route::post('/invitation/extend-deadline', [InvitationController::class, 'extendDeadline'])
+    ->name('invitations.extend-deadline');     
+
     Route::get('/admin/invite', [AdminController::class, 'inviteCandidate'])->name('admin.invite');
     Route::get('/admin/select-candidate', [AdminController::class, 'inviteCandidate'])
     ->name('admin.select-candidate');
