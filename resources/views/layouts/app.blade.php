@@ -44,7 +44,7 @@
         @if (app()->environment('local'))
             @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
         @else
-            <link rel="stylesheet" href="/build/assets/app-BXP3Q8IS.css">
+            <link rel="stylesheet" href="/build/assets/app-D2Me0P_F.css">
             <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
             <script src="/build/assets/webcam-C5f4CeFM.js" defer></script>
             <script src="/build/assets/test-monitoring-MqHrcf0C.js" defer></script>
