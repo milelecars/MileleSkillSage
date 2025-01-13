@@ -55,7 +55,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/invitation/{token}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 });
 
-Route::middleware(['guest', 'throttle:6,1'])->group(function () {
+Route::middleware(['guest', 'throttle:3,5'])->group(function () {
     Route::post('generate-otp', [AuthenticatedSessionController::class, 'generateOtp'])
         ->name('generate.otp');
 });
