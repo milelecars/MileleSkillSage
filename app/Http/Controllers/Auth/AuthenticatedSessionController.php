@@ -1,14 +1,18 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Providers\RouteServiceProvider;
+use App\Http\Controllers\OAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Google\Client;
+use Google\Service\Gmail;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -16,107 +20,129 @@ class AuthenticatedSessionController extends Controller
     {
         return view('auth.login');
     }
-    
+
     public function store(Request $request)
     {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
-            'OTP' => 'required|string'
+            'OTP' => 'required|string',
         ]);
 
-        // First check OTP
-        if ($request->OTP !== "24681357") {
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors([
-                    'OTP' => 'Invalid OTP code.',
-                ]);
-        }
-
-        // Create credentials without OTP for database authentication
-        $credentials = $request->only('email', 'password');
-
-        Log::info('Login credentials check', [
-            'email' => $credentials['email'],
-            'provided_password' => $credentials['password'],
-            'guard' => Auth::getDefaultDriver(),
-            'provider' => config('auth.guards.web.provider')
-        ]);
-
-        // Find admin
-        $admin = Admin::where('email', $credentials['email'])->first();
+        // Find the admin by email
+        $admin = Admin::where('email', $request->email)->first();
 
         if (!$admin) {
             return back()
                 ->withInput($request->only('email'))
-                ->with('error', 'No admin account found with this email address.');
+                ->withErrors(['email' => 'No admin account found with this email address.']);
         }
 
-        // Debug password check
-        Log::info('Password check details', [
-            'provided_password' => $credentials['password'],
-            'stored_hash' => $admin->password,
-            'hash_check_result' => Hash::check($credentials['password'], $admin->password) ? 'true' : 'false'
-        ]);
-        
-        // Try both direct hash check and Auth attempt
-        $hashCheck = Hash::check($credentials['password'], $admin->password);
-        $authAttempt = Auth::guard('web')->attempt($credentials); // Now only using email and password
-
-        Log::info('Authentication attempts', [
-            'hash_check' => $hashCheck ? 'passed' : 'failed',
-            'auth_attempt' => $authAttempt ? 'passed' : 'failed'
-        ]);
-
-        if ($hashCheck) {
-            Auth::guard('web')->login($admin);
-            $request->session()->regenerate();
-            
-            Log::info('Admin login successful', [
-                'admin_id' => $admin->id, 
-                'email' => $admin->email
-            ]);
-            
-            return redirect()
-                ->intended(route('admin.dashboard'));
+        // Verify the password
+        if (!Hash::check($request->password, $admin->password)) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['password' => 'The provided password is incorrect.']);
         }
 
-        Log::warning('Failed admin login attempt - password mismatch', [
-            'email' => $request->email
+        // Verify the OTP
+        if (!$admin->otp || $admin->otp_expires_at < now() || $admin->otp !== $request->OTP) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['OTP' => 'Invalid or expired OTP code.']);
+        }
+
+        // Clear the OTP after successful verification
+        $admin->otp = null;
+        $admin->otp_expires_at = null;
+        $admin->save();
+
+        // Log the admin in
+        Auth::guard('web')->login($admin);
+        $request->session()->regenerate();
+
+        Log::info('Admin login successful', [
+            'admin_id' => $admin->id,
+            'email' => $admin->email,
         ]);
-        
-        return back()
-            ->withInput($request->only('email'))
-            ->withErrors([
-                'email' => 'The provided credentials are incorrect.',
-            ]);
+
+        return redirect()->intended(route('admin.dashboard'));
     }
+
+    public function generateOtp(Request $request)
+    {
+        // Validate email input
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Find admin by email
+        $admin = Admin::where('email', $request->email)->first();
+
+        if (!$admin) {
+            return redirect()->back()->withErrors(['email' => 'No admin account found with this email address.']);
+        }
+
+         // Generate a 6-digit OTP
+        $otp = random_int(100000, 999999);
+
+        // Store OTP and expiration in the database
+        $admin->otp = $otp;
+        $admin->otp_expires_at = now()->addMinutes(5);
+        $admin->save();
+
+       
+        $template = file_get_contents(resource_path('views/emails/otp-email-template.blade.php'));
+
+        // Replace both the OTP and admin variables
+        $htmlContent = str_replace(
+            ['{{ $otp }}', '{{ $admin->name }}'], 
+            [$otp, $admin->name],
+            $template
+        );
+
+        // Use email sending logic
+        try {
+            $oAuthController = new OAuthController();
+            $client = $oAuthController->getClient();
+            $service = new Gmail($client);
+
+            $message = new \Google\Service\Gmail\Message();
+            $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
+            $rawMessage .= "To: <{$admin->email}>\r\n";
+            $rawMessage .= "Subject: =?utf-8?B?" . base64_encode("Your OTP Code") . "?=\r\n";
+            $rawMessage .= "MIME-Version: 1.0\r\n";
+            $rawMessage .= "Content-Type: text/html; charset=utf-8\r\n\r\n";
+            $rawMessage .= $htmlContent;
+
+            $message->setRaw(base64_encode($rawMessage));
+            $service->users_messages->send('me', $message);
+
+            Log::info('OTP sent successfully', [
+                'email' => $admin->email,
+                'otp' => $otp,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP', ['error' => $e->getMessage()]);
+            return redirect()->back()->withErrors(['email_error' => 'Failed to send OTP. Please try again later.']);
+        }
+
+        $request->session()->put('otp_generated', true);
+        return redirect()->back()->with('success', 'OTP sent to your email');
+    }
+
 
     public function destroy(Request $request)
     {
-        // Check if user is candidate and store token before logout
-        $isCandidate = Auth::guard('candidate')->check();
-        $token = $request->session()->get('invitation_token');
-        
         if (Auth::guard('web')->check()) {
             $admin = Auth::guard('web')->user();
             Log::info('Admin logged out', ['admin_id' => $admin->id]);
             Auth::guard('web')->logout();
-        } else if (Auth::guard('candidate')->check()) {
-            $candidate = Auth::guard('candidate')->user();
-            Log::info('Candidate logged out', ['candidate_id' => $candidate->id]);
-            Auth::guard('candidate')->logout();
         }
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
-        // Redirect based on user type
-        if ($isCandidate && $token) {
-            return redirect()->route('invitation.show', ['token' => $token]);
-        }
-        
+
         return redirect()->route('welcome');
     }
 }

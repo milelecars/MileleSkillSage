@@ -13,9 +13,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\AcceptanceEmail;
-use App\Mail\RejectionEmail;
-use App\Mail\InvitationEmail;
 use Google\Client;
 use Google\Service\Gmail;
 

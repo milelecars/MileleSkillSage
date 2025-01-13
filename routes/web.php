@@ -48,13 +48,17 @@ Route::middleware('guest')->group(function () {
     Route::post('admin/register', [RegisteredAdminController::class, 'store']);
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
-    
+
     // Invitation handling for guests
     Route::get('/invitation/expired', [InvitationController::class, 'expired'])->name('invitation.expired');
     Route::get('/invitation/{token}', [InvitationController::class, 'show'])->name('invitation.show');
     Route::post('/invitation/{token}/validate', [InvitationController::class, 'validateEmail'])->name('invitation.validate');
 });
 
+Route::middleware(['guest', 'throttle:6,1'])->group(function () {
+    Route::post('generate-otp', [AuthenticatedSessionController::class, 'generateOtp'])
+        ->name('generate.otp');
+});
 
 // Admin authenticated routes
 Route::middleware('auth:web')->group(function () {

@@ -35,7 +35,7 @@ class InvitationController extends Controller
                 $this->setCandidateSession($candidate, $invitation->test_id);
             }
 
-            // Redirect to dashboard instead of rendering the view
+            
             return redirect()->route('candidate.dashboard');
         }
 
@@ -122,7 +122,7 @@ class InvitationController extends Controller
        try {
            DB::beginTransaction();
    
-           // Find the invitation for this test
+           
            $invitation = DB::table('invitations')
                ->where('test_id', $request->test_id)
                ->first();
@@ -131,12 +131,12 @@ class InvitationController extends Controller
                throw new \Exception('Invitation not found for this test.');
            }
    
-           // Get and decode the invited_emails
+           
            $invitedEmails = json_decode($invitation->invited_emails, true);
            $invites = $invitedEmails['invites'] ?? [];
            $updated = false;
    
-           // Update the deadline for the specific email
+           
            foreach ($invites as $key => $invite) {
                if ($invite['email'] === $request->email) {
                    $invites[$key]['deadline'] = Carbon::parse($request->new_deadline)->format('Y-m-d H:i:s');
@@ -149,7 +149,7 @@ class InvitationController extends Controller
                throw new \Exception('Email not found in invitation list.');
            }
    
-           // Update the invitation record
+           
            DB::table('invitations')
                ->where('test_id', $request->test_id)
                ->update([

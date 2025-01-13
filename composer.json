@@ -13,6 +13,7 @@
         "livewire/livewire": "^3.5",
         "maatwebsite/excel": "^3.1",
         "phpmailer/phpmailer": "^6.9",
+        "pragmarx/google2fa": "^8.0",
         "torann/geoip": "^3.0"
     },
     "require-dev": {
