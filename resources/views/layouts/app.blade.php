@@ -34,6 +34,23 @@
             };
         </script>
 
+        <!-- Device detection -->
+        <script>
+            function blockMobileAccess() {
+                const mobileDevices = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                if (mobileDevices.test(navigator.userAgent) && window.innerWidth <= 768) {
+                    document.body.innerHTML = `
+                        <div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">
+                            <h1>Desktop Only</h1>
+                            <p>Please access this test on a laptop or desktop computer.</p>
+                        </div>
+                    `;
+                }
+            }
+
+            window.onload = blockMobileAccess;
+        </script>
+
         <!-- External Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>

@@ -107,7 +107,7 @@
                                         
                                         <td class="px-2 py-4 text-sm">
                                             @if($candidate['status'] === 'accepted')
-                                                <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Invited to Interview</span>
+                                                <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Accepted</span>
                                             @elseif($candidate['status'] === 'rejected')
                                                 <span class="text-red-800 bg-red-100 px-2 py-1 rounded-full">Rejected</span>
                                             @elseif($candidate['status'] === 'completed')
@@ -159,11 +159,11 @@
                                                         class="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg py-1 z-50">
                                                         
                                                         <form action="{{ route('candidate.accept', $candidate['id']) }}" method="POST" class="block"
-                                                            onsubmit="return confirm('Are you sure you want to invite this candidate to an interview?');">
+                                                            onsubmit="return confirm('Are you sure you want to accept this candidate?');">
                                                             @csrf @method('PUT')
                                                             <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
                                                             <button type="submit" class="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-gray-100">
-                                                                Interview Invite
+                                                                Accept
                                                             </button>
                                                         </form>
 
