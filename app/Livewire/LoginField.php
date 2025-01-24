@@ -9,6 +9,7 @@ use Google\Service\Gmail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
+use Illuminate\Support\Facades\Session;
 
 class LoginField extends Component
 {
@@ -18,22 +19,22 @@ class LoginField extends Component
     public $errorMessage = '';
     public $successMessage = '';
 
+    
     public function generateOtp()
     {
-        // Validate the email input
         $validator = Validator::make(['email' => $this->email], [
             'email' => 'required|email|exists:admins,email',
         ]);
-
+    
         if ($validator->fails()) {
             $this->errorMessage = 'Invalid email or no account associated with this email.';
             $this->successMessage = '';
             return;
         }
-
+    
         $admin = Admin::where('email', $this->email)->first();
         $otp = random_int(100000, 999999);
-
+    
         // Store OTP and expiration in the database
         $admin->otp = $otp;
         $admin->otp_expires_at = now()->addMinutes(5);

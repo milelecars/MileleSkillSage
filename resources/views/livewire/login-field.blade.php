@@ -1,9 +1,20 @@
-<div>
+
+<form method="POST" action="{{ route('login') }}" class="w-full max-w-sm mx-auto my-2">
+    @csrf
+
+
+    @if (session('success'))
+        <div class="alert alert-success mb-4 text-green-500">
+            {{ session('success') }}
+        </div>
+    @endif
+
     {{-- Email Input --}}
     <div class="mb-4">
         <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
         <input 
             id="email" 
+            name="email"
             type="email" 
             wire:model="email" 
             required 
@@ -32,6 +43,7 @@
             <input 
                 id="otp" 
                 type="text" 
+                name="OTP"
                 wire:model="otp" 
                 placeholder="Enter OTP sent to your email"
                 required 
@@ -54,4 +66,17 @@
     @if ($successMessage)
         <p class="text-green-500 text-xs">{{ $successMessage }}</p>
     @endif
-</div>
+
+
+
+    {{-- Submit Button --}}
+    <div class="flex items-center justify-between mt-7">
+        <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Log in
+        </button>
+        
+        <a href="{{ route('register') }}" class="inline-block align-baseline font-bold text-sm text-theme hover:text-blue-600">
+            Need an account?
+        </a>
+    </div>
+</from>
