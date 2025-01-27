@@ -101,35 +101,35 @@ class TestReportService
             'averageScore' => $this->calculateScore($candidateTest->score, $totalQuestions),
             'weightedScore' => $this->calculateScore($candidateTest->score, $totalQuestions),
             'antiCheat' => $antiCheatData,
-            'tests' => [
-                [
-                    'name' => $test->title,
-                    'score' => $this->calculateScore($candidateTest->score, $totalQuestions),
-                    'description' => $test->description,
-                    'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
-                    'time_limit' => gmdate('H:i:s', $test->duration * 60),
-                    'skills' => [
-                        [
-                            'name' => 'Controlling and driving the discussion',
-                            'correct' => 35,
-                            'incorrect' => 65,
-                            'unanswered' => 0,
-                        ],
-                        [
-                            'name' => 'Leveraging the psychology of the counterparty',
-                            'correct' => 20,
-                            'incorrect' => 30,
-                            'unanswered' => 50,
-                        ],
-                        [
-                            'name' => 'Using emotional intelligence',
-                            'correct' => 0,
-                            'incorrect' => 0,
-                            'unanswered' => 100,
-                        ],
-                    ],
-                ],
-            ],
+            // 'tests' => [
+            //     [
+            //         'name' => $test->title,
+            //         'score' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            //         'description' => $test->description,
+            //         'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
+            //         'time_limit' => gmdate('H:i:s', $test->duration * 60),
+            //         'skills' => [
+            //             [
+            //                 'name' => 'Controlling and driving the discussion',
+            //                 'correct' => 35,
+            //                 'incorrect' => 65,
+            //                 'unanswered' => 0,
+            //             ],
+            //             [
+            //                 'name' => 'Leveraging the psychology of the counterparty',
+            //                 'correct' => 20,
+            //                 'incorrect' => 30,
+            //                 'unanswered' => 50,
+            //             ],
+            //             [
+            //                 'name' => 'Using emotional intelligence',
+            //                 'correct' => 0,
+            //                 'incorrect' => 0,
+            //                 'unanswered' => 100,
+            //             ],
+            //         ],
+            //     ],
+            // ],
         ];
 
         $fileName = "report_candidate{$candidateId}_test{$testId}_" . time() . '.pdf';
