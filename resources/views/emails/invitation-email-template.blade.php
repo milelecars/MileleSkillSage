@@ -13,7 +13,7 @@
         
         <p>On behalf of Milele Motors, we are delighted to invite you to take part in our assessment process.</p>
         
-        <p>You have been selected to complete the <strong>"Test 1"</strong> assessment as part of our evaluation process. This test will assist us in evaluating your skills and determining your potential fit within our organization.</p>
+        <p>You have been selected to complete the <strong>"{{ $testName }}"</strong> assessment as part of our evaluation process. This test will assist us in evaluating your skills and determining your potential fit within our organization.</p>
         
         <p>To begin the test, please click on the link below:</p>
 
