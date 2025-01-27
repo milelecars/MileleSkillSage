@@ -33,6 +33,9 @@
             autocomplete="current-password" 
             class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         >
+        @error('password')
+            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+        @enderror
     </div>
 
 
