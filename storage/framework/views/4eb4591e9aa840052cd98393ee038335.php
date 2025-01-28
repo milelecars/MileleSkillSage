@@ -11,21 +11,21 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 text-center">
-                @foreach($emailList as $index => $record)
+                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $emailList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $record): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <tr>
-                        <td class="px-2 py-4 text-sm">{{ $record['firstName'] }}</td>
-                        <td class="px-2 py-4 text-sm">{{ $record['lastName'] }}</td>
-                        <td class="px-2 py-4 text-sm">{{ $record['role'] }}</td>
-                        <td class="px-2 py-4 text-sm">{{ $record['email'] }}</td>
+                        <td class="px-2 py-4 text-sm"><?php echo e($record['firstName']); ?></td>
+                        <td class="px-2 py-4 text-sm"><?php echo e($record['lastName']); ?></td>
+                        <td class="px-2 py-4 text-sm"><?php echo e($record['role']); ?></td>
+                        <td class="px-2 py-4 text-sm"><?php echo e($record['email']); ?></td>
                         <td class="px-2 py-4">
                             <button 
-                                wire:click="removeEmail({{ $index }})"
+                                wire:click="removeEmail(<?php echo e($index); ?>)"
                                 class="bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700">
                                 -
                             </button>
                         </td>
                     </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
 
                 <!-- Add New Row -->
                 <tr>
@@ -37,9 +37,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="firstName"
                                 >
-                                @error('firstName') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['firstName'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -48,9 +55,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="lastName"
                                 >
-                                @error('lastName') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['lastName'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -59,9 +73,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="role"
                                 >
-                                @error('role') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['role'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -70,9 +91,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="newEmail"
                                 >
-                                @error('newEmail') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['newEmail'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
 
                             <div class="p-2">
@@ -100,7 +128,7 @@
         </table>
     </div>
 
-    @if($emailList)
+    <!--[if BLOCK]><![endif]--><?php if($emailList): ?>
         <div class="mt-6">
             <button wire:click="submitInvitations" 
                     wire:loading.attr="disabled"
@@ -118,24 +146,27 @@
                 </span>
             </button>
         </div>
-    @endif
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
-    @if (session('success'))
+    <!--[if BLOCK]><![endif]--><?php if(session('success')): ?>
         <div class="bg-green-100 border border-green-400 text-green-700 p-4 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    @if (session('warning'))
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    <!--[if BLOCK]><![endif]--><?php if(session('warning')): ?>
         <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 p-4 rounded-lg">
-            {{ session('warning') }}
-        </div>
-    @endif
+            <?php echo e(session('warning')); ?>
 
-    @if ($errors->has('submission'))
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    <!--[if BLOCK]><![endif]--><?php if($errors->has('submission')): ?>
         <div class="bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg">
-            {{ $errors->first('submission') }}
-        </div>
-    @endif
+            <?php echo e($errors->first('submission')); ?>
 
-</div>
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+</div><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/invite-candidates.blade.php ENDPATH**/ ?>

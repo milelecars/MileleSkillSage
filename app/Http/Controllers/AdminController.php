@@ -39,12 +39,24 @@ class AdminController extends Controller
         return view('admin.dashboard', $stats);
     }
 
-    public function inviteCandidate()
+    public function inviteCandidate(Request $request)
     {
         $tests = Test::all();
         $allTestIds = $tests->pluck('id')->toArray();
-        
-        $emailToTestIds = Invitation::whereJsonLength('invited_emails->invites', '>', 0)
+    
+        $query = Invitation::query();
+    
+        // Check if a candidate name is provided
+        if ($request->has('candidate_name') && $request->candidate_name) {
+            $candidateName = $request->candidate_name;
+    
+            // Join or filter candidates by name
+            $query->whereHas('candidate', function ($q) use ($candidateName) {
+                $q->where('name', 'like', '%' . $candidateName . '%');
+            });
+        }
+    
+        $emailToTestIds = $query->whereJsonLength('invited_emails->invites', '>', 0)
             ->get()
             ->flatMap(function ($invitation) {
                 $invitedEmails = $invitation->invited_emails['invites'] ?? [];
@@ -59,15 +71,15 @@ class AdminController extends Controller
             ->map(function ($group) {
                 return $group->pluck('test_id')->unique()->values()->toArray();
             });
-            
-        // the opposite mapping (uninvited tests for each email)
+    
+        // The opposite mapping (uninvited tests for each email)
         $emailToUninvitedTestIds = $emailToTestIds->map(function ($invitedTestIds) use ($allTestIds) {
             return array_values(array_diff($allTestIds, $invitedTestIds));
         });
-
-
+    
         return view('admin.invite', compact('emailToTestIds', 'emailToUninvitedTestIds', 'tests'));
     }
+    
 
     public function sendInvitation(Request $request)
     {
