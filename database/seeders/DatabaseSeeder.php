@@ -74,7 +74,6 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'Helia Admin',
                 'email' => 'helia.haghighi@milele.com',
-                'password' => Hash::make('password12'),
                  
 
             ],

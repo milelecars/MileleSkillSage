@@ -20,7 +20,6 @@ class AuthenticatedSessionController extends Controller
     {
         Log::debug('Store method invoked.', [
             'email' => $request->email,
-            'has_password' => $request->has('password'),
             'has_OTP' => $request->has('OTP'),
             'ip_address' => $request->ip(),
         ]);
@@ -28,13 +27,11 @@ class AuthenticatedSessionController extends Controller
         // Validate request input
         $validatedData = $request->validate([
             'email' => ['required', 'email', 'exists:admins,email'],
-            'password' => ['required'],
             'OTP' => ['required', 'string'], // Ensure OTP is validated here
         ], [
             'email.required' => 'Email is required.',
             'email.email' => 'Please provide a valid email address.',
             'email.exists' => 'No account found with the provided email.',
-            'password.required' => 'Password is required.',
             'OTP.required' => 'OTP is required.',
         ]);
         
@@ -53,17 +50,6 @@ class AuthenticatedSessionController extends Controller
                 ->withErrors(['email' => 'No account found with this email address.']);
         }
 
-        // Check password
-        if (!Hash::check($validatedData['password'], $admin->password)) {
-            Log::warning('Password verification failed.', [
-                'admin_id' => $admin->id,
-                'ip_address' => $request->ip(),
-            ]);
-
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['password' => 'The password is incorrect.']);
-        }
 
 
         // Check OTP

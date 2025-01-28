@@ -15,14 +15,12 @@ class Admin extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
         'otp', 
         'otp_expires_at', 
         'otp_attempts',
     ];
 
     protected $hidden = [
-        'password',
         'remember_token',
     ];
 
