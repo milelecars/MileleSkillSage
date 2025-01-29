@@ -31,7 +31,7 @@
                 id="otp" 
                 type="text" 
                 name="OTP"
-                wire:model="otp" 
+                wire:model="OTP" 
                 placeholder="Enter OTP sent to your email"
                 required 
                 autocomplete="one-time-code" 
