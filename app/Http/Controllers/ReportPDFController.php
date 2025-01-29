@@ -46,12 +46,19 @@ class ReportPDFController extends Controller
         } catch (\Exception $e) {
             Log::error("Failed to generate PDF: " . $e->getMessage());
     
-            return view('reports.error', [
-                'errorMessage' => 'No report is available at the moment. Please try again later.',
-            ]);
+            showErrorPage();
             
         }
     }
+
+    public function showErrorPage()
+    {
+        
+        return view('reports.error', [
+            'errorMessage' => 'No report is available at the moment. Please try again later.',
+        ]);
+    }
+
     
 
 }

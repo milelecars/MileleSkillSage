@@ -86,6 +86,8 @@ Route::middleware('auth:web')->group(function () {
     ->name('admin.send');
 
     Route::get('/reports/candidate-report/{candidateId}/{testId}', [ReportPDFController::class, 'streamPDF'])->name('reports.candidate-report');
+    Route::get('/reports/error', [ReportPDFController::class, 'showErrorPage'])->name('reports.error');
+
     Route::get('/admin/manage-reports', [AdminController::class, 'manageReports'])->name('admin.manage-reports');
     Route::get('/admin/manage-reports/download/{testId}', [AdminController::class, 'downloadTestReports'])->name('admin.download-test-reports');
     
