@@ -479,7 +479,7 @@
     </div>
 
     <!-- Test Sections -->
-    @foreach($tests as $test)
+    <!-- @foreach($tests as $test)
     <div class="test-section">
         <div class="test-sec-header">
             <div class="test-sec-data">
@@ -553,7 +553,7 @@
             </div>
         </div>
     </div>
-    @endforeach
+    @endforeach -->
 
     <div class="footer">
         <script type="text/php">
