@@ -418,10 +418,10 @@
     <table class="header-table">
         <tr>
             <td class="company-name-cell">{{ $companyName }}</td>
-            <!-- <td class="department-info-cell">
+            <td class="department-info-cell">
                 <div class="department-title">Assessment</div>
                 <div class="department-name">Department: {{ $department }}</div>
-            </td> -->
+            </td>
         </tr>
     </table>
 

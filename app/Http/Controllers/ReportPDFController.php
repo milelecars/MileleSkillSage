@@ -46,7 +46,7 @@ class ReportPDFController extends Controller
         } catch (\Exception $e) {
             Log::error("Failed to generate PDF: " . $e->getMessage());
     
-            showErrorPage();
+            return $this->showErrorPage();
             
         }
     }
