@@ -75,7 +75,25 @@ class InviteCandidates extends Component
             'role' => 'required|string|max:255',
             'newEmail' => 'required|email|max:255',
         ]);
-    
+
+        // Check if the email is already in the database as invited
+        $existingInvitation = Invitation::where('test_id', $this->testId)
+        ->whereJsonContains('invited_emails->invites', ['email' => $this->newEmail])
+        ->exists();
+
+        if ($existingInvitation) {
+            $this->addError('newEmail', 'This email has already been invited.');
+            return;
+        }
+
+        // Check if the email is already in the current list
+        $emailExistsInList = collect($this->emailList)->contains('email', $this->newEmail);
+
+        if ($emailExistsInList) {
+            $this->addError('newEmail', 'This email has already been added to the current list.');
+            return;
+        }
+        
         $this->emailList[] = [
             'firstName' => $this->firstName,
             'lastName' => $this->lastName,
