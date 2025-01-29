@@ -93,7 +93,7 @@ class TestReportService
             'title' => 'Skill Test Report',
             'date' => now()->format('Y-m-d'),
             'companyName' => 'Milele Motors',
-            'department' => 'Admin & Personal Assistant', 
+            // 'department' => 'Admin & Personal Assistant', 
             'candidateName' => $candidate->name,
             'email' => $candidate->email,
             'overallRating' => $this->calculateScore($candidateTest->score, $totalQuestions),

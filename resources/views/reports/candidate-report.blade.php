@@ -414,159 +414,166 @@
     </style>
 </head>
 <body>
-    <!-- Header Section -->
-    <table class="header-table">
-        <tr>
-            <td class="company-name-cell">{{ $companyName }}</td>
-            <td class="department-info-cell">
-                <div class="department-title">Assessment</div>
-                <div class="department-name">Department: {{ $department }}</div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- Candidate Info -->
-    <div class="candidate-info">
-        <div class="candidate-name">{{ $candidateName }}</div>
-        <div class="candidate-email">{{ $email }}</div>
-    </div>
-
-    <!-- Stats Section -->
-    <table class="stats-table">
-        <tr>
-            <td>
-                <div class="stat-label">Status</div>
-                <div class="stat-value black">{{ $status }}</div>
-            </td>
-            <td>
-                <div class="stat-label center">Average score</div>
-                <div class="stat-value">{{ $averageScore }}%</div>
-            </td>
-            <td>
-                <div class="stat-label center">Weighted</div>
-                <div class="stat-value">{{ $weightedScore }}%</div>
-            </td>
-            <td>
-                <div class="stat-label">Scoring method</div>
-                <div class="stat-value black">Percentage of correct answers</div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- Anti-cheating Monitor -->
-    <div class="monitor-section">
-        <div class="monitor-title">Anti-cheating monitor</div>
-        <table class="monitor-table">
-            @foreach($antiCheat as $check)
+    @if($reportAvailable)
+        <!-- Header Section -->
+        <table class="header-table">
             <tr>
-                <td>{{ $check['label'] }}</td>
+                <td class="company-name-cell">{{ $companyName }}</td>
+                <!-- <td class="department-info-cell">
+                    <div class="department-title">Assessment</div>
+                    <div class="department-name">Department: {{ $department }}</div>
+                </td> -->
+            </tr>
+        </table>
+
+        <!-- Candidate Info -->
+        <div class="candidate-info">
+            <div class="candidate-name">{{ $candidateName }}</div>
+            <div class="candidate-email">{{ $email }}</div>
+        </div>
+
+        <!-- Stats Section -->
+        <table class="stats-table">
+            <tr>
                 <td>
-                    @if($check['value'] === 'Yes')
-                        <span class="yes-badge">Yes</span>
-                    @elseif($check['value'] === 'No')
-                        <span class="no-badge">No</span>
-                    @elseif(is_numeric($check['value']))
-                        <span class="count-badge {{ isset($check['flagged']) && $check['flagged'] === 'Yes' ? 'flagged' : '' }}">
-                            {{ $check['value'] }}
-                        </span>
-                    @else
-                        <span class="badge-value">{{ $check['value'] }}</span>
-                    @endif
+                    <div class="stat-label">Status</div>
+                    <div class="stat-value black">{{ $status }}</div>
+                </td>
+                <td>
+                    <div class="stat-label center">Average score</div>
+                    <div class="stat-value">{{ $averageScore }}%</div>
+                </td>
+                <td>
+                    <div class="stat-label center">Weighted</div>
+                    <div class="stat-value">{{ $weightedScore }}%</div>
+                </td>
+                <td>
+                    <div class="stat-label">Scoring method</div>
+                    <div class="stat-value black">Percentage of correct answers</div>
                 </td>
             </tr>
-            @endforeach
         </table>
-    </div>
 
-    <!-- Test Sections -->
-    <!-- @foreach($tests as $test)
-    <div class="test-section">
-        <div class="test-sec-header">
-            <div class="test-sec-data">
-                <h1>Test Scores</h1>
-                <div class="scoring-method">Scoring method: % of correct answers</div>
-            </div>
-            <div class="data">
-                <div class="test-sec-data">
-                    <p class="score-detail">Average score</p>
-                    <p class="score-detail-value">{{ $averageScore }}%</p>
-                </div>
-                <div class="test-sec-data">
-                    <p class="score-detail">Weighted</p>
-                    <p class="score-detail-value">{{ $weightedScore }}%</p>
-                </div>
-            </div>
+        <!-- Anti-cheating Monitor -->
+        <div class="monitor-section">
+            <div class="monitor-title">Anti-cheating monitor</div>
+            <table class="monitor-table">
+                @foreach($antiCheat as $check)
+                <tr>
+                    <td>{{ $check['label'] }}</td>
+                    <td>
+                        @if($check['value'] === 'Yes')
+                            <span class="yes-badge">Yes</span>
+                        @elseif($check['value'] === 'No')
+                            <span class="no-badge">No</span>
+                        @elseif(is_numeric($check['value']))
+                            <span class="count-badge {{ isset($check['flagged']) && $check['flagged'] === 'Yes' ? 'flagged' : '' }}">
+                                {{ $check['value'] }}
+                            </span>
+                        @else
+                            <span class="badge-value">{{ $check['value'] }}</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </table>
         </div>
 
-        <div class="test">
-            <table class="test-header-table">
-                <tr>
-                    <td class="test-title">{{ $test['name'] }}</td>
-                    <td class="test-score">{{ $test['score'] }}%</td>
-                </tr>
-            </table>
-    
-            <div class="test-description">{{ $test['description'] }}</div>
-            
-            @foreach($test['skills'] as $skill)
-            <div class="skill-item">
-                <div class="skill-name">• {{ $skill['name'] }}</div>
-                <table class="skill-bar-table">
+        <!-- Test Sections -->
+        <!-- @foreach($tests as $test)
+        <div class="test-section">
+            <div class="test-sec-header">
+                <div class="test-sec-data">
+                    <h1>Test Scores</h1>
+                    <div class="scoring-method">Scoring method: % of correct answers</div>
+                </div>
+                <div class="data">
+                    <div class="test-sec-data">
+                        <p class="score-detail">Average score</p>
+                        <p class="score-detail-value">{{ $averageScore }}%</p>
+                    </div>
+                    <div class="test-sec-data">
+                        <p class="score-detail">Weighted</p>
+                        <p class="score-detail-value">{{ $weightedScore }}%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test">
+                <table class="test-header-table">
                     <tr>
-                        @if($skill['correct'] > 0)
-                        <td class="bar-correct" width="{{ $skill['correct']*25 }}%">
-                            {{ $skill['correct'] }}
-                        </td>
-                        @endif
-                        @if($skill['incorrect'] > 0)
-                        <td class="bar-incorrect" width="{{ $skill['incorrect']*25 }}%">
-                            {{ $skill['incorrect'] }}
-                        </td>
-                        @endif
-                        @if($skill['unanswered'] > 0)
-                        <td class="bar-unanswered" width="{{ $skill['unanswered']*25 }}%">
-                            {{ $skill['unanswered'] }}
-                        </td>
-                        @endif
+                        <td class="test-title">{{ $test['name'] }}</td>
+                        <td class="test-score">{{ $test['score'] }}%</td>
                     </tr>
                 </table>
-            </div>
-            @endforeach
+        
+                <div class="test-description">{{ $test['description'] }}</div>
+                
+                @foreach($test['skills'] as $skill)
+                <div class="skill-item">
+                    <div class="skill-name">• {{ $skill['name'] }}</div>
+                    <table class="skill-bar-table">
+                        <tr>
+                            @if($skill['correct'] > 0)
+                            <td class="bar-correct" width="{{ $skill['correct']*25 }}%">
+                                {{ $skill['correct'] }}
+                            </td>
+                            @endif
+                            @if($skill['incorrect'] > 0)
+                            <td class="bar-incorrect" width="{{ $skill['incorrect']*25 }}%">
+                                {{ $skill['incorrect'] }}
+                            </td>
+                            @endif
+                            @if($skill['unanswered'] > 0)
+                            <td class="bar-unanswered" width="{{ $skill['unanswered']*25 }}%">
+                                {{ $skill['unanswered'] }}
+                            </td>
+                            @endif
+                        </tr>
+                    </table>
+                </div>
+                @endforeach
 
-            <div class="skill-guide">
-                <div class="guide-item">
-                    <div class="guide-color correct"></div>
-                    <span>Correct</span>
+                <div class="skill-guide">
+                    <div class="guide-item">
+                        <div class="guide-color correct"></div>
+                        <span>Correct</span>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-color incorrect"></div>
+                        <span>Incorrect</span>
+                    </div>
+                    <div class="guide-item">
+                        <div class="guide-color unanswered"></div>
+                        <span>Not answered</span>
+                    </div>
                 </div>
-                <div class="guide-item">
-                    <div class="guide-color incorrect"></div>
-                    <span>Incorrect</span>
+        
+                <div class="time-info">
+                    Finished in {{ $test['time_spent'] }} out of {{ $test['time_limit'] }}
                 </div>
-                <div class="guide-item">
-                    <div class="guide-color unanswered"></div>
-                    <span>Not answered</span>
-                </div>
-            </div>
-    
-            <div class="time-info">
-                Finished in {{ $test['time_spent'] }} out of {{ $test['time_limit'] }}
             </div>
         </div>
-    </div>
-    @endforeach -->
+        @endforeach -->
 
-    <div class="footer">
-        <script type="text/php">
-            if (isset($pdf)) {
-                $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
-                $font = 'figtree';
-                $size =9;
-                $color = array(0,0,0);
-                $pdf->page_text(($pdf->get_width()/2) - 35, $pdf->get_height()-35, $text, $font, $size, $color);
-            }
-        </script>
-        <p class="brand">Powered by Milele SkillSage</p>
-    </div>
-
+        <div class="footer">
+            <script type="text/php">
+                if (isset($pdf)) {
+                    $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
+                    $font = 'figtree';
+                    $size =9;
+                    $color = array(0,0,0);
+                    $pdf->page_text(($pdf->get_width()/2) - 35, $pdf->get_height()-35, $text, $font, $size, $color);
+                }
+            </script>
+            <p class="brand">Powered by Milele SkillSage</p>
+        </div>
+    @else
+        <!-- Show No Report Available Message -->
+        <div class="no-report">
+            <h2 style="color: red; text-align: center;">No Report Available</h2>
+            <p style="text-align: center;">The test report is not available at the moment. Please try again later.</p>
+        </div>
+    @endif
 </body>
 </html>

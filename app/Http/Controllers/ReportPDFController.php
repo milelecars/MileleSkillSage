@@ -24,21 +24,32 @@ class ReportPDFController extends Controller
             ->where('candidate_id', $candidateId)
             ->where('test_id', $testId)
             ->first();
-
+    
         if (!$candidateTest) {
-            abort(404, 'Test data for the candidate not found.');
+            return response()->json(['error' => 'Test data for the candidate not found.'], 404);
         }
-
+    
         // If report exists and file exists in storage, just stream it
         if ($candidateTest->report_path && Storage::disk('public')->exists($candidateTest->report_path)) {
-            Log::info("report exists");
+            Log::info("Report exists");
             return response()->file(Storage::disk('public')->path($candidateTest->report_path));
         }
-
-        // If report doesn't exist, generate and stream it
-        $fullPath = $this->testReportService->generatePDF($candidateId, $testId);
-        return response()->file(Storage::disk('public')->path($fullPath));
+    
+        try {
+            // If report doesn't exist, generate and stream it
+            $fullPath = $this->testReportService->generatePDF($candidateId, $testId);
+    
+            if (!$fullPath || !Storage::disk('public')->exists($fullPath)) {
+                throw new \Exception("Generated report file not found.");
+            }
+    
+            return response()->file(Storage::disk('public')->path($fullPath));
+        } catch (\Exception $e) {
+            Log::error("Failed to generate PDF: " . $e->getMessage());
+            return response()->json(['error' => 'No report available at the moment. Please try again later.'], 500);
+        }
     }
+    
 
 
 }
