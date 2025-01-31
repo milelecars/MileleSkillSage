@@ -692,18 +692,24 @@ class AdminController extends Controller
                 $invitation = DB::table('invitations')
                     ->where('test_id', $report->id)
                     ->first();
-                
-                $invitedEmails = $invitation ? json_decode($invitation->invited_emails, true) : [];
+            
                 \Log::info('Invitation Data: ', (array) $invitation);
+            
+                $invitedEmails = $invitation && $invitation->invited_emails
+                    ? json_decode($invitation->invited_emails, true)
+                    : ['invites' => []]; 
+
                 \Log::info('Invited Emails Data: ', ['invitedEmails' => $invitedEmails]);
-                $totalInvited = count($invitedEmails) ?? 0;
-                
+            
+                $totalInvited = is_array($invitedEmails) ? count($invitedEmails['invites'] ?? []) : 0;
+            
                 $report->total_invited = $totalInvited;
                 $report->remaining_invites = $totalInvited - $report->completed_count;
                 $report->invitation_expiry = $invitation ? $invitation->expiration_date : null;
-                
+            
                 return $report;
             });
+            
     
         return view('admin.manage-reports', [
             'testReports' => $testReports,
