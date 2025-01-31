@@ -695,7 +695,7 @@ class AdminController extends Controller
                 
                 $invitedEmails = $invitation ? json_decode($invitation->invited_emails, true) : [];
                 \Log::info($invitation);
-                \Log::info('Invited Emails Data: ', ['invitedEmails' => $invitedEmails]);
+                \Log::info('Invitation Data: ', (array) $invitation);
                 $totalInvited = count($invitedEmails) ?? 0;
                 
                 $report->total_invited = $totalInvited;
