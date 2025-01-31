@@ -27,13 +27,13 @@ class AdminController extends Controller
     public function dashboard()
     {
         $stats = [
-            'totalCandidates' => Candidate::count(),
+            'totalCandidates' => Candidate::count() ?? 0,
             'completedTests' => DB::table('candidate_test')
                 ->whereIn('status', $this->getCompletedStatuses())
                 ->distinct('candidate_id')
                 ->count(),
-            'activeTests' => Test::count(),
-            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
+            'activeTests' => Test::count() ?? 0,
+            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count() ?? 0,
         ];
         
         return view('admin.dashboard', $stats);
@@ -307,7 +307,7 @@ class AdminController extends Controller
                 $invites = is_string($invitation->invited_emails) 
                     ? json_decode($invitation->invited_emails, true)['invites'] ?? []
                     : ($invitation->invited_emails['invites'] ?? []);
-                return count($invites);
+                return count($invites) ?? 0;
             });
             
         $completedByTest = DB::table('candidate_test')
@@ -323,16 +323,16 @@ class AdminController extends Controller
         $allCandidates = $activeTestCandidates->concat($invitedEmails)
         ->sortBy(function ($item) {
             return [
-                $item['sort_order'],                    // Primary sort by status order
-                !($item['has_logged_in'] ?? false),     // Then by whether they've logged in
-                !isset($item['name']),                  // Then by whether they have a name
-                $item['email']                          // Finally by email
+                $item['sort_order'],                    
+                !($item['has_logged_in'] ?? false),    
+                !isset($item['name']),                  
+                $item['email']                         
             ];
         });
 
         $candidates = new \Illuminate\Pagination\LengthAwarePaginator(
             $allCandidates->forPage(request()->get('page', 1), 10),
-            $allCandidates->count(),
+            $allCandidates->count() ?? 0,
             10,
             request()->get('page', 1)
         );
@@ -343,13 +343,13 @@ class AdminController extends Controller
             'totalInvited' => $totalInvited,
             'completedTestsCount' => array_sum($completedByTest),
             'completedByTest' => $completedByTest,
-            'activeTests' => Test::count(),
+            'activeTests' => Test::count() ?? 0,
             'totalReports' => DB::table('candidate_test')
                 ->when($testFilter, function($query) use ($testFilter) {
                     return $query->where('test_id', $testFilter);
                 })
                 ->whereNotNull('report_path')
-                ->count(),
+                ->count() ?? 0,
         ];
 
         return view('admin.manage-candidates', array_merge(
@@ -554,11 +554,11 @@ class AdminController extends Controller
             ->get();
 
         Log::info('Retrieved screenshots', [
-            'count' => $screenshots->count(),
+            'count' => $screenshots->count() ?? [],
             'paths' => $screenshots->pluck('screenshot_path')->toArray()
         ]);
 
-        $totalQuestions = $test->questions->count();
+        $totalQuestions = $test->questions->count() ?? 0;
         $percentage = $totalQuestions > 0 
             ? round(($test->pivot->score / $totalQuestions) * 100) 
             : 0;
@@ -694,7 +694,7 @@ class AdminController extends Controller
                     ->first();
                 
                 $invitedEmails = $invitation ? json_decode($invitation->invited_emails, true) : [];
-                $totalInvited = count($invitedEmails);
+                $totalInvited = count($invitedEmails) ?? 0;
                 
                 $report->total_invited = $totalInvited;
                 $report->remaining_invites = $totalInvited - $report->completed_count;
@@ -705,12 +705,12 @@ class AdminController extends Controller
     
         return view('admin.manage-reports', [
             'testReports' => $testReports,
-            'totalTests' => Test::count(),
-            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count(),
+            'totalTests' => Test::count() ?? 0,
+            'totalReports' => DB::table('candidate_test')->whereNotNull('report_path')->count() ?? 0,
             'totalCandidatesParticipated' => DB::table('candidate_test')
                 ->whereIn('status', $this->getCompletedStatuses())
                 ->distinct('candidate_id')
-                ->count()
+                ->count() ?? 0
         ]);
     }
     
