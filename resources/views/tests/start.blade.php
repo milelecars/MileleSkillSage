@@ -34,13 +34,13 @@
                                     @if($media->image_url)
                                         <img src="{{ $media->image_url }}" 
                                             alt="{{ $media->description ?? 'Question Image' }}" 
-                                            class="mb-6 max-w-full rounded-lg">
+                                            class="mb-6 max-w-full rounded-lg border border-black">
                                     @endif
                                 @endforeach
                             @elseif($questions[$currentQuestionIndex]->media && isset($questions[$currentQuestionIndex]->media->image_url))
                                 <img src="{{ $questions[$currentQuestionIndex]->media->image_url }}" 
                                     alt="{{ $questions[$currentQuestionIndex]->media->description ?? 'Question Image' }}" 
-                                    class="mb-6 max-w-full rounded-lg">
+                                    class="mb-6 max-w-full rounded-lg border border-black">
                             @endif
                         </div>
 
