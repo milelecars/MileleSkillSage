@@ -30,6 +30,7 @@
         
         <p>Important Information:</p>
         <ul>
+            <li>Make sure to use this email address to sign in</li>
             <li>The test is timed, so please ensure you have a quiet, uninterrupted period to complete it.</li>
             <li>Make sure you have a stable internet connection before starting.</li>
             <li>Read all instructions carefully before beginning each section.</li>
