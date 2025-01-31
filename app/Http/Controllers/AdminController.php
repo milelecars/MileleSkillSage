@@ -694,6 +694,8 @@ class AdminController extends Controller
                     ->first();
                 
                 $invitedEmails = $invitation ? json_decode($invitation->invited_emails, true) : [];
+                \Log::info($invitation);
+                \Log::info('Invited Emails Data: ', ['invitedEmails' => $invitedEmails]);
                 $totalInvited = count($invitedEmails) ?? 0;
                 
                 $report->total_invited = $totalInvited;
