@@ -784,6 +784,39 @@ class TestController extends Controller
                 'start_time' => $startTime,
                 'candidate_id' => $candidate->id
             ]);
+
+             //    Randomization
+            // $startTime = now();
+            // $endTime = $startTime->copy()->addMinutes($test->duration);
+            
+            // $allQuestionIds = $questions->pluck('id')->toArray();
+
+            // $indices = range(0, count($allQuestionIds) - 1);
+            // for ($i = count($indices) - 1; $i > 0; $i--) {
+            //     $j = random_int(0, $i);
+            //     [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
+            // }
+            
+            // $questionOrder = array_map(function($index) use ($allQuestionIds) {
+            //     return $allQuestionIds[$index];
+            // }, $indices);
+            
+            // $testSession = [
+            //     'test_id' => $test->id,
+            //     'start_time' => $startTime->toDateTimeString(),
+            //     'end_time' => $endTime->toDateTimeString(),
+            //     'current_question' => 0,
+            //     'answers' => [],
+            //     'question_order' => $questionOrder,
+            //     'total_questions' => count($allQuestionIds)
+            // ];        
+            
+            // $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
+            // $candidate->tests()->updateExistingPivot($id, [
+            //     'started_at' => $startTime,
+            //     'status' => 'in progress'
+            // ]);
+            
         } else {
             $startTime = Carbon::parse($testSession['start_time']);
             $endTime = $startTime->copy()->addMinutes($test->duration);
@@ -838,7 +871,7 @@ class TestController extends Controller
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
         }
-    
+        $flagTypes = FlagType::all();
         session(['test_session' => $testSession]);
     
         $currentQuestionIndex = $testSession['current_question'];
