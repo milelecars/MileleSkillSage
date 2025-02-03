@@ -737,7 +737,7 @@ class TestController extends Controller
             return redirect()->route('invitation.candidate-auth')
                 ->with('error', 'Unauthorized access to the test.');
         }
-
+    
         if ($request->isMethod('post')) {
             $request->validate([
                 'agreement' => 'required|accepted',
@@ -750,68 +750,40 @@ class TestController extends Controller
         $candidate = Auth::guard('candidate')->user();
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
         $questions = $test->questions;
-        
+    
         $isCompleted = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->where('candidate_test.status', 'completed')
             ->exists();
-        
+    
         if ($isCompleted) {
             return redirect()->route('tests.result', ['id' => $id])
                 ->with('info', 'You have already completed this test.');
         }
-        
+    
         $testSession = session('test_session', []);
-        
-        // Initialize new session if none exists or test_id doesn't match
+    
         if (!isset($testSession['test_id']) || $testSession['test_id'] != $id) {
             $startTime = now();
             $endTime = $startTime->copy()->addMinutes($test->duration);
             $allQuestionIds = $questions->pluck('id')->toArray();
-            $questionOrder = $allQuestionIds;
-            
+            $questionOrder = $allQuestionIds; 
+    
             $testSession = [
                 'test_id' => $test->id,
                 'start_time' => $startTime->toDateTimeString(),
                 'end_time' => $endTime->toDateTimeString(),
                 'current_question' => 0,
                 'answers' => [],
-                'question_order' => $questionOrder, 
+                'question_order' => $questionOrder,
                 'total_questions' => count($allQuestionIds)
-            ];      
-
-        //    Randomization
-            // $startTime = now();
-            // $endTime = $startTime->copy()->addMinutes($test->duration);
-            
-            // $allQuestionIds = $questions->pluck('id')->toArray();
-
-            // $indices = range(0, count($allQuestionIds) - 1);
-            // for ($i = count($indices) - 1; $i > 0; $i--) {
-            //     $j = random_int(0, $i);
-            //     [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
-            // }
-            
-            // $questionOrder = array_map(function($index) use ($allQuestionIds) {
-            //     return $allQuestionIds[$index];
-            // }, $indices);
-            
-            // $testSession = [
-            //     'test_id' => $test->id,
-            //     'start_time' => $startTime->toDateTimeString(),
-            //     'end_time' => $endTime->toDateTimeString(),
-            //     'current_question' => 0,
-            //     'answers' => [],
-            //     'question_order' => $questionOrder,
-            //     'total_questions' => count($allQuestionIds)
-            // ];        
-            
-            // $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
-            // $candidate->tests()->updateExistingPivot($id, [
-            //     'started_at' => $startTime,
-            //     'status' => 'in progress'
-            // ]);
-            
+            ];
+    
+            Log::info('Test session initialized', [
+                'test_id' => $test->id,
+                'start_time' => $startTime,
+                'candidate_id' => $candidate->id
+            ]);
         } else {
             $startTime = Carbon::parse($testSession['start_time']);
             $endTime = $startTime->copy()->addMinutes($test->duration);
@@ -821,45 +793,23 @@ class TestController extends Controller
             } else {
                 $endTime = Carbon::parse($testSession['end_time']);
             }
-    
-            if (!isset($testSession['question_order']) || 
-                count($testSession['question_order']) !== $questions->count() ||
-                count(array_unique($testSession['question_order'])) !== count($testSession['question_order']) || 
-                array_diff($questions->pluck('id')->toArray(), $testSession['question_order'])) {
-                
-                $allQuestionIds = $questions->pluck('id')->unique()->toArray();
-                
-                $indices = range(0, count($allQuestionIds) - 1);
-                for ($i = count($indices) - 1; $i > 0; $i--) {
-                    $j = random_int(0, $i);
-                    [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
-                }
-                
-                $questionOrder = array_map(function($index) use ($allQuestionIds) {
-                    return $allQuestionIds[$index];
-                }, $indices);
-                
-                $testSession['question_order'] = $questionOrder;
-                $testSession['total_questions'] = count($allQuestionIds);
-            }
         }
     
         $questions = $questions->sortBy(function($question) use ($testSession) {
             return array_search($question->id, $testSession['question_order']);
         })->values();
-         
-        if (!isset($testSession['current_question']) || 
-            $testSession['current_question'] >= count($questions)) {
+    
+        if (!isset($testSession['current_question']) || $testSession['current_question'] >= count($questions)) {
             $testSession['current_question'] = 0;
         }
-        
+
         Log::info('Question order established', [
             'test_id' => $test->id,
             'question_order' => $testSession['question_order'],
             'unique_count' => count(array_unique($testSession['question_order'])),
             'total_count' => count($testSession['question_order'])
         ]);
-       
+    
         $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->first();
@@ -869,16 +819,28 @@ class TestController extends Controller
                 'started_at' => now(),
                 'status' => 'in progress'
             ]);
-            Log::info("in test");
+            Log::info('New test attempt created', [
+                'test_id' => $test->id,
+                'candidate_id' => $candidate->id
+            ]);
+        } else {
+            if ($testAttempt->pivot->status !== 'in progress') {
+                $candidate->tests()->updateExistingPivot($id, [
+                    'status' => 'in progress'
+                ]);
+                Log::info('Test attempt status updated to "in progress"', [
+                    'test_id' => $test->id,
+                    'candidate_id' => $candidate->id
+                ]);
+            }
         }
     
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
         }
     
-        $flagTypes = FlagType::all();
         session(['test_session' => $testSession]);
-        
+    
         $currentQuestionIndex = $testSession['current_question'];
     
         return view('tests.start', compact('test', 'candidate', 'questions', 'currentQuestionIndex', 'flagTypes'));
