@@ -16,7 +16,7 @@ class Test extends Model
         'duration', 
         'admin_id', 
         'overall_results_pdf_path',
-        'deleted_by'  // Add this to track who deleted the test
+        'deleted_by'  
     ];
 
     protected $dates = [
@@ -25,7 +25,7 @@ class Test extends Model
         'updated_at'
     ];
 
-    // Existing relationships
+    
     public function questions()
     {
         return $this->hasMany(Question::class);
@@ -63,13 +63,13 @@ class Test extends Model
         return $this->hasOne(Invitation::class);
     }
 
-    // Add relationship to track who deleted the test
+    
     public function deletedBy()
     {
         return $this->belongsTo(Admin::class, 'deleted_by');
     }
 
-    // Scopes for easy querying
+    
     public function scopeActive($query)
     {
         return $query->whereNull('deleted_at');
@@ -80,7 +80,7 @@ class Test extends Model
         return $query->whereNotNull('deleted_at');
     }
 
-    // Helper methods
+    
     public function isArchived()
     {
         return $this->deleted_at !== null;
@@ -91,7 +91,7 @@ class Test extends Model
         $this->update([
             'deleted_by' => $adminId
         ]);
-        $this->delete(); // This will set deleted_at
+        $this->delete(); 
     }
 
     public function restore($force = false)

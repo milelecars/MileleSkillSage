@@ -283,7 +283,6 @@ class TestController extends Controller
                 'validated_data' => $validatedData
             ]);
 
-            // Update test details
             $test->update([
                 'title' => $validatedData['title'],
                 'description' => $validatedData['description'],
@@ -307,7 +306,6 @@ class TestController extends Controller
                 ]);
 
                 try {
-                    // Delete existing questions and related data
                     $questionIds = $test->questions->pluck('id')->toArray();
                     
                     Log::info('Deleting existing questions', [
@@ -342,7 +340,6 @@ class TestController extends Controller
                         throw new \Exception('No questions found in the uploaded file.');
                     }
 
-                    // Create new questions
                     foreach ($questions as $q) {
                         Log::info('Processing question for update', ['question' => $q]);
                         
@@ -620,8 +617,26 @@ class TestController extends Controller
                     $endTime = Carbon::parse($testSession['end_time']);
                     $remainingTime = max(0, now()->diffInSeconds($endTime, false));
                 }
+
+                // Test Preview
+                $questionsExplained =[
+                    "The (B) answer is the right one, because the word “abuse” means practically the same thing as the word
+                    MALTREAT. For each question of this kind, you are to decide which of the four possible answers
+                    means most nearly the same thing as the capitalized word in the sentence.",
+                    "The (D) answer is the right one for this question, because the word “reached” most nearly means the
+                    same thing as ATTAINED. Notice that it is necessary to read all four choices. You are to choose
+                    the best answer, not just a possible answer.",
+                    "The answer is (A).",
+                    "For this question, the (C) answer is the right one, because 102 plus 120 plus 50 makes 272.",
+                    "The (A) answer is the right one, because 7x9=63.",
+                    "There are 3 boxes in the pile. So the (C) answer is the right one.",
+                    "The right answer is 4 boxes. Only 3 boxes show in the first picture. But the other picture shows that
+                    there is one more box which was covered up in the first picture. The hidden box has to be counted too,
+                    making 4 boxes altogether. So the (A) ansvrer is the right one.",
+                    "You can see that the right answer is 5 boxes. So the (B) answer is the right one."
+                ];
         
-                return view('tests.show', compact('test', 'isTestStarted', 'questions',
+                return view('tests.show', compact('test', 'isTestStarted', 'questions', 'questionsExplained',
                     'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
         
             } catch (\Exception $e) {
@@ -752,18 +767,8 @@ class TestController extends Controller
         if (!isset($testSession['test_id']) || $testSession['test_id'] != $id) {
             $startTime = now();
             $endTime = $startTime->copy()->addMinutes($test->duration);
-            
             $allQuestionIds = $questions->pluck('id')->toArray();
-
-            $indices = range(0, count($allQuestionIds) - 1);
-            for ($i = count($indices) - 1; $i > 0; $i--) {
-                $j = random_int(0, $i);
-                [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
-            }
-            
-            $questionOrder = array_map(function($index) use ($allQuestionIds) {
-                return $allQuestionIds[$index];
-            }, $indices);
+            $questionOrder = $allQuestionIds;
             
             $testSession = [
                 'test_id' => $test->id,
@@ -771,15 +776,41 @@ class TestController extends Controller
                 'end_time' => $endTime->toDateTimeString(),
                 'current_question' => 0,
                 'answers' => [],
-                'question_order' => $questionOrder,
+                'question_order' => $questionOrder, 
                 'total_questions' => count($allQuestionIds)
-            ];        
+            ];      
+
+        //    Randomization
+            // $startTime = now();
+            // $endTime = $startTime->copy()->addMinutes($test->duration);
             
-            $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
-            $candidate->tests()->updateExistingPivot($id, [
-                'started_at' => $startTime,
-                'status' => 'in progress'
-            ]);
+            // $allQuestionIds = $questions->pluck('id')->toArray();
+
+            // $indices = range(0, count($allQuestionIds) - 1);
+            // for ($i = count($indices) - 1; $i > 0; $i--) {
+            //     $j = random_int(0, $i);
+            //     [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
+            // }
+            
+            // $questionOrder = array_map(function($index) use ($allQuestionIds) {
+            //     return $allQuestionIds[$index];
+            // }, $indices);
+            
+            // $testSession = [
+            //     'test_id' => $test->id,
+            //     'start_time' => $startTime->toDateTimeString(),
+            //     'end_time' => $endTime->toDateTimeString(),
+            //     'current_question' => 0,
+            //     'answers' => [],
+            //     'question_order' => $questionOrder,
+            //     'total_questions' => count($allQuestionIds)
+            // ];        
+            
+            // $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
+            // $candidate->tests()->updateExistingPivot($id, [
+            //     'started_at' => $startTime,
+            //     'status' => 'in progress'
+            // ]);
             
         } else {
             $startTime = Carbon::parse($testSession['start_time']);
