@@ -847,7 +847,7 @@ class TestController extends Controller
             ->wherePivot('test_id', $id)
             ->first();
     
-        if (!$testAttempt) {
+        if ($testAttempt->pivot->status == 'not started') {
             $candidate->tests()->attach($id, [
                 'started_at' => now(),
                 'status' => 'in progress'
@@ -856,17 +856,18 @@ class TestController extends Controller
                 'test_id' => $test->id,
                 'candidate_id' => $candidate->id
             ]);
-        } else {
-            if ($testAttempt->pivot->status !== 'in progress') {
-                $candidate->tests()->updateExistingPivot($id, [
-                    'status' => 'in progress'
-                ]);
-                Log::info('Test attempt status updated to "in progress"', [
-                    'test_id' => $test->id,
-                    'candidate_id' => $candidate->id
-                ]);
-            }
         }
+        //  else {
+        //     if ($testAttempt->pivot->status !== 'in progress') {
+        //         $candidate->tests()->updateExistingPivot($id, [
+        //             'status' => 'in progress'
+        //         ]);
+        //         Log::info('Test attempt status updated to "in progress"', [
+        //             'test_id' => $test->id,
+        //             'candidate_id' => $candidate->id
+        //         ]);
+        //     }
+        // }
     
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
