@@ -749,7 +749,13 @@ class TestController extends Controller
     
         $candidate = Auth::guard('candidate')->user();
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
-        $questions = $test->questions;
+        
+        if($test->title == "General Mental Ability (GMA)"){
+            $questions = $test->questions()->skip(8)->get();
+        }else{
+            
+            $questions = $test->questions;
+        }
     
         $isCompleted = $candidate->tests()
             ->wherePivot('test_id', $id)
