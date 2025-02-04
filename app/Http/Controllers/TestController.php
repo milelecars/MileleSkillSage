@@ -778,6 +778,11 @@ class TestController extends Controller
                 'question_order' => $questionOrder,
                 'total_questions' => count($allQuestionIds)
             ];
+            $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
+            $candidate->tests()->updateExistingPivot($id, [
+                'started_at' => $startTime,
+                'status' => 'in progress'
+            ]);
     
             Log::info('Test session initialized', [
                 'test_id' => $test->id,
@@ -785,7 +790,7 @@ class TestController extends Controller
                 'candidate_id' => $candidate->id
             ]);
 
-             //    Randomization
+            //    Randomization
             // $startTime = now();
             // $endTime = $startTime->copy()->addMinutes($test->duration);
             
@@ -856,18 +861,17 @@ class TestController extends Controller
                 'test_id' => $test->id,
                 'candidate_id' => $candidate->id
             ]);
+        } else {
+            if ($testAttempt->pivot->status !== 'in progress') {
+                $candidate->tests()->updateExistingPivot($id, [
+                    'status' => 'in progress'
+                ]);
+                Log::info('Test attempt status updated to "in progress"', [
+                    'test_id' => $test->id,
+                    'candidate_id' => $candidate->id
+                ]);
+            }
         }
-        //  else {
-        //     if ($testAttempt->pivot->status !== 'in progress') {
-        //         $candidate->tests()->updateExistingPivot($id, [
-        //             'status' => 'in progress'
-        //         ]);
-        //         Log::info('Test attempt status updated to "in progress"', [
-        //             'test_id' => $test->id,
-        //             'candidate_id' => $candidate->id
-        //         ]);
-        //     }
-        // }
     
         if (now()->gt($endTime)) {
             return $this->handleExpiredTest($test);
