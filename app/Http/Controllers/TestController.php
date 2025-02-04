@@ -751,8 +751,13 @@ class TestController extends Controller
         $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
         
         if($test->title == "General Mental Ability (GMA)"){
-            $questions =  $questions->slice(8);
+            $questions = $test->questions()
+            ->with(['choices', 'media'])
+            ->skip(10)
+            ->take(PHP_INT_MAX)
+            ->get();
         }else{
+            
             $questions = $test->questions;
         }
     
