@@ -148,11 +148,11 @@
                                     <div class="space-y-2">
                                         <p class="text-sm text-gray-600">Score Progress</p>
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $percentage }}%"></div>
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $calculatedScore }}%"></div>
                                         </div>
                                         <div class="flex justify-between text-sm">
-                                            <span class="text-gray-600">Score: {{ $test->pivot->score ?? '0' }} / {{ $totalQuestions }}</span>
-                                            <span class="font-medium">{{ $percentage }}%</span>
+                                            <span class="text-gray-600">Score: {{ $test->pivot->correct_answers ?? '0' }} / {{ $totalQuestions }}</span>
+                                            <span class="font-medium">{{ $calculatedScore }}%</span>
                                         </div>
                                     </div>
                                 </div>

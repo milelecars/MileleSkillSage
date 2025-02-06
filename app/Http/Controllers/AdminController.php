@@ -211,7 +211,7 @@ class AdminController extends Controller
 
         $activeTestCandidates = Candidate::with(['tests' => function ($query) {
             $query->select('tests.id', 'title', 'description', 'duration')
-                ->withPivot('started_at', 'completed_at', 'score', 'ip_address', 'status');
+                ->withPivot('started_at', 'completed_at',  'correct_answers', 'wrong_answers' , 'ip_address', 'status');
         }])
         ->whereHas('tests', function($query) use ($testFilter) {
             if ($testFilter) {
@@ -242,7 +242,8 @@ class AdminController extends Controller
                     'status' => $status,
                     'started_at' => $test->pivot->started_at,
                     'completed_at' => $test->pivot->completed_at,
-                    'score' => $test->pivot->score,
+                    'correct_answers' => $test->pivot->correct_answers,
+                    'wrong_answers' => $test->pivot->wrong_answers,
                     'total_questions' => $test->questions->count(),
                     'has_started' => true,
                     'has_logged_in' => $hasLoggedIn,
@@ -522,20 +523,20 @@ class AdminController extends Controller
         }
     }
 
-    public function candidateResult(Test $test, Candidate $candidate )
+    public function candidateResult(Test $test, Candidate $candidate)
     {
         $test = $candidate->tests()
             ->where('candidate_test.test_id', $test->id)
             ->where('candidate_test.candidate_id', $candidate->id)
             ->with(['questions.choices', 'questions.media'])
-            ->withPivot('started_at', 'completed_at', 'score', 'ip_address', 'status')
+            ->withPivot('started_at', 'completed_at', 'correct_answers', 'wrong_answers', 'ip_address', 'status')
             ->first();
-
+    
         if (!$test) {
             Log::error('No test found for candidate', ['candidateId' => $candidate->id]);
             return redirect()->back()->with('error', 'No test found for this candidate.');
         }
-
+    
         if ($test->pivot->started_at && $test->pivot->completed_at) {
             $startedAt = Carbon::parse($test->pivot->started_at);
             $completedAt = Carbon::parse($test->pivot->completed_at);
@@ -543,27 +544,30 @@ class AdminController extends Controller
             $durationInMinutes = $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
             $durationInSeconds = $duration->s;
         }
-
+    
         $duration = $durationInMinutes . ' ' . Str::plural('minute', $durationInMinutes) . ' and ' . $durationInSeconds . ' ' . Str::plural('second', $durationInSeconds);
-
+    
         $screenshots = DB::table('candidate_test_screenshots')
             ->where('candidate_id', $candidate->id)
             ->where('test_id', $test->id)
             ->select('id', 'screenshot_path', 'created_at')
             ->orderBy('created_at', 'asc')
             ->get();
-
+    
         Log::info('Retrieved screenshots', [
             'count' => $screenshots->count() ?? [],
             'paths' => $screenshots->pluck('screenshot_path')->toArray()
         ]);
-
+    
         $totalQuestions = $test->questions->count() ?? 0;
+    
+        // Calculate score using the calculateScore method
+        $correctAnswers = $test->pivot->correct_answers ?? 0;
+        $wrongAnswers = $test->pivot->wrong_answers ?? 0;
         $percentage = $totalQuestions > 0 
-            ? round(($test->pivot->score / $totalQuestions) * 100) 
+            ? $this->calculateScore($correctAnswers, $wrongAnswers, $totalQuestions)
             : 0;
-
-
+    
         return view('admin.candidate-result', compact(
             'candidate',
             'test',
@@ -573,6 +577,7 @@ class AdminController extends Controller
             'duration'
         ));
     }
+    
 
     private function sendEmailWithGmail($candidate, $template, $subject)
     {
@@ -769,5 +774,10 @@ class AdminController extends Controller
         }
     
         return back()->with('error', 'Could not create zip file.');
+    }
+
+    public function calculateScore($correct_answers, $wrong_answers, $totalQuestions)
+    {
+        return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
     }
 }

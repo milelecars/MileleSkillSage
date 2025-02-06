@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\TestController;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Auth;
 
 #[LivewireComponent]
 class TestTimer extends Component
@@ -53,10 +54,40 @@ class TestTimer extends Component
             'end_time' => $this->endTime
         ]);
 
+        $id = $this->testId;
+        $candidate = Auth::guard('candidate')->user();
+        $test = Test::with('questions.choices')->findOrFail($id);
+        
+        if($test->title == "General Mental Ability (GMA)"){
+            $questions = $test->questions()
+            ->with(['choices', 'media'])
+            ->skip(8)
+            ->take(PHP_INT_MAX)
+            ->get();
+        }else{
+            
+            $questions = $test->questions;
+        }
+
+        Log::info('Loaded test and questions for submission', [
+            'test_id' => $id,
+            'candidate_id' => $candidate->id,
+            'question_count' => $questions->count()
+        ]);
+        
+        $testAttempt = $candidate->tests()
+        ->wherePivot('test_id', $id)
+        ->first();
+        if (!$testAttempt) {
+            Log::error('Test attempt not found in TestTimer', ['test_id' => $id, 'candidate_id' => $candidate->id]);
+            return redirect()->route('tests.start', ['id' => $id])
+                ->with('error', 'Test attempt not found.');
+        }
+
         try {
             $test = Test::findOrFail($this->testId);
             $testController = App::make(TestController::class);
-            return $testController->handleExpiredTest($test);
+            return $testController->handleTimeout($test);
         } catch (\Exception $e) {
             Log::error('Error handling expired test time', [
                 'test_id' => $this->testId,

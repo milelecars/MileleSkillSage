@@ -44,7 +44,7 @@ class Test extends Model
     public function candidates()
     {
         return $this->belongsToMany(Candidate::class, 'candidate_test')
-            ->withPivot(['started_at', 'completed_at', 'score', 'ip_address', 'status'])
+            ->withPivot(['started_at', 'completed_at', 'correct_answers', 'wrong_answers', 'ip_address', 'status'])
             ->withTimestamps();
     }
 

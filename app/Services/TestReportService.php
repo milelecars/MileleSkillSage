@@ -52,9 +52,17 @@ class TestReportService
         ->select('flag_types.name', 'candidate_flags.occurrences', 'candidate_flags.is_flagged')
         ->get();
 
-        $totalQuestions = DB::table('questions')
-            ->where('test_id', $testId)
-            ->count();
+        if($test->title == "General Mental Ability (GMA)"){
+            $totalQuestions = DB::table('questions')
+                ->where('test_id', $testId)
+                ->count() - 8;
+        }else{
+            
+            $totalQuestions = DB::table('questions')
+                ->where('test_id', $testId)
+                ->count();
+        }
+
 
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
@@ -89,6 +97,15 @@ class TestReportService
             ];
         }
 
+        $testAttempt = $candidate->tests()
+        ->wherePivot('test_id', $testId)
+        ->first();
+        if (!$testAttempt) {
+            Log::error('Test attempt not found in TestReportService', ['test_id' => $testId, 'candidate_id' => $candidate->id]);
+            return redirect()->route('tests.start', ['id' => $testId])
+                ->with('error', 'Test attempt not found.');
+        }
+
         $data = [
             'title' => 'Skill Test Report',
             'date' => now()->format('Y-m-d'),
@@ -96,15 +113,15 @@ class TestReportService
             'department' => 'HR Department', 
             'candidateName' => $candidate->name,
             'email' => $candidate->email,
-            'overallRating' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            'overallRating' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
             'status' => 'Completed on ' . date('M d, Y', strtotime($candidateTest->completed_at)),
-            'averageScore' => $this->calculateScore($candidateTest->score, $totalQuestions),
-            'weightedScore' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            'averageScore' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
+            'weightedScore' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
             'antiCheat' => $antiCheatData,
             // 'tests' => [
             //     [
             //         'name' => $test->title,
-            //         'score' => $this->calculateScore($candidateTest->score, $totalQuestions),
+            //         'score' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
             //         'description' => $test->description,
             //         'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
             //         'time_limit' => gmdate('H:i:s', $test->duration * 60),
@@ -264,8 +281,8 @@ class TestReportService
         return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
     
-    public function calculateScore($score, $totalQuestions)
+    public function calculateScore($correct_answers, $wrong_answers, $totalQuestions)
     {
-        return $score > 0 ? round(($score / $totalQuestions) * 100, 2) : 0;
+        return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
     }
 }

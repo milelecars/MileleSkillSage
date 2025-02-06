@@ -129,7 +129,7 @@
                                         </td>
                                         <td class="px-2 py-4 text-sm">
                                             @if(isset($candidate['completed_at']))
-                                                <div>{{ $candidate['score'] }} / {{ $candidate['total_questions'] }}</div>
+                                                <div>{{ $candidate['correct_answers'] }} / {{ $candidate['total_questions'] }}</div>
                                             @else
                                                 <span>-</span>
                                             @endif

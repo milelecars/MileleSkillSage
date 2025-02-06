@@ -74,8 +74,8 @@
 
                                             </td>
                                             <td class="px-2 py-4 text-base">
-                                                <?php if($test['score'] !== null): ?>
-                                                    <span class="font-medium"><?php echo e(number_format(($test['score'] / $test['questions_count']) * 100, 1)); ?>%</span>
+                                                <?php if($test['correct_answers'] !== null): ?>
+                                                    <span class="font-medium"><?php echo e(number_format(($test['correct_answers'] / $test['questions_count']) * 100, 1)); ?>%</span>
                                                 <?php else: ?>
                                                     -
                                                 <?php endif; ?>

@@ -61,8 +61,8 @@
                                                 {{ $test['completed_at'] ? \Carbon\Carbon::parse($test['completed_at'])->format('M d, Y H:i') : '-' }}
                                             </td>
                                             <td class="px-2 py-4 text-base">
-                                                @if($test['score'] !== null)
-                                                    <span class="font-medium">{{ number_format(($test['score'] / $test['questions_count']) * 100, 1) }}%</span>
+                                                @if($test['correct_answers'] !== null)
+                                                    <span class="font-medium">{{ number_format(($test['correct_answers'] / $test['questions_count']) * 100, 1) }}%</span>
                                                 @else
                                                     -
                                                 @endif

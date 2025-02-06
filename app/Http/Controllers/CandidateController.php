@@ -111,15 +111,15 @@ class CandidateController extends Controller
                     'record' => $candidateTest
                 ]);
 
-                // In your dashboard controller, modify the status string:
                 if ($candidateTest) {
                     $testData = [
                         'title' => $invitation->test->title,
                         'test_id' => $invitation->test->id,
-                        'status' => str_replace(' ', '_', $candidateTest->status), // Convert space to underscore
+                        'status' => str_replace(' ', '_', $candidateTest->status), 
                         'started_at' => $candidateTest->started_at,
                         'completed_at' => $candidateTest->completed_at,
-                        'score' => $candidateTest->score,
+                        'correct_answers' => $candidateTest->correct_answers,
+                        'wrong_answers' => $candidateTest->wrong_answers,
                         'questions_count' => $invitation->test->questions->count(),
                         'has_started' => true
                     ];
@@ -134,7 +134,8 @@ class CandidateController extends Controller
                     'status' => 'not_started',
                     'started_at' => null,
                     'completed_at' => null,
-                    'score' => null,
+                    'correct_answers' => null,
+                    'wrong_answers' => null,
                     'questions_count' => $invitation->test->questions->count(),
                     'has_started' => false
                 ];
@@ -156,7 +157,8 @@ class CandidateController extends Controller
                         'status' => 'expired',
                         'started_at' => null,
                         'completed_at' => null,
-                        'score' => null,
+                        'correct_answers' => null,
+                        'wrong_answers' => null,
                         'questions_count' => $invitation->test->questions->count(),
                         'has_started' => false
                     ];

@@ -753,7 +753,7 @@ class TestController extends Controller
         if($test->title == "General Mental Ability (GMA)"){
             $questions = $test->questions()
             ->with(['choices', 'media'])
-            ->skip(10)
+            ->skip(8)
             ->take(PHP_INT_MAX)
             ->get();
         }else{
@@ -777,15 +777,14 @@ class TestController extends Controller
             $startTime = now();
             $endTime = $startTime->copy()->addMinutes($test->duration);
             $allQuestionIds = $questions->pluck('id')->toArray();
-            $questionOrder = $allQuestionIds; 
-    
+            
             $testSession = [
                 'test_id' => $test->id,
                 'start_time' => $startTime->toDateTimeString(),
                 'end_time' => $endTime->toDateTimeString(),
                 'current_question' => 0,
                 'answers' => [],
-                'question_order' => $questionOrder,
+                'question_order' => $allQuestionIds,
                 'total_questions' => count($allQuestionIds)
             ];
             $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
@@ -812,7 +811,7 @@ class TestController extends Controller
             //     [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
             // }
             
-            // $questionOrder = array_map(function($index) use ($allQuestionIds) {
+            // $allQuestionIds = array_map(function($index) use ($allQuestionIds) {
             //     return $allQuestionIds[$index];
             // }, $indices);
             
@@ -822,7 +821,7 @@ class TestController extends Controller
             //     'end_time' => $endTime->toDateTimeString(),
             //     'current_question' => 0,
             //     'answers' => [],
-            //     'question_order' => $questionOrder,
+            //     'question_order' => $allQuestionIds,
             //     'total_questions' => count($allQuestionIds)
             // ];        
             
@@ -835,13 +834,17 @@ class TestController extends Controller
         } else {
             $startTime = Carbon::parse($testSession['start_time']);
             $endTime = $startTime->copy()->addMinutes($test->duration);
-    
+            
             if (!isset($testSession['end_time']) || !Carbon::hasFormat($testSession['end_time'], 'Y-m-d H:i:s')) {
                 $testSession['end_time'] = $endTime->toDateTimeString();
             } else {
                 $endTime = Carbon::parse($testSession['end_time']);
             }
         }
+        $allQuestionIds = $questions->pluck('id')->toArray();
+        if (!isset($testSession['question_order'])) {
+            $testSession['question_order'] = $allQuestionIds;
+        }            
     
         $questions = $questions->sortBy(function($question) use ($testSession) {
             return array_search($question->id, $testSession['question_order']);
@@ -850,19 +853,12 @@ class TestController extends Controller
         if (!isset($testSession['current_question']) || $testSession['current_question'] >= count($questions)) {
             $testSession['current_question'] = 0;
         }
-
-        Log::info('Question order established', [
-            'test_id' => $test->id,
-            'question_order' => $testSession['question_order'],
-            'unique_count' => count(array_unique($testSession['question_order'])),
-            'total_count' => count($testSession['question_order'])
-        ]);
     
         $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
             ->first();
     
-        if ($testAttempt->pivot->status == 'not started') {
+        if ($testAttempt && $testAttempt->pivot->status == 'not started') {
             $candidate->tests()->attach($id, [
                 'started_at' => now(),
                 'status' => 'in progress'
@@ -884,7 +880,7 @@ class TestController extends Controller
         }
     
         if (now()->gt($endTime)) {
-            return $this->handleExpiredTest($test);
+            return $this->handleTimeout($test);
         }
         $flagTypes = FlagType::all();
         session(['test_session' => $testSession]);
@@ -936,7 +932,17 @@ class TestController extends Controller
                 ->with('error', 'Invalid test session.');
         }
 
-        $questions = $test->questions->sortBy(function($question) use ($testSession) {
+        if ($test->title == "General Mental Ability (GMA)") {
+            $questions = $test->questions()
+                ->with(['choices', 'media'])
+                ->skip(8)
+                ->take(PHP_INT_MAX)
+                ->get();
+        } else {
+            $questions = $test->questions;
+        }
+        
+        $questions = $questions->sortBy(function ($question) use ($testSession) {
             return array_search($question->id, $testSession['question_order']);
         })->values();
 
@@ -1009,10 +1015,21 @@ class TestController extends Controller
             'timestamp' => now()
         ]);
     
-        try {
+        try { 
+            
+            
             $candidate = Auth::guard('candidate')->user();
             $test = Test::with('questions.choices')->findOrFail($id);
-            $questions = $test->questions;
+            if($test->title == "General Mental Ability (GMA)"){
+                $questions = $test->questions()
+                ->with(['choices', 'media'])
+                ->skip(8)
+                ->take(PHP_INT_MAX)
+                ->get();
+            }else{
+                
+                $questions = $test->questions;
+            }
             Log::info('Loaded test and questions for submission', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
@@ -1031,15 +1048,6 @@ class TestController extends Controller
                 'current_index' => 'required|numeric',
                 'answer' => 'nullable|exists:question_choices,id', 
             ]);
-    
-            $testSession = session('test_session');
-            if (!$testSession || $testSession['test_id'] != $id) {
-                throw new \Exception('Invalid test session');
-            }
-
-            $questions = $test->questions->sortBy(function($question) use ($testSession) {
-                return array_search($question->id, $testSession['question_order']);
-            })->values();
     
             $currentIndex = $request->input('current_index');
             $choiceId = intval($request->input('answer', null)); 
@@ -1060,17 +1068,39 @@ class TestController extends Controller
                 ->whereIn('question_id', $questions->pluck('id'))
                 ->get();
 
-            $score = 0;
-            foreach ($questions as $question) { 
+            $correct_answers = 0;
+            $wrong_answers = 0;
+            $unanswered = 0;
+            
+            foreach ($questions as $question) {
                 if ($question->question_type === 'MCQ') {
+                    Log::info($question);
                     $correctChoice = $question->choices->firstWhere('is_correct', true);
+                    Log::info($correctChoice);
                     $userAnswer = $answers->firstWhere('question_id', $question->id);
-
-                    if ($correctChoice && $userAnswer && $userAnswer->answer_text == $correctChoice->choice_text) {
-                        $score++;
+                    Log::info($userAnswer);
+            
+                    if ($correctChoice) {
+                        if ($userAnswer) {
+                            if ($userAnswer->answer_text == $correctChoice->choice_text) {
+                                Log::info('Correct Answer');
+                                $correct_answers++;
+                            } else {
+                                Log::info('Wrong Answer');
+                                $wrong_answers++;
+                            }
+                        } else {
+                            Log::info('Unanswered');
+                            $unanswered++;
+                        }
                     }
                 }
             }
+            
+            Log::info('Correct Answers: ' . $correct_answers);
+            Log::info('Wrong Answers: ' . $wrong_answers);
+            Log::info('Unanswered: ' . $unanswered);
+            
             
     
             $realIP = $this->testReportService->getClientIP();
@@ -1083,7 +1113,8 @@ class TestController extends Controller
                 'completed_at' => now() > $started_at->copy()->addMinutes($test->duration)
                     ? $started_at->copy()->addMinutes($test->duration)
                     : now(),
-                'score' => $score ?? 0,
+                'correct_answers' => $correct_answers ?? 0,
+                'wrong_answers' => $wrong_answers ?? 0,
                 'ip_address' => $realIP,
                 'status' => 'completed'
             ]);
@@ -1091,7 +1122,8 @@ class TestController extends Controller
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'score' => $score?? 0,
+                'correct_answers' => $correct_answers?? 0,
+                'wrong_answers' => $wrong_answers?? 0,
                 'ip_address' => $realIP,
             ]);
         
@@ -1126,52 +1158,89 @@ class TestController extends Controller
         }
     }    
   
-    public function handleExpiredTest($test)
+    public function handleTimeout($test)
     {
         Log::info('Handling expired test', ['test_id' => $test->id]);
-        
-        $testSession = session('test_session');
-        $test = Test::with(['questions.choices'])->findOrFail($test->id);
-        
-        $questions = $test->questions->sortBy(function($question) use ($testSession) {
-            return array_search($question->id, $testSession['question_order']);
-        })->values();
+
+        $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($test->id);
+
+        if ($test->title == "General Mental Ability (GMA)") {
+            $questions = $test->questions()
+                ->skip(8)
+                ->take(PHP_INT_MAX)
+                ->get();
+        } else {
+            $questions = $test->questions;
+        }
 
         $candidate = Auth::guard('candidate')->user();
-
-        $answers = Answer::where('candidate_id', $candidate->id)->where('test_id', $test->id)
+        $answers = Answer::where('candidate_id', $candidate->id)
+            ->where('test_id', $test->id)
             ->whereIn('question_id', $questions->pluck('id'))
             ->get();
 
-        $score = 0;
-        foreach ($questions as $question) { 
+        $correct_answers = 0;
+        $wrong_answers = 0;
+        $unanswered = 0;
+
+        foreach ($questions as $question) {
             if ($question->question_type === 'MCQ') {
                 $correctChoice = $question->choices->firstWhere('is_correct', true);
-                $userAnswer = $answers->firstWhere('question_id', $question->id);
+                $userAnswer = $answers->firstWhere(function ($answer) use ($question, $candidate, $test) {
+                    return $answer->question_id == $question->id 
+                           && $answer->candidate_id == $candidate->id 
+                           && $answer->test_id == $test->id;
+                });
+                Log::info('question_id'. $question->id);
+                Log::info('candidate_id'. $candidate->id);
+                Log::info('test_id'. $test->id);
 
-                if ($correctChoice && $userAnswer && $userAnswer->answer_text == $correctChoice->choice_text) {
-                    $score++;
+                Log::info($question);
+                Log::info('correctChoice'. $correctChoice);
+                Log::info('userAnswer'. $userAnswer);
+
+                if ($correctChoice) {
+                    if ($userAnswer) {
+                        if ($userAnswer->answer_text == $correctChoice->choice_text) {
+                            $correct_answers++;
+                        } else {
+                            $wrong_answers++;
+                        }
+                    } else {
+                        $unanswered++;
+                    }
                 }
             }
         }
-        
-        $test_pivot = $candidate->tests()->where('test_id', $test->id)->first()->pivot;
-        $started_at = Carbon::parse($test_pivot->started_at);
-        $completed_at = $started_at->addMinutes($test->duration);
-        
+
+        Log::info('Correct Answers: ' . $correct_answers);
+        Log::info('Wrong Answers: ' . $wrong_answers);
+        Log::info('Unanswered: ' . $unanswered);
+
+        $test_pivot = $candidate->tests()->where('test_id', $test->id)->first();
+        if ($test_pivot) {
+            $test_pivot = $test_pivot->pivot;
+            $started_at = Carbon::parse($test_pivot->started_at);
+            $completed_at = $started_at->addMinutes($test->duration);
+        } else {
+            $completed_at = now();
+        }
+
         $realIP = $this->testReportService->getClientIP();
-        $location = $this->testReportService->getLocationFromIP('192.168.1.37');
-            Log::info("location is ", $location);
+        $location = $this->testReportService->getLocationFromIP($realIP);
+        Log::info("location is ", $location);
+
         $candidate->tests()->updateExistingPivot($test->id, [
             'completed_at' => $completed_at,
-            'score' => $score ?? 0,
+            'correct_answers' => $correct_answers,
+            'wrong_answers' => $wrong_answers,
             'ip_address' => $realIP,
             'status' => 'completed'
         ]);
+
         $this->testReportService->generatePDF($candidate->id, $test->id);
 
         session()->forget('test_session');
-
 
         return redirect()->route('tests.result', ['id' => $test->id])
             ->with('warning', 'Test time has expired. Your answers have been submitted automatically.');
@@ -1208,12 +1277,26 @@ class TestController extends Controller
         $endTime = Carbon::parse($startTime)->addMinutes($test->duration);
         $isExpired = $endTime->isPast();
 
+        if($test->title == "General Mental Ability (GMA)"){
+            $totalQuestions = DB::table('questions')
+                ->where('test_id', $test->id)
+                ->count() - 8;
+        }else{
+            
+            $totalQuestions = DB::table('questions')
+                ->where('test_id', $test->id)
+                ->count();
+        }
+
+        $calculatedScore = $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions);
+
         return view('tests.result', [
             'test' => $test,
             'candidate' => $candidate,
             'testAttempt' => $testAttempt,
             'questions' => $questions,
-            'isExpired' => $isExpired
+            'isExpired' => $isExpired,
+            'calculatedScore' => $calculatedScore
         ]);
     }
     
@@ -1263,5 +1346,10 @@ class TestController extends Controller
         }
 
         return false;
+    }
+
+    public function calculateScore($correct_answers, $wrong_answers, $totalQuestions)
+    {
+        return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
     }
 }
