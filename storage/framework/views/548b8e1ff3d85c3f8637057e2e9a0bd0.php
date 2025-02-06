@@ -98,18 +98,8 @@
                             <h2 class="text-xl font-semibold mb-3">Score Summary</h2>
                             <div class="bg-gray-100 p-4 rounded-lg">
                                 <div class="text-4xl font-bold text-center text-blue-600">
-                                    <?php echo e($testAttempt->pivot->correct_answers ?? 0); ?> / <?php echo e(count($questions ?? [])); ?>
-
+                                    <?php echo e($calculatedScore); ?>%
                                 </div>
-                                <p class="text-center text-gray-600 mt-2">Correct Answers</p>
-                            </div>
-                            <div class="mt-4">
-                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: <?php echo e(($candidate->test_score / count($questions) * 100)); ?>%"></div>
-                                </div>
-                                <p class="text-center text-gray-600 mt-2">
-                                <?php echo e($calculatedScore); ?>% Score
-                                </p>
                             </div>
                         </div>
                     </div>
