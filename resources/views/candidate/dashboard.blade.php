@@ -62,7 +62,11 @@
                                             </td>
                                             <td class="px-2 py-4 text-base">
                                                 @if($test['correct_answers'] !== null)
-                                                    <span class="font-medium">{{ number_format(($test['correct_answers'] / $test['questions_count']) * 100, 1) }}%</span>
+                                                    <span class="font-medium">
+                                                        {{ number_format(($test['correct_answers'] > 0 ? 
+                                                            (($test['correct_answers'] - (1/3 * ($test['questions_count'] - $test['correct_answers']))) / $test['questions_count']) * 100 
+                                                            : 0), 1) }}%
+                                                    </span>
                                                 @else
                                                     -
                                                 @endif
