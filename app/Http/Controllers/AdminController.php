@@ -232,7 +232,7 @@ class AdminController extends Controller
                 // If status is "not_started" and we have a record in candidate_test,
                 // this means they've logged in
                 $hasLoggedIn = $status === 'not_started' && $test->pivot->created_at;
-                
+
                 if ($test->title == "General Mental Ability (GMA)") {
                     $questions = $test->questions()
                         ->skip(8)
@@ -241,6 +241,7 @@ class AdminController extends Controller
                 } else {
                     $questions = $test->questions;
                 }
+                
 
                 return [
                     'id' => $candidate->id,
