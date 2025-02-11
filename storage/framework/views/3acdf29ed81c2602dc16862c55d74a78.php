@@ -1,5 +1,14 @@
 <!-- resources/views/admin/candidate-details.blade.php -->
-<x-app-layout>
+<?php if (isset($component)) { $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54 = $attributes; } ?>
+<?php $component = App\View\Components\AppLayout::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('app-layout'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\App\View\Components\AppLayout::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
     <div class="py-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <!-- Main Card -->
@@ -8,12 +17,12 @@
                 <div class="border-b border-gray-200 bg-white px-9 py-6">
                     <div class="flex justify-between items-center">
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-900">{{ $candidate->name }}</h1>
-                            <p class="text-sm text-gray-600">{{ $candidate->email }}</p>
+                            <h1 class="text-2xl font-bold text-gray-900"><?php echo e($candidate->name); ?></h1>
+                            <p class="text-sm text-gray-600"><?php echo e($candidate->email); ?></p>
                         </div>
                         <div class="text-right">
                             <p class="text-sm text-gray-600">Registered on</p>
-                            <p class="text-sm font-semibold">{{ $candidate->created_at->format('M d, Y') }}</p>
+                            <p class="text-sm font-semibold"><?php echo e($candidate->created_at->format('M d, Y')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -37,7 +46,7 @@
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-600">Test Name</p>
-                                        <p class="font-semibold">{{ $test->title }}</p>
+                                        <p class="font-semibold"><?php echo e($test->title); ?></p>
                                     </div>
                                 </div>
 
@@ -50,7 +59,7 @@
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-600">IP Address</p>
-                                        <p class="font-semibold">{{ $test->pivot->ip_address ?? 'N/A' }}</p>
+                                        <p class="font-semibold"><?php echo e($test->pivot->ip_address ?? 'N/A'); ?></p>
                                     </div>
                                 </div>
 
@@ -63,7 +72,7 @@
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-600">Started At</p>
-                                        <p class="font-semibold">{{ $test->pivot->started_at ? Carbon\Carbon::parse($test->pivot->started_at)->format('M d, Y H:i') : 'Not started' }}</p>
+                                        <p class="font-semibold"><?php echo e($test->pivot->started_at ? Carbon\Carbon::parse($test->pivot->started_at)->format('M d, Y H:i') : 'Not started'); ?></p>
                                     </div>
                                 </div>
 
@@ -76,7 +85,7 @@
                                     </div>
                                     <div>
                                         <p class="text-sm text-gray-600">Completed At</p>
-                                        <p class="font-semibold">{{ $test->pivot->completed_at ? Carbon\Carbon::parse($test->pivot->completed_at)->format('M d, Y H:i') : 'Not completed' }}</p>
+                                        <p class="font-semibold"><?php echo e($test->pivot->completed_at ? Carbon\Carbon::parse($test->pivot->completed_at)->format('M d, Y H:i') : 'Not completed'); ?></p>
                                     </div>
                                 </div>
 
@@ -90,18 +99,19 @@
                                     <div>
                                         <p class="text-sm text-gray-600">Duration</p>
                                         <p class="font-semibold">
-                                            @if($test->pivot->started_at && $test->pivot->completed_at)
-                                                {{ $duration }}
-                                            @else
+                                            <?php if($test->pivot->started_at && $test->pivot->completed_at): ?>
+                                                <?php echo e($duration); ?>
+
+                                            <?php else: ?>
                                                 N/A
-                                            @endif
+                                            <?php endif; ?>
                                         </p>
                                     </div>
                                 </div>
                                
                                 <!-- Report -->
                                 <div>
-                                    <a  class="flex items-center space-x-3" href="{{ route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id]) }}">
+                                    <a  class="flex items-center space-x-3" href="<?php echo e(route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id])); ?>">
                                         <div class="flex-shrink-0">
                                             <svg fill="#a7acb3" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#c5c9d0" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
                                         </div>
@@ -123,36 +133,36 @@
                                 <div class="p-6 space-y-4">
                                     <div class="flex justify-between items-center">
                                         <span class="text-gray-600">Status</span>
-                                        @if($test->pivot->status === 'accepted')
+                                        <?php if($test->pivot->status === 'accepted'): ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-green-800 bg-green-100">
                                                 Accepted
                                             </span>
-                                        @elseif($test->pivot->status === 'rejected')
+                                        <?php elseif($test->pivot->status === 'rejected'): ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-red-800 bg-red-100">
                                                 Rejected
                                             </span>
-                                        @elseif($test->pivot->status === 'completed')
+                                        <?php elseif($test->pivot->status === 'completed'): ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-blue-800 bg-blue-100">
                                                 Completed
                                             </span>
-                                        @elseif($test->pivot->status === 'in_progress')
+                                        <?php elseif($test->pivot->status === 'in_progress'): ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-yellow-800 bg-yellow-100">
                                                 In Progress
                                             </span>
-                                        @else
+                                        <?php else: ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-gray-800 bg-gray-100">
                                                 Not Started
                                             </span>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                     <div class="space-y-2">
                                         <p class="text-sm text-gray-600">Score Progress</p>
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $percentage }}%"></div>
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: <?php echo e($percentage); ?>%"></div>
                                         </div>
                                         <div class="flex justify-between text-sm">
-                                            <span class="text-gray-600">Score: {{ $test->pivot->correct_answers ?? '0' }} / {{ $totalQuestions }}</span>
-                                            <span class="font-medium">{{ $percentage }}%</span>
+                                            <span class="text-gray-600">Score: <?php echo e($test->pivot->correct_answers ?? '0'); ?> / <?php echo e($totalQuestions); ?></span>
+                                            <span class="font-medium"><?php echo e($percentage); ?>%</span>
                                         </div>
                                     </div>
                                 </div>
@@ -173,8 +183,8 @@
                                     <div id="gallery" class="relative w-full" data-carousel="slide">
                                         <!-- Carousel wrapper -->
                                         <div class="relative h-72 overflow-hidden rounded-lg">
-                                            @forelse($screenshots as $index => $screenshot)
-                                                @php
+                                            <?php $__empty_1 = true; $__currentLoopData = $screenshots; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $screenshot): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                                <?php
                                                     $pathParts = explode('/', $screenshot->screenshot_path);
                                                     $filename = end($pathParts);
                                                     $screenshotUrl = route('private.screenshot', [
@@ -182,25 +192,26 @@
                                                         'candidateId' => $candidate->id,
                                                         'filename' => $filename
                                                     ]);
-                                                @endphp
+                                                ?>
 
-                                                <div class="hidden duration-700 ease-in-out" data-carousel-item="{{ $index === 0 ? 'active' : '' }}">
+                                                <div class="hidden duration-700 ease-in-out" data-carousel-item="<?php echo e($index === 0 ? 'active' : ''); ?>">
                                                     <img 
-                                                        src="{{ $screenshotUrl }}" 
+                                                        src="<?php echo e($screenshotUrl); ?>" 
                                                         class="rounded-lg absolute block max-w-full h-auto -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
-                                                        alt="Screenshot {{ $loop->iteration }}"
+                                                        alt="Screenshot <?php echo e($loop->iteration); ?>"
                                                     >
                                                     <!-- Timestamp overlay -->
                                                     <div class="absolute bottom-0 left-0 right-0 p-4 bg-black/60 backdrop-blur-sm">
                                                         <div class="flex justify-between items-center">
-                                                            <span class="text-white text-sm">Screenshot #{{ $loop->iteration }}</span>
+                                                            <span class="text-white text-sm">Screenshot #<?php echo e($loop->iteration); ?></span>
                                                             <span class="text-white text-sm">
-                                                                {{ Carbon\Carbon::parse($screenshot->created_at)->format('M d, Y H:i:s') }}
+                                                                <?php echo e(Carbon\Carbon::parse($screenshot->created_at)->format('M d, Y H:i:s')); ?>
+
                                                             </span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            @empty
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                                 <div class="h-full flex items-center justify-center bg-gray-50">
                                                     <div class="text-center">
                                                         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,11 +220,11 @@
                                                         <p class="mt-2 text-gray-500">No screenshots available</p>
                                                     </div>
                                                 </div>
-                                            @endforelse
+                                            <?php endif; ?>
                                         </div>
 
                                         <!-- Slider controls -->
-                                        @if($screenshots->count() > 1)
+                                        <?php if($screenshots->count() > 1): ?>
                                             <button type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-prev>
                                                <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 group-hover:bg-white/50 group-focus:ring-4 group-focus:ring-white group-focus:outline-none">
                                                 <svg class="w-4 h-4 text-white rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
@@ -228,7 +239,7 @@
                                                 </svg>
                                             </span>
                                         </button>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
@@ -236,12 +247,12 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <!-- @if($test->pivot->status !== 'accepted' && $test->pivot->status !== 'rejected')
+                    <!-- <?php if($test->pivot->status !== 'accepted' && $test->pivot->status !== 'rejected'): ?>
                         <div class="mt-8 flex justify-end space-x-4">
-                            <form action="{{ route('candidate.accept', $candidate) }}" method="POST" class="inline">
-                                @csrf
-                                @method('PUT')
-                                <input type="hidden" name="test_id" value="{{ $test->id }}">
+                            <form action="<?php echo e(route('candidate.accept', $candidate)); ?>" method="POST" class="inline">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
+                                <input type="hidden" name="test_id" value="<?php echo e($test->id); ?>">
                                 <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-green-600 hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -249,10 +260,10 @@
                                     Accept
                                 </button>
                             </form>
-                            <form action="{{ route('candidate.reject', $candidate) }}" method="POST" class="inline">
-                                @csrf
-                                @method('PUT')
-                                <input type="hidden" name="test_id" value="{{ $test->id }}">
+                            <form action="<?php echo e(route('candidate.reject', $candidate)); ?>" method="POST" class="inline">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
+                                <input type="hidden" name="test_id" value="<?php echo e($test->id); ?>">
                                 <button type="submit" class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200">
                                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -261,9 +272,18 @@
                                 </button>
                             </form>                                
                         </div>
-                    @endif -->
+                    <?php endif; ?> -->
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout> 
+ <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $attributes = $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
+<?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
+<?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
+<?php endif; ?> <?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/admin/candidate-result.blade.php ENDPATH**/ ?>
