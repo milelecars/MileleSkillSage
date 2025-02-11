@@ -233,6 +233,15 @@ class AdminController extends Controller
                 // this means they've logged in
                 $hasLoggedIn = $status === 'not_started' && $test->pivot->created_at;
                 
+                if ($test->title == "General Mental Ability (GMA)") {
+                    $questions = $test->questions()
+                        ->skip(8)
+                        ->take(PHP_INT_MAX)
+                        ->get();
+                } else {
+                    $questions = $test->questions;
+                }
+
                 return [
                     'id' => $candidate->id,
                     'name' => $candidate->name,
@@ -244,7 +253,7 @@ class AdminController extends Controller
                     'completed_at' => $test->pivot->completed_at,
                     'correct_answers' => $test->pivot->correct_answers,
                     'wrong_answers' => $test->pivot->wrong_answers,
-                    'total_questions' => $test->questions->count(),
+                    'total_questions' => $questions->count(),
                     'has_started' => true,
                     'has_logged_in' => $hasLoggedIn,
                     'sort_order' => self::STATUS_SORT_ORDER[$status] ?? 99

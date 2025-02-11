@@ -129,9 +129,13 @@
                                         </td>
                                         <td class="px-2 py-4 text-sm">
                                             @if(isset($candidate['completed_at']))
-                                                <div>{{ $candidate['correct_answers'] }} / {{ $candidate['total_questions'] }}</div>
+                                                <span class="font-medium">
+                                                    {{ number_format(($test['correct_answers'] > 0 ? 
+                                                        (( $candidate['correct_answers'] - (1/3 * ($candidate['wrong_answers']))) /  $candidate['total_questions']) * 100 
+                                                        : 0), 1) }}%
+                                                </span>
                                             @else
-                                                <span>-</span>
+                                                -
                                             @endif
                                         </td>
                                         
