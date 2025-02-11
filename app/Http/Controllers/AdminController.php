@@ -569,7 +569,16 @@ class AdminController extends Controller
             'paths' => $screenshots->pluck('screenshot_path')->toArray()
         ]);
     
-        $totalQuestions = $test->questions->count() ?? 0;
+        if ($test->title == "General Mental Ability (GMA)") {
+            $questions = $test->questions()
+                ->skip(8)
+                ->take(PHP_INT_MAX)
+                ->get();
+        } else {
+            $questions = $test->questions;
+        }
+        
+        $totalQuestions = $questions->count() ?? 0;
     
         // Calculate score using the calculateScore method
         $correctAnswers = $test->pivot->correct_answers ?? 0;
