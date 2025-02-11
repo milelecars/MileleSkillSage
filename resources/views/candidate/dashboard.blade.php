@@ -64,7 +64,7 @@
                                                 @if($test['correct_answers'] !== null)
                                                     <span class="font-medium">
                                                         {{ number_format(($test['correct_answers'] > 0 ? 
-                                                            (($test['correct_answers'] - (1/3 * ($test['questions_count'] - $test['correct_answers']))) / $test['questions_count']) * 100 
+                                                            (($test['correct_answers'] - (1/3 * ($test['wrong_answers']))) / $test['questions_count']) * 100 
                                                             : 0), 1) }}%
                                                     </span>
                                                 @else
