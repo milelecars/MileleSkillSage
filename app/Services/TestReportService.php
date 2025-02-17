@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Candidate;
+use App\Models\Question;
+use App\Models\Answer;
 use App\Models\Test;
 use App\Models\CandidateFlag;
 use App\Models\FlagType;
@@ -42,6 +44,37 @@ class TestReportService
 
         $candidate = Candidate::findOrFail($candidateId);
         $test = Test::findOrFail($testId);
+
+        // Fetch only LSQ questions that are red-flagged
+        $redFlaggedQuestions = Question::where('test_id', $testId)
+            ->where('question_type', 'LSQ')
+            ->where('red_flag', true)
+            ->get();
+
+        $answerMeanings = [
+            1 => 'Strongly Disagree',
+            2 => 'Disagree',
+            3 => 'Neutral',
+            4 => 'Agree',
+            5 => 'Strongly Agree',
+        ];
+            
+        // Retrieve LSQ Answers for the red-flagged questions
+        $redFlaggedAnswers = Answer::where('candidate_id', $candidateId)
+            ->where('test_id', $testId)
+            ->whereIn('question_id', $redFlaggedQuestions->pluck('id'))
+            ->get()
+            ->map(function ($answer) use ($answerMeanings) {
+            return [
+                'question_id' => $answer->question_id,
+                'answer_value' => $answer->answer_text,
+                'meaning' => $answerMeanings[$answer->answer_text] ?? 'No answer provided',
+            ];
+        });
+
+        // **Group by Category**
+        $groupedQuestions = $redFlaggedQuestions->groupBy('category');
+        Log::info('hi cat', [$groupedQuestions]);
     
         // Move this query up before using $candidateFlags
         $candidateFlags = CandidateFlag::where([
@@ -63,6 +96,8 @@ class TestReportService
                 ->count();
         }
 
+        $hasMCQ = $totalQuestions->contains('question_type', 'MCQ');
+        $hasLSQ = $totalQuestions->contains('question_type', 'LSQ');
 
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
@@ -113,40 +148,17 @@ class TestReportService
             'department' => 'HR Department', 
             'candidateName' => $candidate->name,
             'email' => $candidate->email,
-            'overallRating' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
+            'overallRating' => $testAttempt->pivot->score,
             'status' => 'Completed on ' . date('M d, Y', strtotime($candidateTest->completed_at)),
-            'averageScore' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
-            'weightedScore' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
+            'score' => $testAttempt->pivot->score,
+            'weightedScore' => $testAttempt->pivot->score,
             'antiCheat' => $antiCheatData,
-            // 'tests' => [
-            //     [
-            //         'name' => $test->title,
-            //         'score' => $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions),
-            //         'description' => $test->description,
-            //         'time_spent' => gmdate('H:i:s', strtotime($candidateTest->completed_at) - strtotime($candidateTest->started_at)),
-            //         'time_limit' => gmdate('H:i:s', $test->duration * 60),
-            //         'skills' => [
-            //             [
-            //                 'name' => 'Controlling and driving the discussion',
-            //                 'correct' => 35,
-            //                 'incorrect' => 65,
-            //                 'unanswered' => 0,
-            //             ],
-            //             [
-            //                 'name' => 'Leveraging the psychology of the counterparty',
-            //                 'correct' => 20,
-            //                 'incorrect' => 30,
-            //                 'unanswered' => 50,
-            //             ],
-            //             [
-            //                 'name' => 'Using emotional intelligence',
-            //                 'correct' => 0,
-            //                 'incorrect' => 0,
-            //                 'unanswered' => 100,
-            //             ],
-            //         ],
-            //     ],
-            // ],
+            'redFlaggedAnswers' => $redFlaggedAnswers ?? [],
+            'redFlaggedQuestions' => $redFlaggedQuestions ?? [],
+            'groupedQuestions' => $groupedQuestions  ?? [],
+            'hasMCQ' => $hasMCQ,
+            'hasLSQ' => $hasLSQ,
+            
         ];
 
         $fileName = "report_candidate{$candidateId}_test{$testId}_" . time() . '.pdf';
@@ -281,8 +293,4 @@ class TestReportService
         return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
     }
     
-    public function calculateScore($correct_answers, $wrong_answers, $totalQuestions)
-    {
-        return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
-    }
 }

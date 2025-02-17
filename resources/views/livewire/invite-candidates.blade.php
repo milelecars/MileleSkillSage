@@ -101,7 +101,7 @@
     </div>
 
     @if($emailList)
-        <div class="mt-6">
+        <div class="my-6">
             <button wire:click="submitInvitations" 
                     wire:loading.attr="disabled"
                     wire:target="submitInvitations"

@@ -55,22 +55,24 @@ if (isset($__slots)) unset($__slots);
                             </h2>
 
                             
-                            <?php if($questions[$currentQuestionIndex]->media && $questions[$currentQuestionIndex]->media instanceof \Illuminate\Database\Eloquent\Collection): ?>
-                                <?php $__currentLoopData = $questions[$currentQuestionIndex]->media; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $media): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <?php if($media->image_url): ?>
-                                        <img src="<?php echo e($media->image_url); ?>" 
-                                            alt="<?php echo e($media->description ?? 'Question Image'); ?>" 
-                                            class="mb-6 max-w-full rounded-lg border border-black">
-                                    <?php endif; ?>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            <?php elseif($questions[$currentQuestionIndex]->media && isset($questions[$currentQuestionIndex]->media->image_url)): ?>
-                                <img src="<?php echo e($questions[$currentQuestionIndex]->media->image_url); ?>" 
-                                    alt="<?php echo e($questions[$currentQuestionIndex]->media->description ?? 'Question Image'); ?>" 
-                                    class="mb-6 max-w-full rounded-lg border border-black">
+                            <?php if($questions[$currentQuestionIndex]->question_type === 'MCQ'): ?>
+                                <?php if($questions[$currentQuestionIndex]->media && $questions[$currentQuestionIndex]->media instanceof \Illuminate\Database\Eloquent\Collection): ?>
+                                    <?php $__currentLoopData = $questions[$currentQuestionIndex]->media; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $media): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php if($media->image_url): ?>
+                                            <img src="<?php echo e($media->image_url); ?>" 
+                                                alt="<?php echo e($media->description ?? 'Question Image'); ?>" 
+                                                class="mb-6 max-w-full rounded-lg border border-black">
+                                        <?php endif; ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                <?php elseif($questions[$currentQuestionIndex]->media && isset($questions[$currentQuestionIndex]->media->image_url)): ?>
+                                    <img src="<?php echo e($questions[$currentQuestionIndex]->media->image_url); ?>" 
+                                        alt="<?php echo e($questions[$currentQuestionIndex]->media->description ?? 'Question Image'); ?>" 
+                                        class="mb-6 max-w-full rounded-lg border border-black">
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
 
-                        <!-- Choices -->
+                        <!-- Answer Section -->
                         <div class="md:w-1/3 p-6 bg-gray-50">
                             <form id="questionForm" method="POST" 
                                   action="<?php echo e($currentQuestionIndex === $questions->count() - 1 
@@ -80,24 +82,51 @@ if (isset($__slots)) unset($__slots);
                                 <input type="hidden" name="current_index" value="<?php echo e($currentQuestionIndex); ?>">
 
                                 
-                                <div class="space-y-4">
-                                    <?php $__currentLoopData = $questions[$currentQuestionIndex]->choices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $choice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                        <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
-                                            <input type="radio" 
-                                                name="answer" 
-                                                value="<?php echo e($choice->id); ?>" 
-                                                class="mt-1 form-radio text-blue-600" 
-                                                <?php echo e(session()->get("test_session.answers.$currentQuestionIndex") === $choice->id ? 'checked' : ''); ?>
+                                <?php if($questions[$currentQuestionIndex]->question_type === 'MCQ'): ?>
+                                    <div class="space-y-4">
+                                        <?php $__currentLoopData = $questions[$currentQuestionIndex]->choices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $choice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
+                                                <input type="radio" 
+                                                    name="answer" 
+                                                    value="<?php echo e($choice->id); ?>" 
+                                                    class="mt-1 form-radio text-blue-600" 
+                                                    <?php echo e(session()->get("test_session.answers.$currentQuestionIndex") === $choice->id ? 'checked' : ''); ?>
 
-                                                required>
-                                            <span class="ml-3">
-                                                <span class="font-medium"><?php echo e(chr(65 + $loop->index)); ?>.</span>
-                                                <?php echo e($choice->choice_text); ?>
+                                                    required>
+                                                <span class="ml-3">
+                                                    <span class="font-medium"><?php echo e(chr(65 + $loop->index)); ?>.</span>
+                                                    <?php echo e($choice->choice_text); ?>
 
-                                            </span>
-                                        </label>
-                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                </span>
+                                            </label>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                
+                                <?php if($questions[$currentQuestionIndex]->question_type === 'LSQ'): ?>
+                                <div class="space-y-4 flex flex-col items-center justify-center ">
+                                    <input 
+                                        type="range" 
+                                        name="lsq_answers[<?php echo e($questions[$currentQuestionIndex]->id); ?>]" 
+                                        min="1" 
+                                        max="5" 
+                                        step="1" 
+                                        value="<?php echo e(old('lsq_answers.' . $questions[$currentQuestionIndex]->id, 3)); ?>" 
+                                        class="w-[90%] cursor-pointer"
+                                        oninput="this.nextElementSibling.value = this.value"
+                                        required
+                                    >
+
+                                    <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
+                                        <div class="w-12 text-center -ml-6">Strongly Disagree</div>
+                                        <div class="w-16 text-center -ml-6">Disagree</div>
+                                        <div class="w-14 text-center -ml-1">Neutral</div>
+                                        <div class="w-12 text-center -mr-5">Agree</div>
+                                        <div class="w-12 text-center -mr-6">Strongly Agree</div>
+                                    </div>
                                 </div>
+                                <?php endif; ?>
 
                                 
                                 <div class="mt-6">
@@ -148,4 +177,5 @@ if (isset($__slots)) unset($__slots);
 <?php if (isset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
 <?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
 <?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
-<?php endif; ?><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/tests/start.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/tests/start.blade.php ENDPATH**/ ?>

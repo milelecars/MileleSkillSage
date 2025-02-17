@@ -386,6 +386,72 @@
         .guide-color.unanswered {
             background-color: #e5e5e5;
         }
+        
+        /* Red-Flagged Section */
+        .red-flag-section {
+            background: #fdf2f2;
+            border: 1px solid #e63946;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .red-flag-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e63946;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .red-flag-category {
+            margin-bottom: 15px;
+            color: #122f53;
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+            
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        .red-flag-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .th-1 {
+            border-top-left-radius: 10px;
+        }
+
+        .th-2 {
+            border-top-right-radius: 10px;
+        }
+
+        .red-flag-th {
+            background: #f8d7da;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #e63946;
+        }
+
+        .red-flag-td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e5e5;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .red-flag-row:nth-child(even) {
+            background: #f8f9fa;
+        }
+
 
         /* Time Info */
         .time-info {
@@ -439,12 +505,8 @@
                 <div class="stat-value black">{{ $status }}</div>
             </td>
             <td>
-                <div class="stat-label center">Average score</div>
-                <div class="stat-value">{{ $averageScore }}%</div>
-            </td>
-            <td>
-                <div class="stat-label center">Weighted</div>
-                <div class="stat-value">{{ $weightedScore }}%</div>
+                <div class="stat-label center">Score</div>
+                <div class="stat-value">{{ $score }} {{ $hasMCQ ? $score . '%' : '' }}</div>
             </td>
             <td>
                 <div class="stat-label">Scoring method</div>
@@ -477,6 +539,41 @@
             @endforeach
         </table>
     </div>
+
+    <!-- Red-Flagged LSQ Questions Grouped by Category -->
+    <div class="red-flag-section">
+        <h2 class="red-flag-title">⚠️ Red-Flagged LSQ Questions</h2>
+
+        @foreach ($groupedQuestions as $category => $questions)
+            <div class="red-flag-category">
+                <h3 class="category-title">{{ $category }}</h3> 
+                <table class="red-flag-table">
+                    <tr>
+                        <th class="red-flag-th th-1">Question</th>
+                        <th class="red-flag-th th-2">Answer</th>
+                    </tr>
+
+                    @foreach ($questions as $question)
+    <tr class="red-flag-row">
+        <td class="red-flag-td">{{ $question->question_text }}</td>
+        <td class="red-flag-td">
+            @php
+                $answer = $redFlaggedAnswers->where('question_id', $question->id)->first();
+            @endphp
+            @if ($answer)
+                {{ $answer['meaning'] }}
+            @else
+                No answer provided
+            @endif
+        </td>
+    </tr>
+@endforeach
+
+                </table>
+            </div>
+        @endforeach
+    </div>
+
 
     <!-- Test Sections -->
 

@@ -97,25 +97,29 @@
                         <div>
                             <h2 class="text-xl font-semibold mb-3">Score Summary</h2>
                             <div class="bg-gray-100 p-4 rounded-lg">
-                                <div class="text-4xl font-bold text-center text-blue-600">
-                                    <?php echo e($calculatedScore); ?>%
-                                </div>
+                            <div class="text-4xl font-bold text-center text-blue-600">
+                                <?php echo e($calculatedScore); ?><?php echo e($hasMCQ ? '%' : ''); ?>
+
+                            </div>
+
                             </div>
                         </div>
                     </div>
 
-                    <div class="mt-10">
-                        <h2 class="text-xl font-semibold mb-3">🌟Performance Feedback🌟</h2>
-                        <p class="text-gray-700">
-                            <?php if($calculatedScore >= 0.8): ?>
-                                Excellent work! Your high score demonstrates a strong understanding of the subject matter.
-                            <?php elseif($calculatedScore >= 0.6): ?>
-                                Good job! You've shown a solid grasp of many key concepts, but there's still room for improvement.
-                            <?php else: ?>
-                                Thank you for completing the test. We recommend further study to improve your understanding of the material.
-                            <?php endif; ?>
-                        </p>
-                    </div>
+                    <?php if($hasMCQ): ?>
+                        <div class="mt-10">
+                            <h2 class="text-xl font-semibold mb-3">🌟Performance Feedback🌟</h2>
+                            <p class="text-gray-700">
+                                <?php if($calculatedScore >= 0.8): ?>
+                                    Excellent work! Your high score demonstrates a strong understanding of the subject matter.
+                                <?php elseif($calculatedScore >= 0.6): ?>
+                                    Good job! You've shown a solid grasp of many key concepts, but there's still room for improvement.
+                                <?php else: ?>
+                                    Thank you for completing the test. We recommend further study to improve your understanding of the material.
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="mt-20 flex justify-end w-full">
                         <a href="<?php echo e(route('candidate.dashboard')); ?>" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold  text-white hover:bg-blue-500 disabled:opacity-25 transition ease-in-out duration-150">

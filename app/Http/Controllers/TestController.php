@@ -63,7 +63,7 @@ class TestController extends Controller
     {
         Log::info('Starting test creation process', [
             'admin_id' => auth()->id(),
-            'request_data' => $request->except(['file'])  // Exclude file to keep logs clean
+            'request_data' => $request->except(['file'])
         ]);
     
         try {
@@ -72,10 +72,6 @@ class TestController extends Controller
                 'description' => 'required|string',
                 'duration' => 'required',
                 'invitation_link' => 'required|string|url',
-            ]);
-    
-            Log::info('Validation passed', [
-                'validated_data' => $validatedData
             ]);
     
             $test = Test::create([
@@ -112,9 +108,7 @@ class TestController extends Controller
             ]);
     
             if (!$request->hasFile('file')) {
-                Log::warning('No file uploaded', [
-                    'test_id' => $test->id
-                ]);
+                Log::warning('No file uploaded', ['test_id' => $test->id]);
                 return redirect()->back()->with('error', 'No file uploaded.');
             }
     
@@ -129,120 +123,82 @@ class TestController extends Controller
             }
     
             $extension = $file->getClientOriginalExtension();
-            Log::info('Processing uploaded file', [
-                'test_id' => $test->id,
-                'file_name' => $file->getClientOriginalName(),
-                'extension' => $extension,
-                'size' => $file->getSize()
-            ]);
-    
-            // Parse questions based on file type
-            if (in_array($extension, ['xlsx', 'csv'])) {
-                $questions = $this->getQuestionsFromExcel($file, $test);
-                Log::info('Parsed Excel/CSV file', [
-                    'question_count' => count($questions)
-                ]);
-            } elseif ($extension === 'json') {
-                $jsonContent = file_get_contents($file->getRealPath());
-                $questions = json_decode($jsonContent, true);
-                Log::info('Parsed JSON file', [
-                    'question_count' => count($questions)
-                ]);
-            } else {
-                Log::error('Unsupported file type', [
-                    'extension' => $extension
-                ]);
+            if (!in_array($extension, ['xlsx', 'csv'])) {
+                Log::error('Unsupported file type', ['extension' => $extension]);
                 return redirect()->back()->with('error', 'Unsupported file type.');
             }
-
-            if ($request->hasFile('file') && $request->file('file')->isValid()) {
-                $file = $request->file('file');
-                $extension = $file->getClientOriginalExtension();
-
-                Log::info('Processing file', [
-                    'extension' => $extension,
-                    'filename' => $file->getClientOriginalName()
-                ]);
     
-                try {
-                    if (in_array($extension, ['xlsx', 'csv'])) {
-                        $import = new QuestionsImport($test);
-                        $collection = Excel::toCollection($import, $file);
-                        
-                        $questions = $collection->first()->toArray();
-                        
-                        Log::info('Questions imported from Excel', [
-                            'question_count' => count($questions),
-                            'sample' => !empty($questions) ? $questions[0] : null
-                        ]);
-                    } elseif ($extension === 'json') {
-                        $jsonContent = file_get_contents($file->getRealPath());
-                        $questions = json_decode($jsonContent, true);
-                        
-                        Log::info('Questions parsed from JSON', [
-                            'question_count' => count($questions)
-                        ]);
-                    }
-                    
-                    if (empty($questions)) {
-                        throw new \Exception('No questions found in the file.');
-                    }
+            // Parse questions
+            $questions = $this->getQuestionsFromExcel($file, $test);
+            if (empty($questions)) {
+                throw new \Exception('No valid questions found in the file.');
+            }
     
-                    // Create questions and related data
-                    foreach ($questions as $q) {
-                        Log::info('Processing question', ['question' => $q]);
-                        
-                        $question = Question::create([
-                            'test_id' => $test->id,
-                            'question_text' => $q['question'],
-                            'question_type' => $q['type'],
-                        ]);
-
-                        if ($q['type'] === 'MCQ') {
-                            // Create choices
-                            $choices = [
-                                'a' => $q['choice_a'],
-                                'b' => $q['choice_b'],
-                                'c' => $q['choice_c'],
-                                'd' => $q['choice_d']
-                            ];
-
-                            foreach ($choices as $key => $text) {
-                                QuestionChoice::create([
-                                    'question_id' => $question->id,
-                                    'choice_text' => $text,
-                                    'is_correct' => strtoupper($key) === $q['answer']
-                                ]);
-                            }
-                        }
-
-                        if (!empty($q['image_url'])) {
-                            QuestionMedia::create([
+            // Create questions and related data
+            foreach ($questions as $q) {
+                Log::info('Processing question', ['question' => $q]);
+    
+                // Normalize data to avoid case-sensitivity issues
+                $q = array_change_key_case($q, CASE_LOWER);
+    
+                if ($q['type'] === 'MCQ') {
+                    $question = Question::create([
+                        'test_id' => $test->id,
+                        'question_text' => $q['question'],
+                        'question_type' => 'MCQ',
+                    ]);
+    
+                    $choices = [
+                        'a' => $q['choice_a'] ?? null,
+                        'b' => $q['choice_b'] ?? null,
+                        'c' => $q['choice_c'] ?? null,
+                        'd' => $q['choice_d'] ?? null
+                    ];
+    
+                    foreach ($choices as $key => $text) {
+                        if (!empty($text)) {
+                            QuestionChoice::create([
                                 'question_id' => $question->id,
-                                'image_url' => $q['image_url'],
-                                'description' => $q['image_description'] ?? ''
+                                'choice_text' => $text,
+                                'is_correct' => strtoupper($key) === strtoupper($q['answer'])
                             ]);
                         }
                     }
-
-                    Log::info('Questions created successfully', [
-                        'test_id' => $test->id,
-                        'total_questions' => count($questions)
-                    ]);
-
-                    return redirect()->route('tests.show', $test->id)
-                        ->with('success', 'Test created successfully with ' . count($questions) . ' questions!');
     
-                
-                } catch (\Exception $e) {
-                    Log::error('Error processing questions file', [
+                    if (!empty($q['image_url'])) {
+                        QuestionMedia::create([
+                            'question_id' => $question->id,
+                            'image_url' => $q['image_url'],
+                            'description' => $q['image_description'] ?? ''
+                        ]);
+                    }
+                } elseif ($q['type'] === 'LSQ') {
+                    $question = Question::create([
                         'test_id' => $test->id,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
+                        'question_text' => $q['question'],
+                        'question_type' => 'LSQ',
+                        'category' => $q['category'] ?? null,
+                        'reverse' => isset($q['reverse']) ? boolval($q['reverse']) : false,
+                        'red_flag' => isset($q['red_flag']) ? boolval($q['red_flag']) : false,
+
                     ]);
-                    
+                    Log::info('Quest', [
+                        'category' => $q['category'] ?? null,
+                        'reverse' => isset($q['reverse']) ? boolval($q['reverse']) : false,
+                        'red_flag' => isset($q['red_flag']) ? boolval($q['red_flag']) : false,
+
+                    ]);
                 }
             }
+    
+            Log::info('Questions created successfully', [
+                'test_id' => $test->id,
+                'total_questions' => count($questions)
+            ]);
+    
+            return redirect()->route('tests.show', $test->id)
+                ->with('success', 'Test created successfully with ' . count($questions) . ' questions!');
+    
         } catch (\Exception $e) {
             Log::error('Error in test creation process', [
                 'error' => $e->getMessage(),
@@ -250,10 +206,10 @@ class TestController extends Controller
                 'admin_id' => auth()->id()
             ]);
     
-            return redirect()->back()
-                ->with('error', 'Error creating test: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error creating test: ' . $e->getMessage());
         }
     }
+    
 
     public function edit($id)
     {
@@ -509,10 +465,7 @@ class TestController extends Controller
     
         try {
             $import = new QuestionsImport($test);
-            // Use toCollection instead of import
             $collection = Excel::toCollection($import, $file);
-            
-            // Get the first sheet's data and convert to array
             $data = $collection->first()->toArray();
     
             Log::info('Excel import completed', [
@@ -550,6 +503,14 @@ class TestController extends Controller
             return redirect()->route('candidate.dashboard')
                             ->with('error', 'You do not have access to this test.');
         }
+
+        $existingAttempt = $candidate->tests()->where('test_id', $id)->first();
+
+        if (!$existingAttempt) {
+            $candidate->tests()->attach($id, [
+                'status' => 'not started'  
+            ]);
+        }
     
         $testAttempt = $candidate->tests()
                                 ->where('test_id', $id)
@@ -568,11 +529,19 @@ class TestController extends Controller
     public function show($id)
     {
         if (Auth::guard('web')->check()) {
-            $test = Test::with(['questions.choices', 'questions.media', 'admin'])->findOrFail($id);
+            $test = Test::with([
+                'questions' => function ($query) {
+                    $query->with(['choices', 'media'])->where('question_type', 'MCQ'); // Only MCQ gets choices & media
+                },
+                'admin'
+            ])->findOrFail($id);
+            
             $questions = $test->questions()
             ->with(['choices', 'media'])
             ->orderBy('id', 'asc')
             ->get();
+            $hasMCQ = $questions->contains('question_type', 'MCQ');
+            $hasLSQ = $questions->contains('question_type', 'LSQ');
 
             Log::info('Test questions loaded', [
                 'test_id' => $id,
@@ -581,7 +550,7 @@ class TestController extends Controller
                 'has_choices' => $questions->filter->choices->isNotEmpty(),
             ]);
             
-            return view('tests.show', compact('test', 'questions'));
+            return view('tests.show', compact('test', 'questions', 'hasMCQ', 'hasLSQ'));
 
         } elseif (Auth::guard('candidate')->check()) {
             try {
@@ -603,6 +572,8 @@ class TestController extends Controller
                 
                 $test = $invitation->test;
                 $questions = $test->questions;
+                $hasMCQ = $questions->contains('question_type', 'MCQ');
+                $hasLSQ = $questions->contains('question_type', 'LSQ');
                 
                 $testAttempt = $candidate->tests()->find($id);
         
@@ -636,7 +607,7 @@ class TestController extends Controller
                     "You can see that the right answer is 5 boxes. So the (B) answer is the right one."
                 ];
         
-                return view('tests.show', compact('test', 'isTestStarted', 'questions', 'questionsExplained',
+                return view('tests.show', compact('test', 'isTestStarted', 'questions', 'hasMCQ', 'hasLSQ', 'questionsExplained',
                     'isTestCompleted', 'isInvitationExpired', 'remainingTime'));
         
             } catch (\Exception $e) {
@@ -748,8 +719,23 @@ class TestController extends Controller
         }
     
         $candidate = Auth::guard('candidate')->user();
-        $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
-        
+        $test = Test::with([
+            'questions.choices' => function ($query) {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->selectRaw(1)->from('questions')
+                        ->whereColumn('questions.id', 'question_choices.question_id')
+                        ->where('questions.question_type', 'MCQ');
+                });
+            },
+            'questions.media' => function ($query) {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->selectRaw(1)->from('questions')
+                        ->whereColumn('questions.id', 'question_media.question_id')
+                        ->where('questions.question_type', 'MCQ');
+                });
+            }
+        ])->findOrFail($id);
+                
         if($test->title == "General Mental Ability (GMA)"){
             $questions = $test->questions()
             ->with(['choices', 'media'])
@@ -884,9 +870,9 @@ class TestController extends Controller
         }
         $flagTypes = FlagType::all();
         session(['test_session' => $testSession]);
-    
+
         $currentQuestionIndex = $testSession['current_question'];
-    
+
         return view('tests.start', compact('test', 'candidate', 'questions', 'currentQuestionIndex', 'flagTypes'));
     }
 
@@ -894,6 +880,7 @@ class TestController extends Controller
     {
         $candidate = Auth::guard('candidate')->user();
         Log::info('Processing next question', ['test_id' => $id]);
+        
 
         $testAttempt = $candidate->tests()
             ->wherePivot('test_id', $id)
@@ -905,32 +892,37 @@ class TestController extends Controller
                 ->with('error', 'Test attempt not found.');
         }
 
-        Log::info('Test attempt found', [
-            'test_id' => $testAttempt->pivot->test_id,
-            'candidate_id' => $candidate->id,
-            'started_at' => $testAttempt->pivot->started_at
-        ]);
-
         if ($this->checkTimeUp($testAttempt)) {
             Log::info('Time is up during next question', ['test_id' => $id]);
             return $this->submitTest($request, $id);
         }
 
-        $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($id);
-    
-        Log::info('Request data before validation', $request->all());
-
-
-        $request->validate([
-            'current_index' => 'required|numeric',
-            'answer' => 'nullable|exists:question_choices,id', 
-        ]);
+        $test = Test::with([
+            'questions.choices' => function ($query) {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->selectRaw(1)->from('questions')
+                        ->whereColumn('questions.id', 'question_choices.question_id')
+                        ->where('questions.question_type', 'MCQ');
+                });
+            },
+            'questions.media' => function ($query) {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->selectRaw(1)->from('questions')
+                        ->whereColumn('questions.id', 'question_media.question_id')
+                        ->where('questions.question_type', 'MCQ');
+                });
+            }
+        ])->findOrFail($id);
 
         $testSession = session('test_session');
+
         if (!$testSession || $testSession['test_id'] != $id) {
             return redirect()->route('tests.start', ['id' => $id])
                 ->with('error', 'Invalid test session.');
         }
+
+        $currentIndex = intval($request->input('current_index', 0));
+
 
         if ($test->title == "General Mental Ability (GMA)") {
             $questions = $test->questions()
@@ -941,27 +933,51 @@ class TestController extends Controller
         } else {
             $questions = $test->questions;
         }
-        
+
         $questions = $questions->sortBy(function ($question) use ($testSession) {
             return array_search($question->id, $testSession['question_order']);
         })->values();
 
-        $currentIndex = $request->input('current_index');
-        $choiceId = intval($request->input('answer', null)); 
-        $currentQuestion = $questions[$currentIndex];
-
-        if (!$currentQuestion) {
-            Log::error('Invalid question index', [
+        // Ensure questions array is not empty
+        if ($questions->isEmpty() || !isset($questions[$currentIndex])) {
+            Log::error('Invalid question index or no questions found', [
                 'current_index' => $currentIndex,
                 'test_id' => $id
             ]);
+
             return redirect()->route('tests.start', ['id' => $id])
-                ->with('error', 'Invalid question index.');
+                ->with('error', 'Invalid question index or no questions found.');
         }
 
-        if ($choiceId) {
+        $currentQuestion = $questions[$currentIndex];
+        // Debugging: Log the request data
+        Log::info('Request Data', $request->all());
+
+        // Check the current question type
+        Log::info('Processing Question', [
+            'question_id' => $currentQuestion->id,
+            'question_type' => $currentQuestion->question_type
+        ]);
+
+        // Dynamic validation based on question type
+        $validationRules = [
+            'current_index' => 'required|numeric',
+        ];
+
+        if ($currentQuestion->question_type === 'MCQ') {
+            $validationRules['answer'] = 'nullable|exists:question_choices,id';
+        } elseif ($currentQuestion->question_type === 'LSQ') {
+            $validationRules['lsq_answers'] = 'required|array';
+            $validationRules["lsq_answers.{$currentQuestion->id}"] = 'integer|min:1|max:5';
+        }
+
+        $request->validate($validationRules);
+
+        // Save MCQ Answer
+        if ($currentQuestion->question_type === 'MCQ' && $request->filled('answer')) {
+            $choiceId = intval($request->input('answer'));
             $answerText = QuestionChoice::findOrFail($choiceId)->choice_text;
-            
+
             try {
                 Answer::create([
                     'candidate_id' => $candidate->id,
@@ -985,27 +1001,39 @@ class TestController extends Controller
             }
         }
 
-        $nextIndex = $currentIndex + 1;
+        // Save LSQ Answer
+        if ($currentQuestion->question_type === 'LSQ' && $request->has("lsq_answers.{$currentQuestion->id}")) {
+            $lsqValue = intval($request->input("lsq_answers.{$currentQuestion->id}"));
+            Log::info('hi', ['value' => $lsqValue]);
 
-        Log::info('Moving to next question', [
-            'test_id' => $id,
-            'current_index' => $currentIndex,
-            'next_index' => $nextIndex
-        ]);
+            Answer::updateOrCreate(
+                [
+                    'candidate_id' => $candidate->id,
+                    'test_id' => $test->id,
+                    'question_id' => $currentQuestion->id,
+                ],
+                ['answer_text' => $lsqValue]
+            );
+            Log::info('LSQ Answer saved', [
+                'candidate_id' => $candidate->id,
+                'test_id' => $test->id,
+                'question_id' => $currentQuestion->id,
+                'answer_text' => $lsqValue
+            ]);
+        }
+
+        // Move to the next question
+        $nextIndex = $currentIndex + 1;
 
         if ($nextIndex >= $questions->count()) {
             return $this->submitTest($request, $id);
-            // -----------
-            return redirect()->action([TestController::class, 'submitTest'], ['id' => $id])
-                ->withInput()
-                ->with('_method', 'POST');
         }
 
-        session()->put('test_session', $testSession);
         session()->put('test_session.current_question', $nextIndex);
 
         return redirect()->route('tests.start', ['id' => $id]);
     }
+
     
     public function submitTest(Request $request, $id)
     {
@@ -1014,48 +1042,72 @@ class TestController extends Controller
             'is_expired' => $request->boolean('expired'),
             'timestamp' => now()
         ]);
-    
+
         try { 
-            
-            
             $candidate = Auth::guard('candidate')->user();
-            $test = Test::with('questions.choices')->findOrFail($id);
-            if($test->title == "General Mental Ability (GMA)"){
-                $questions = $test->questions()
-                ->with(['choices', 'media'])
-                ->skip(8)
-                ->take(PHP_INT_MAX)
-                ->get();
-            }else{
-                
+
+            $test = Test::with([
+                'questions.choices' => function ($query) {
+                    $query->whereExists(function ($subQuery) {
+                        $subQuery->selectRaw(1)->from('questions')
+                            ->whereColumn('questions.id', 'question_choices.question_id')
+                            ->where('questions.question_type', 'MCQ');
+                    });
+                },
+                'questions.media' => function ($query) {
+                    $query->whereExists(function ($subQuery) {
+                        $subQuery->selectRaw(1)->from('questions')
+                            ->whereColumn('questions.id', 'question_media.question_id')
+                            ->where('questions.question_type', 'MCQ');
+                    });
+                }
+            ])->findOrFail($id);
+
+            // Filter questions based on test type
+            if ($test->title == "General Mental Ability (GMA)") {
+                $questions = $test->questions()->with(['choices', 'media'])->skip(8)->take(PHP_INT_MAX)->get();
+            } else {
                 $questions = $test->questions;
             }
-            Log::info('Loaded test and questions for submission', [
+            
+            Log::info('Total Questions After Filtering:', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
                 'question_count' => $questions->count()
             ]);
-            
-            $testAttempt = $candidate->tests()
-            ->wherePivot('test_id', $id)
-            ->first();
+
+            // Ensure test attempt exists
+            $testAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
             if (!$testAttempt) {
                 Log::error('Test attempt not found', ['test_id' => $id, 'candidate_id' => $candidate->id]);
-                return redirect()->route('tests.start', ['id' => $id])
-                    ->with('error', 'Test attempt not found.');
+                return redirect()->route('tests.start', ['id' => $id])->with('error', 'Test attempt not found.');
             }
-            $request->validate([
-                'current_index' => 'required|numeric',
-                'answer' => 'nullable|exists:question_choices,id', 
-            ]);
-    
+
+            // Retrieve answers from request
             $currentIndex = $request->input('current_index');
             $choiceId = intval($request->input('answer', null)); 
+            $lsqAnswers = $request->input('lsq_answers', []);
+
             $currentQuestion = $questions[$currentIndex];
 
-            if ($choiceId) {
+            $validationRules = [
+                'current_index' => 'required|numeric|max:' . ($questions->count() - 1)
+            ];
+
+            
+            if ($currentQuestion->question_type === 'MCQ') {
+                $validationRules['answer'] = 'required|exists:question_choices,id';
+            } elseif ($currentQuestion->question_type === 'LSQ') {
+                $validationRules['lsq_answers'] = 'required|array';
+                $validationRules["lsq_answers.{$currentQuestion->id}"] = 'integer|min:1|max:5';
+            }
+            
+            $request->validate($validationRules);
+
+            // Handle MCQ Submission
+            if ($currentQuestion->question_type === 'MCQ' && $choiceId) {
                 $answerText = QuestionChoice::findOrFail($choiceId)->choice_text;
-           
+
                 Answer::create([
                     'candidate_id' => $candidate->id,
                     'test_id' => $test->id,
@@ -1064,106 +1116,201 @@ class TestController extends Controller
                 ]);
             }
 
-            $answers = Answer::where('candidate_id', $candidate->id)->where('test_id', $test->id)
+            // Handle LSQ Submission
+            if ($currentQuestion->question_type === 'LSQ' && isset($lsqAnswers[$currentQuestion->id])) {
+                foreach ($lsqAnswers as $questionId => $answerValue) {
+                    Answer::updateOrCreate(
+                        [
+                            'candidate_id' => $candidate->id,
+                            'test_id' => $test->id,
+                            'question_id' => $questionId,
+                        ],
+                        [
+                            'answer_text' => intval($answerValue),  
+                        ]
+                    );
+                }
+            }
+
+            // Retrieve all submitted answers
+            $answers = Answer::where('candidate_id', $candidate->id)
+                ->where('test_id', $test->id)
                 ->whereIn('question_id', $questions->pluck('id'))
                 ->get();
 
+            // Process MCQ Results
             $correct_answers = 0;
             $wrong_answers = 0;
             $unanswered = 0;
-            
+
             foreach ($questions as $question) {
                 if ($question->question_type === 'MCQ') {
-                    Log::info($question);
                     $correctChoice = $question->choices->firstWhere('is_correct', true);
-                    Log::info($correctChoice);
                     $userAnswer = $answers->firstWhere('question_id', $question->id);
-                    Log::info($userAnswer);
-            
+
                     if ($correctChoice) {
                         if ($userAnswer) {
                             if ($userAnswer->answer_text == $correctChoice->choice_text) {
-                                Log::info('Correct Answer');
                                 $correct_answers++;
                             } else {
-                                Log::info('Wrong Answer');
                                 $wrong_answers++;
                             }
                         } else {
-                            Log::info('Unanswered');
                             $unanswered++;
                         }
                     }
+                }else{
+                    break;
                 }
             }
-            
-            Log::info('Correct Answers: ' . $correct_answers);
-            Log::info('Wrong Answers: ' . $wrong_answers);
-            Log::info('Unanswered: ' . $unanswered);
-            
-            
+
+            if($test->title == "General Mental Ability (GMA)"){
+                $totalQuestions = DB::table('questions')
+                    ->where('test_id', $test->id)
+                    ->count() - 8;
+            }else{
+                
+                $totalQuestions = DB::table('questions')
+                    ->where('test_id', $test->id)
+                    ->count();
+            }
     
+            $mcq_final_score = $this->calculateMCQScore($correct_answers, $wrong_answers, $totalQuestions);
+    
+
+            Log::info('MCQ Results', [
+                'correct_answers' => $correct_answers,
+                'wrong_answers' => $wrong_answers,
+                'unanswered' => $unanswered
+            ]);
+
+            /// Process LSQ Results
+            $total_score = 0;
+            $total_questions = 0;
+            $red_flags = [];
+
+            foreach ($questions as $question) {
+                if ($question->question_type !== 'LSQ') {
+                    continue;
+                }
+
+                $userAnswer = $answers->firstWhere('question_id', $question->id);
+
+                if ($userAnswer) {
+                    $score = intval($userAnswer->answer_text);
+
+                    if ($question->reverse == 1) {
+                        $score = 6 - $score; 
+                    }
+
+                    if ($question->red_flag == 1) {
+                        $red_flags[] = [
+                            'question' => $question->question_text,
+                            'answer' => $userAnswer->answer_text
+                        ];
+                    } else {
+                        $total_score += $score;
+                        $total_questions++;
+                    }
+                }
+            }
+
+            Log::info('LSQ Score Calculated', [
+                'total_score' => $total_score,
+                'total_questions' => $total_questions,
+                'final_score' =>$total_score
+            ]);
+
             $realIP = $this->testReportService->getClientIP();
-            $location = $this->testReportService->getLocationFromIP('192.168.1.37');
-            Log::info("location is ", $location);
+            $location = $this->testReportService->getLocationFromIP($realIP);
+            Log::info("Location Data", $location);
 
             $started_at = Carbon::parse($testAttempt->pivot->started_at);
-
             $candidate->tests()->updateExistingPivot($id, [
                 'completed_at' => now() > $started_at->copy()->addMinutes($test->duration)
-                    ? $started_at->copy()->addMinutes($test->duration)
-                    : now(),
-                'correct_answers' => $correct_answers ?? 0,
-                'wrong_answers' => $wrong_answers ?? 0,
+                ? $started_at->copy()->addMinutes($test->duration)
+                : now(),
                 'ip_address' => $realIP,
                 'status' => 'completed'
             ]);
-            
+
+            if ($currentQuestion->question_type === 'MCQ') {
+                $candidate->tests()->updateExistingPivot($id, [
+                    'correct_answers' => $correct_answers,
+                    'wrong_answers' => $wrong_answers,
+                    'score' => $mcq_final_score,
+
+                ]);
+            }
+            if ($currentQuestion->question_type === 'LSQ') {
+                $candidate->tests()->updateExistingPivot($id, [
+                    'score' =>$total_score,
+                    'red_flags' => $red_flags
+                ]);
+            }
+
+
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'correct_answers' => $correct_answers?? 0,
-                'wrong_answers' => $wrong_answers?? 0,
+                'red_flags'=> $red_flags,
+                'correct_answers' => $correct_answers,
+                'wrong_answers' => $wrong_answers,
+                'lsq_score' =>$total_score,
                 'ip_address' => $realIP,
             ]);
-        
+            
             $this->testReportService->generatePDF($candidate->id, $id);
-    
-            // Clear the session
+            // $this->generateLSQReport($candidate->id, $id, $red_flags);
+
             session()->forget('test_session');
-    
+
             $message = $request->boolean('expired')
                 ? 'Test time has expired. Your answers have been submitted automatically.'
                 : 'Test completed successfully!';
-            
-            
-            
+
             return redirect()->route('tests.result', ['id' => $id])
                 ->with($request->boolean('expired') ? 'warning' : 'success', $message);
-    
+
         } catch (\Exception $e) {
             Log::error('Exception in submitTest', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-    
+
             if ($request->wantsJson()) {
                 return response()->json([
                     'error' => 'Failed to submit test',
                     'message' => $e->getMessage()
                 ], 500);
             }
-    
+
             throw $e;
         }
-    }    
+    }
+  
   
     public function handleTimeout($test)
     {
         Log::info('Handling expired test', ['test_id' => $test->id]);
 
-        $test = Test::with(['questions.choices', 'questions.media'])->findOrFail($test->id);
-
+        $test = Test::with([
+            'questions.choices' => function ($query) {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->selectRaw(1)->from('questions')
+                        ->whereColumn('questions.id', 'question_choices.question_id')
+                        ->where('questions.question_type', 'MCQ');
+                });
+            },
+            'questions.media' => function ($query) {
+                $query->whereExists(function ($subQuery) {
+                    $subQuery->selectRaw(1)->from('questions')
+                        ->whereColumn('questions.id', 'question_media.question_id')
+                        ->where('questions.question_type', 'MCQ');
+                });
+            }
+        ])->findOrFail($test->id);
+        
         if ($test->title == "General Mental Ability (GMA)") {
             $questions = $test->questions()
                 ->skip(8)
@@ -1173,12 +1320,16 @@ class TestController extends Controller
             $questions = $test->questions;
         }
 
+        $hasMCQ = $questions->contains('question_type', 'MCQ');
+        $hasLSQ = $questions->contains('question_type', 'LSQ');
+
         $candidate = Auth::guard('candidate')->user();
         $answers = Answer::where('candidate_id', $candidate->id)
             ->where('test_id', $test->id)
             ->whereIn('question_id', $questions->pluck('id'))
             ->get();
 
+        // For MCQ
         $correct_answers = 0;
         $wrong_answers = 0;
         $unanswered = 0;
@@ -1213,6 +1364,63 @@ class TestController extends Controller
             }
         }
 
+        if($test->title == "General Mental Ability (GMA)"){
+            $totalQuestions = DB::table('questions')
+                ->where('test_id', $test->id)
+                ->count() - 8;
+        }else{
+            
+            $totalQuestions = DB::table('questions')
+                ->where('test_id', $test->id)
+                ->count();
+        }
+
+        $mcq_final_score = $this->calculateMCQScore($correct_answers, $wrong_answers, $totalQuestions);
+    
+
+        Log::info('MCQ Results', [
+            'correct_answers' => $correct_answers,
+            'wrong_answers' => $wrong_answers,
+            'unanswered' => $unanswered
+        ]);
+
+        // Process LSQ Results
+        $total_score = 0;
+        $total_questions = 0;
+        $red_flags = [];
+
+        foreach ($questions as $question) {
+            if ($question->question_type !== 'LSQ') {
+                continue;
+            }
+
+            $userAnswer = $answers->firstWhere('question_id', $question->id);
+
+            if ($userAnswer) {
+                $score = intval($userAnswer->answer_text);
+
+                if ($question->reverse == 1) {
+                    $score = 6 - $score; 
+                }
+
+                if ($question->red_flag == 1) {
+                    $red_flags[] = [
+                        'question' => $question->question_text,
+                        'answer' => $userAnswer->answer_text
+                    ];
+                } else {
+                    $total_score += $score;
+                    $total_questions++;
+                }
+            }
+        }
+
+
+        $test_pivot = $candidate->tests()->where('test_id', $test->id)->first();
+
+        $realIP = $this->testReportService->getClientIP();
+        $location = $this->testReportService->getLocationFromIP($realIP);
+        Log::info("location is ", $location);
         Log::info('Correct Answers: ' . $correct_answers);
         Log::info('Wrong Answers: ' . $wrong_answers);
         Log::info('Unanswered: ' . $unanswered);
@@ -1226,17 +1434,26 @@ class TestController extends Controller
             $completed_at = now();
         }
 
-        $realIP = $this->testReportService->getClientIP();
-        $location = $this->testReportService->getLocationFromIP($realIP);
-        Log::info("location is ", $location);
-
         $candidate->tests()->updateExistingPivot($test->id, [
-            'completed_at' => $completed_at,
-            'correct_answers' => $correct_answers,
-            'wrong_answers' => $wrong_answers,
             'ip_address' => $realIP,
             'status' => 'completed'
         ]);
+
+        if ($question->question_type === 'MCQ') {
+            $candidate->tests()->updateExistingPivot($test->id, [
+                'correct_answers' => $correct_answers,
+                'wrong_answers' => $wrong_answers,
+                'score' => $mcq_final_score,
+
+            ]);
+        }
+        if ($question->question_type === 'LSQ') {
+            $candidate->tests()->updateExistingPivot($test->id, [
+                'score' =>$total_score,
+                'red_flags' => $red_flags
+            ]);
+
+        }
 
         $this->testReportService->generatePDF($candidate->id, $test->id);
 
@@ -1250,12 +1467,19 @@ class TestController extends Controller
     {
         $candidate = Auth::guard('candidate')->user();
         $test = Test::with([
-            'questions.choices',
-            'questions.media',
-            'questions.answers' => function($query) use ($candidate) {
-                $query->where('candidate_id', $candidate->id);
-            }
+            'questions' => function ($query) use ($candidate) {
+                $query->with([
+                    'answers' => function ($subQuery) use ($candidate) {
+                        $subQuery->where('candidate_id', $candidate->id);
+                    },
+                    'choices',
+                    'media'
+                ]);
+            },
+            'admin'
         ])->findOrFail($id);
+
+
         $questions = $test->questions;
         $now = now();
         
@@ -1288,7 +1512,9 @@ class TestController extends Controller
                 ->count();
         }
 
-        $calculatedScore = $this->calculateScore($testAttempt->pivot->correct_answers, $testAttempt->pivot->wrong_answers, $totalQuestions);
+        $calculatedScore = $testAttempt->pivot->score;
+        $hasMCQ = $questions->contains('question_type', 'MCQ');
+        $hasLSQ = $questions->contains('question_type', 'LSQ');
 
         return view('tests.result', [
             'test' => $test,
@@ -1296,7 +1522,10 @@ class TestController extends Controller
             'testAttempt' => $testAttempt,
             'questions' => $questions,
             'isExpired' => $isExpired,
-            'calculatedScore' => $calculatedScore
+            'calculatedScore' => $calculatedScore,
+            'hasMCQ' => $hasMCQ,
+            'hasLSQ' => $hasLSQ,
+            
         ]);
     }
     
@@ -1348,8 +1577,20 @@ class TestController extends Controller
         return false;
     }
 
-    public function calculateScore($correct_answers, $wrong_answers, $totalQuestions)
+    public function calculateMCQScore($correct_answers, $wrong_answers, $totalQuestions)
     {
         return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
     }
+
+    // public function calculateLSQScore($total_questions, $total_score)
+    // {
+    //     $total_questions_without_red_flags = $total_questions - 12;
+
+    //     if ($total_questions_without_red_flags <= 0) {
+    //         return 0;
+    //     }
+
+    //     return round($total_score / ($total_questions_without_red_flags * 5) * $total_questions_without_red_flags, 2);
+    // }
+
 }

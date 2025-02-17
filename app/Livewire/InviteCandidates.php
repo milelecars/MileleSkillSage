@@ -76,7 +76,6 @@ class InviteCandidates extends Component
             'newEmail' => 'required|email|max:255',
         ]);
 
-        // Check if the email is already in the database as invited
         $existingInvitation = Invitation::where('test_id', $this->testId)
         ->whereJsonContains('invited_emails->invites', ['email' => $this->newEmail])
         ->exists();
@@ -86,7 +85,6 @@ class InviteCandidates extends Component
             return;
         }
 
-        // Check if the email is already in the current list
         $emailExistsInList = collect($this->emailList)->contains('email', $this->newEmail);
 
         if ($emailExistsInList) {
@@ -101,7 +99,6 @@ class InviteCandidates extends Component
             'email' => $this->newEmail,
         ];
     
-        // Store in session
         session(["test_{$this->testId}_emails" => $this->emailList]);
         
         $this->reset(['firstName', 'lastName', 'role', 'newEmail']);
@@ -110,9 +107,8 @@ class InviteCandidates extends Component
     public function removeEmail($index)
     {
         unset($this->emailList[$index]);
-        $this->emailList = array_values($this->emailList); // Reindex array
+        $this->emailList = array_values($this->emailList); 
         
-        // Update session
         session(["test_{$this->testId}_emails" => $this->emailList]);
     }
 

@@ -128,11 +128,9 @@
                                             {{ isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('M d, Y H:i') : '-' }}
                                         </td>
                                         <td class="px-2 py-4 text-sm">
-                                            @if(isset($candidate['completed_at']))
+                                            @if(isset($candidate['score']))
                                                 <span class="font-medium">
-                                                    {{ number_format(($candidate['correct_answers'] > 0 ? 
-                                                        (( $candidate['correct_answers'] - (1/3 * ($candidate['wrong_answers']))) /  $candidate['total_questions']) * 100 
-                                                        : 0), 1) }}%
+                                                {{$candidate['score']}}{{ $candidate['hasMCQ'] ? '%' : '' }}
                                                 </span>
                                             @else
                                                 -
