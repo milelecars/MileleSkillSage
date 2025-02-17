@@ -386,6 +386,67 @@
         .guide-color.unanswered {
             background-color: #e5e5e5;
         }
+        
+        /* Red-Flagged Section */
+        .red-flag-section {
+            background: #fdf2f2;
+            border: 1px solid #e63946;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .red-flag-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e63946;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .red-flag-category {
+            margin-bottom: 15px;
+            color: #122f53;
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: bold;
+            
+            margin-bottom: 10px;
+            text-decoration: underline;
+        }
+
+        .red-flag-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .red-flag-th {
+            background: #f8d7da;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #e63946;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+
+        }
+
+        .red-flag-td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e5e5;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .red-flag-row:nth-child(even) {
+            background: #f8f9fa;
+        }
+
 
         /* Time Info */
         .time-info {
@@ -478,6 +539,42 @@
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </table>
     </div>
+
+    <!-- Red-Flagged LSQ Questions Grouped by Category -->
+    <div class="red-flag-section">
+        <h2 class="red-flag-title">⚠️ Red-Flagged LSQ Questions</h2>
+
+        <?php $__currentLoopData = $groupedQuestions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $questions): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="red-flag-category">
+                <h3 class="category-title"><?php echo e($category); ?></h3> 
+                <table class="red-flag-table">
+                    <tr>
+                        <th class="red-flag-th">Question</th>
+                        <th class="red-flag-th">Answer</th>
+                    </tr>
+
+                    <?php $__currentLoopData = $questions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $question): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+    <tr class="red-flag-row">
+        <td class="red-flag-td"><?php echo e($question->question_text); ?></td>
+        <td class="red-flag-td">
+            <?php
+                $answer = $redFlaggedAnswers->where('question_id', $question->id)->first();
+            ?>
+            <?php if($answer): ?>
+                <?php echo e($answer['meaning']); ?>
+
+            <?php else: ?>
+                No answer provided
+            <?php endif; ?>
+        </td>
+    </tr>
+<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
+                </table>
+            </div>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+    </div>
+
 
     <!-- Test Sections -->
 

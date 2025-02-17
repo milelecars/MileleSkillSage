@@ -54,9 +54,19 @@ class TestTimer extends Component
             'end_time' => $this->endTime
         ]);
 
-        $id = $this->testId;
         $candidate = Auth::guard('candidate')->user();
-        $test = Test::with('questions.choices')->findOrFail($id);
+        $test = Test::with([
+            'questions' => function ($query) use ($candidate) {
+                $query->with([
+                    'answers' => function ($subQuery) use ($candidate) {
+                        $subQuery->where('candidate_id', $candidate->id);
+                    },
+                    'choices',
+                    'media'
+                ]);
+            },
+            'admin'
+        ])->findOrFail($this->testId);
         
         if($test->title == "General Mental Ability (GMA)"){
             $questions = $test->questions()
@@ -70,17 +80,17 @@ class TestTimer extends Component
         }
 
         Log::info('Loaded test and questions for submission', [
-            'test_id' => $id,
+            'test_id' => $this->testId,
             'candidate_id' => $candidate->id,
             'question_count' => $questions->count()
         ]);
         
         $testAttempt = $candidate->tests()
-        ->wherePivot('test_id', $id)
+        ->wherePivot('test_id', $this->testId)
         ->first();
         if (!$testAttempt) {
-            Log::error('Test attempt not found in TestTimer', ['test_id' => $id, 'candidate_id' => $candidate->id]);
-            return redirect()->route('tests.start', ['id' => $id])
+            Log::error('Test attempt not found in TestTimer', ['test_id' => $this->testId, 'candidate_id' => $candidate->id]);
+            return redirect()->route('tests.start', ['id' => $this->testId])
                 ->with('error', 'Test attempt not found.');
         }
 

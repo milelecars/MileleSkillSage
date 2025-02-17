@@ -28,23 +28,25 @@
                                 {{ $questions[$currentQuestionIndex]->question_text }}
                             </h2>
 
-                            {{-- Question Media --}}
-                            @if($questions[$currentQuestionIndex]->media && $questions[$currentQuestionIndex]->media instanceof \Illuminate\Database\Eloquent\Collection)
-                                @foreach($questions[$currentQuestionIndex]->media as $media)
-                                    @if($media->image_url)
-                                        <img src="{{ $media->image_url }}" 
-                                            alt="{{ $media->description ?? 'Question Image' }}" 
-                                            class="mb-6 max-w-full rounded-lg border border-black">
-                                    @endif
-                                @endforeach
-                            @elseif($questions[$currentQuestionIndex]->media && isset($questions[$currentQuestionIndex]->media->image_url))
-                                <img src="{{ $questions[$currentQuestionIndex]->media->image_url }}" 
-                                    alt="{{ $questions[$currentQuestionIndex]->media->description ?? 'Question Image' }}" 
-                                    class="mb-6 max-w-full rounded-lg border border-black">
+                            {{-- Show media for MCQ only --}}
+                            @if($questions[$currentQuestionIndex]->question_type === 'MCQ')
+                                @if($questions[$currentQuestionIndex]->media && $questions[$currentQuestionIndex]->media instanceof \Illuminate\Database\Eloquent\Collection)
+                                    @foreach($questions[$currentQuestionIndex]->media as $media)
+                                        @if($media->image_url)
+                                            <img src="{{ $media->image_url }}" 
+                                                alt="{{ $media->description ?? 'Question Image' }}" 
+                                                class="mb-6 max-w-full rounded-lg border border-black">
+                                        @endif
+                                    @endforeach
+                                @elseif($questions[$currentQuestionIndex]->media && isset($questions[$currentQuestionIndex]->media->image_url))
+                                    <img src="{{ $questions[$currentQuestionIndex]->media->image_url }}" 
+                                        alt="{{ $questions[$currentQuestionIndex]->media->description ?? 'Question Image' }}" 
+                                        class="mb-6 max-w-full rounded-lg border border-black">
+                                @endif
                             @endif
                         </div>
 
-                        <!-- Choices -->
+                        <!-- Answer Section -->
                         <div class="md:w-1/3 p-6 bg-gray-50">
                             <form id="questionForm" method="POST" 
                                   action="{{ $currentQuestionIndex === $questions->count() - 1 
@@ -53,23 +55,50 @@
                                 @csrf
                                 <input type="hidden" name="current_index" value="{{ $currentQuestionIndex }}">
 
-                                {{-- Choices --}}
-                                <div class="space-y-4">
-                                    @foreach($questions[$currentQuestionIndex]->choices as $choice)
-                                        <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
-                                            <input type="radio" 
-                                                name="answer" 
-                                                value="{{ $choice->id }}" 
-                                                class="mt-1 form-radio text-blue-600" 
-                                                {{ session()->get("test_session.answers.$currentQuestionIndex") === $choice->id ? 'checked' : '' }}
-                                                required>
-                                            <span class="ml-3">
-                                                <span class="font-medium">{{ chr(65 + $loop->index) }}.</span>
-                                                {{ $choice->choice_text }}
-                                            </span>
-                                        </label>
-                                    @endforeach
+                                {{-- MCQ Choices --}}
+                                @if($questions[$currentQuestionIndex]->question_type === 'MCQ')
+                                    <div class="space-y-4">
+                                        @foreach($questions[$currentQuestionIndex]->choices as $choice)
+                                            <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
+                                                <input type="radio" 
+                                                    name="answer" 
+                                                    value="{{ $choice->id }}" 
+                                                    class="mt-1 form-radio text-blue-600" 
+                                                    {{ session()->get("test_session.answers.$currentQuestionIndex") === $choice->id ? 'checked' : '' }}
+                                                    required>
+                                                <span class="ml-3">
+                                                    <span class="font-medium">{{ chr(65 + $loop->index) }}.</span>
+                                                    {{ $choice->choice_text }}
+                                                </span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                {{-- LSQ Scale (1-5) --}}
+                                @if($questions[$currentQuestionIndex]->question_type === 'LSQ')
+                                <div class="space-y-4 flex flex-col items-center justify-center ">
+                                    <input 
+                                        type="range" 
+                                        name="lsq_answers[{{ $questions[$currentQuestionIndex]->id }}]" 
+                                        min="1" 
+                                        max="5" 
+                                        step="1" 
+                                        value="{{ old('lsq_answers.' . $questions[$currentQuestionIndex]->id, 3) }}" 
+                                        class="w-[90%] cursor-pointer"
+                                        oninput="this.nextElementSibling.value = this.value"
+                                        required
+                                    >
+
+                                    <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
+                                        <div class="w-12 text-center -ml-6">Strongly Disagree</div>
+                                        <div class="w-16 text-center -ml-6">Disagree</div>
+                                        <div class="w-14 text-center -ml-1">Neutral</div>
+                                        <div class="w-12 text-center -mr-5">Agree</div>
+                                        <div class="w-12 text-center -mr-6">Strongly Agree</div>
+                                    </div>
                                 </div>
+                                @endif
 
                                 {{-- Submit Button --}}
                                 <div class="mt-6">

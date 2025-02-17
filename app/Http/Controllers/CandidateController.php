@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Test;
 use App\Models\Invitation;
+use App\Models\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -94,11 +95,9 @@ class CandidateController extends Controller
                 })
             ]);
 
-            // Now process each valid invite and check candidate-tests table
             $candidateTests = $validInvites->map(function ($item) use ($candidate) {
                 $invitation = $item['invitation'];
-                
-                // Check candidate-tests table
+                $questions = Question::where('test_id', $invitation->test_id)->get();
                 $candidateTest = DB::table('candidate_test')
                     ->where('candidate_id', $candidate->id)
                     ->where('test_id', $invitation->test_id)
@@ -110,6 +109,9 @@ class CandidateController extends Controller
                     'record_found' => !is_null($candidateTest),
                     'record' => $candidateTest
                 ]);
+                
+                $hasMCQ = $questions->contains('question_type', 'MCQ');
+                $hasLSQ = $questions->contains('question_type', 'LSQ');
 
                 if ($candidateTest) {
                     $testData = [
@@ -118,10 +120,14 @@ class CandidateController extends Controller
                         'status' => str_replace(' ', '_', $candidateTest->status), 
                         'started_at' => $candidateTest->started_at,
                         'completed_at' => $candidateTest->completed_at,
+                        'score'=> $candidateTest->score,
+                        'red_flags'=> $candidateTest->red_flags,
                         'correct_answers' => $candidateTest->correct_answers,
                         'wrong_answers' => $candidateTest->wrong_answers,
                         'questions_count' => $invitation->test->questions->count(),
-                        'has_started' => true
+                        'has_started' => true,
+                        'hasMCQ' => $hasMCQ,
+                        'hasLSQ' => $hasLSQ,
                     ];
                     \Log::debug('Returning existing test data:', $testData);
                     return $testData;
@@ -134,10 +140,14 @@ class CandidateController extends Controller
                     'status' => 'not_started',
                     'started_at' => null,
                     'completed_at' => null,
+                    'score'=> null,
+                    'red_flags'=> null,
                     'correct_answers' => null,
                     'wrong_answers' => null,
                     'questions_count' => $invitation->test->questions->count(),
-                    'has_started' => false
+                    'has_started' => false,
+                    'hasMCQ' => $hasMCQ,
+                    'hasLSQ' => $hasLSQ,
                 ];
                 \Log::debug('Returning not started test data:', $testData);
                 return $testData;
@@ -157,6 +167,8 @@ class CandidateController extends Controller
                         'status' => 'expired',
                         'started_at' => null,
                         'completed_at' => null,
+                        'score'=> null,
+                        'red_flags'=> null,
                         'correct_answers' => null,
                         'wrong_answers' => null,
                         'questions_count' => $invitation->test->questions->count(),
