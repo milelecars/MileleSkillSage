@@ -92,9 +92,9 @@
 
                                     <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
                                         <div class="w-12 text-center -ml-6">Strongly Disagree</div>
-                                        <div class="w-16 text-center -ml-6">Disagree</div>
+                                        <div class="w-16 text-center -ml-1">Disagree</div>
                                         <div class="w-14 text-center -ml-1">Neutral</div>
-                                        <div class="w-12 text-center -mr-5">Agree</div>
+                                        <div class="w-12 text-center mr-1">Agree</div>
                                         <div class="w-12 text-center -mr-6">Strongly Agree</div>
                                     </div>
                                 </div>
