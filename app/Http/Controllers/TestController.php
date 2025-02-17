@@ -1424,12 +1424,13 @@ class TestController extends Controller
         Log::info('Correct Answers: ' . $correct_answers);
         Log::info('Wrong Answers: ' . $wrong_answers);
         Log::info('Unanswered: ' . $unanswered);
-
+        
         $test_pivot = $candidate->tests()->where('test_id', $test->id)->first();
         if ($test_pivot) {
             $test_pivot = $test_pivot->pivot;
             $started_at = Carbon::parse($test_pivot->started_at);
             $completed_at = $started_at->addMinutes($test->duration);
+            Log::info('completed at: ' . $completed_at);
         } else {
             $completed_at = now();
         }

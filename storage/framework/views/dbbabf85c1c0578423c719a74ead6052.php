@@ -42,9 +42,9 @@ if (isset($__slots)) unset($__slots);
         <div class="py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
                 <div class="bg-white rounded-lg shadow-md overflow-hidden w-full">
-                    <div class="md:flex">
+                    <div class="flex">
                         <!-- Question Section -->
-                        <div class="md:w-2/3 p-6 border-r">
+                        <div class="w-[60%] p-6 border-r">
                             <div class="mb-4 text-sm text-gray-600">
                                 Question <?php echo e($currentQuestionIndex + 1); ?> of <?php echo e($questions->count()); ?>
 
@@ -73,7 +73,7 @@ if (isset($__slots)) unset($__slots);
                         </div>
 
                         <!-- Answer Section -->
-                        <div class="md:w-1/3 p-6 bg-gray-50">
+                        <div class="w-[40%] p-6 bg-gray-50">
                             <form id="questionForm" method="POST" 
                                   action="<?php echo e($currentQuestionIndex === $questions->count() - 1 
                                     ? route('tests.submit', ['id' => $test->id]) 

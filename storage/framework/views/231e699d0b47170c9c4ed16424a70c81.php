@@ -227,10 +227,7 @@
                         <?php endif; ?>
                     <?php endif; ?>
                         
-                    
-                    <?php if(Auth::guard('candidate')->check()): ?>
-                        
-                    <?php endif; ?>
+                   
                 </div>
             </div>
         </div>
