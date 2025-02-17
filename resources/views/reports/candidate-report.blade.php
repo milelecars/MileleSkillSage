@@ -541,38 +541,40 @@
     </div>
 
     <!-- Red-Flagged LSQ Questions Grouped by Category -->
-    <div class="red-flag-section">
-        <h2 class="red-flag-title">⚠️ Red-Flagged LSQ Questions</h2>
+    @if($hasLSQ)
+        <div class="red-flag-section">
+            <h2 class="red-flag-title">⚠️ Red-Flagged LSQ Questions</h2>
 
-        @foreach ($groupedQuestions as $category => $questions)
-            <div class="red-flag-category">
-                <h3 class="category-title">{{ $category }}</h3> 
-                <table class="red-flag-table">
-                    <tr>
-                        <th class="red-flag-th th-1">Question</th>
-                        <th class="red-flag-th th-2">Answer</th>
-                    </tr>
+            @foreach ($groupedQuestions as $category => $questions)
+                <div class="red-flag-category">
+                    <h3 class="category-title">{{ $category }}</h3> 
+                    <table class="red-flag-table">
+                        <tr>
+                            <th class="red-flag-th th-1">Question</th>
+                            <th class="red-flag-th th-2">Answer</th>
+                        </tr>
 
-                    @foreach ($questions as $question)
-    <tr class="red-flag-row">
-        <td class="red-flag-td">{{ $question->question_text }}</td>
-        <td class="red-flag-td">
-            @php
-                $answer = $redFlaggedAnswers->where('question_id', $question->id)->first();
-            @endphp
-            @if ($answer)
-                {{ $answer['meaning'] }}
-            @else
-                No answer provided
-            @endif
-        </td>
-    </tr>
-    @endforeach
-
-                </table>
-            </div>
+                        @foreach ($questions as $question)
+        <tr class="red-flag-row">
+            <td class="red-flag-td">{{ $question->question_text }}</td>
+            <td class="red-flag-td">
+                @php
+                    $answer = $redFlaggedAnswers->where('question_id', $question->id)->first();
+                @endphp
+                @if ($answer)
+                    {{ $answer['meaning'] }}
+                @else
+                    No answer provided
+                @endif
+            </td>
+        </tr>
         @endforeach
-    </div>
+
+                    </table>
+                </div>
+            @endforeach
+        </div>
+    @endif
 
 
     <!-- Test Sections -->
