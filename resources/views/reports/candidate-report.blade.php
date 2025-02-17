@@ -510,7 +510,12 @@
             </td>
             <td>
                 <div class="stat-label">Scoring method</div>
-                <div class="stat-value black">Percentage of correct answers</div>
+                @if($hasMCQ)
+                    <div class="stat-value black">Percentage of correct answers</div>
+                @endif
+                @if($hasLSQ)
+                <div class="stat-value black">Accumulated points, adjusted for reverse & excluding red flags</div>
+                @endif
             </td>
         </tr>
     </table>
