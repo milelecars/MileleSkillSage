@@ -141,11 +141,10 @@
 
                                         </td>
                                         <td class="px-2 py-4 text-sm">
-                                            <?php if(isset($candidate['completed_at'])): ?>
+                                            <?php if(isset($candidate['score'])): ?>
                                                 <span class="font-medium">
-                                                    <?php echo e(number_format(($candidate['correct_answers'] > 0 ? 
-                                                        (( $candidate['correct_answers'] - (1/3 * ($candidate['wrong_answers']))) /  $candidate['total_questions']) * 100 
-                                                        : 0), 1)); ?>%
+                                                <?php echo e($candidate['score']); ?><?php echo e($candidate['hasMCQ'] ? '%' : ''); ?>
+
                                                 </span>
                                             <?php else: ?>
                                                 -

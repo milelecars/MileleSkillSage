@@ -41,7 +41,7 @@ class Question extends Model
     use HasFactory;
 
     protected $fillable = [
-        'test_id', 'question_text', 'question_type'
+        'test_id', 'question_text', 'question_type', 'category', 'reverse', 'red_flag'
     ];
 
     // Question has many Choices

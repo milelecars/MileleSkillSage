@@ -129,7 +129,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
     </div>
 
     <!--[if BLOCK]><![endif]--><?php if($emailList): ?>
-        <div class="mt-6">
+        <div class="my-6">
             <button wire:click="submitInvitations" 
                     wire:loading.attr="disabled"
                     wire:target="submitInvitations"

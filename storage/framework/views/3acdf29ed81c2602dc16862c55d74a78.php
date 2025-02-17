@@ -156,14 +156,21 @@
                                         <?php endif; ?>
                                     </div>
                                     <div class="space-y-2">
-                                        <p class="text-sm text-gray-600">Score Progress</p>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">
+                                                Score: <?php echo e($hasMCQ ? ($test->pivot->correct_answers ?? '0') : "$score / $totalQuestions"); ?>
+
+                                            </span>
+                                            <span class="font-medium text-sm">
+                                                <?php echo e($hasMCQ ? $score . '%' : ''); ?>
+
+                                            </span>
+
+                                        </div>
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: <?php echo e($percentage); ?>%"></div>
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: <?php echo e($score); ?>%"></div>
                                         </div>
-                                        <div class="flex justify-between text-sm">
-                                            <span class="text-gray-600">Score: <?php echo e($test->pivot->correct_answers ?? '0'); ?> / <?php echo e($totalQuestions); ?></span>
-                                            <span class="font-medium"><?php echo e($percentage); ?>%</span>
-                                        </div>
+
                                     </div>
                                 </div>
                             </div>

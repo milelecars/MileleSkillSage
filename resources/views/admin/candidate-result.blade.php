@@ -146,14 +146,19 @@
                                         @endif
                                     </div>
                                     <div class="space-y-2">
-                                        <p class="text-sm text-gray-600">Score Progress</p>
+                                        <div class="flex justify-between">
+                                            <span class="text-gray-600">
+                                                Score: {{ $hasMCQ ? ($test->pivot->correct_answers ?? '0') : "$score / $totalQuestions" }}
+                                            </span>
+                                            <span class="font-medium text-sm">
+                                                {{ $hasMCQ ? $score . '%' : '' }}
+                                            </span>
+
+                                        </div>
                                         <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $percentage }}%"></div>
+                                            <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $score }}%"></div>
                                         </div>
-                                        <div class="flex justify-between text-sm">
-                                            <span class="text-gray-600">Score: {{ $test->pivot->correct_answers ?? '0' }} / {{ $totalQuestions }}</span>
-                                            <span class="font-medium">{{ $percentage }}%</span>
-                                        </div>
+
                                     </div>
                                 </div>
                             </div>

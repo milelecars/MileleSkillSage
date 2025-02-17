@@ -61,11 +61,9 @@
                                                 {{ $test['completed_at'] ? \Carbon\Carbon::parse($test['completed_at'])->format('M d, Y H:i') : '-' }}
                                             </td>
                                             <td class="px-2 py-4 text-base">
-                                                @if($test['correct_answers'] !== null)
+                                                @if($test['score'] !== null)
                                                     <span class="font-medium">
-                                                        {{ number_format(($test['correct_answers'] > 0 ? 
-                                                            (($test['correct_answers'] - (1/3 * ($test['wrong_answers']))) / $test['questions_count']) * 100 
-                                                            : 0), 1) }}%
+                                                        {{ $test['score'] }}{{ $test['hasMCQ'] ? '%' : '' }}
                                                     </span>
                                                 @else
                                                     -

@@ -183,12 +183,19 @@ class AdminController extends Controller
     private function getQuestions($test)
     {
         $test = Test::with([
-            'questions.choices',
-            'questions.media',
-            'questions.answers' => function($query) use ($candidate) {
-                $query->where('candidate_id', $candidate->id);
-            }
+            'questions' => function ($query) use ($candidate) {
+                $query->with([
+                    'answers' => function ($subQuery) use ($candidate) {
+                        $subQuery->where('candidate_id', $candidate->id);
+                    },
+                    'choices',
+                    'media'
+                ]);
+            },
+            'admin'
         ])->findOrFail($id);
+
+        
         $questions = $test->questions;
 
         return $questions;
@@ -211,7 +218,7 @@ class AdminController extends Controller
 
         $activeTestCandidates = Candidate::with(['tests' => function ($query) {
             $query->select('tests.id', 'title', 'description', 'duration')
-                ->withPivot('started_at', 'completed_at',  'correct_answers', 'wrong_answers' , 'ip_address', 'status');
+                ->withPivot('started_at', 'completed_at', 'score', 'red_flags',  'correct_answers', 'wrong_answers' , 'ip_address', 'status');
         }])
         ->whereHas('tests', function($query) use ($testFilter) {
             if ($testFilter) {
@@ -241,7 +248,9 @@ class AdminController extends Controller
                 } else {
                     $questions = $test->questions;
                 }
-                
+                 
+                $hasMCQ = $questions->contains('question_type', 'MCQ');
+                $hasLSQ = $questions->contains('question_type', 'LSQ');
 
                 return [
                     'id' => $candidate->id,
@@ -252,6 +261,10 @@ class AdminController extends Controller
                     'status' => $status,
                     'started_at' => $test->pivot->started_at,
                     'completed_at' => $test->pivot->completed_at,
+                    'score'=> $test->pivot->score,
+                    'hasMCQ' => $hasMCQ,
+                    'hasLSQ' => $hasLSQ,
+                    'red_flags'=> $test->pivot->red_flags,
                     'correct_answers' => $test->pivot->correct_answers,
                     'wrong_answers' => $test->pivot->wrong_answers,
                     'total_questions' => $questions->count(),
@@ -539,7 +552,7 @@ class AdminController extends Controller
             ->where('candidate_test.test_id', $test->id)
             ->where('candidate_test.candidate_id', $candidate->id)
             ->with(['questions.choices', 'questions.media'])
-            ->withPivot('started_at', 'completed_at', 'correct_answers', 'wrong_answers', 'ip_address', 'status')
+            ->withPivot('started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status')
             ->first();
     
         if (!$test) {
@@ -579,21 +592,19 @@ class AdminController extends Controller
         }
         
         $totalQuestions = $questions->count() ?? 0;
-    
-        // Calculate score using the calculateScore method
-        $correctAnswers = $test->pivot->correct_answers ?? 0;
-        $wrongAnswers = $test->pivot->wrong_answers ?? 0;
-        $percentage = $totalQuestions > 0 
-            ? $this->calculateScore($correctAnswers, $wrongAnswers, $totalQuestions)
-            : 0;
+        $score = $test->pivot->score;
+        $hasMCQ = $questions->contains('question_type', 'MCQ');
+        $hasLSQ = $questions->contains('question_type', 'LSQ');
     
         return view('admin.candidate-result', compact(
             'candidate',
             'test',
             'screenshots',
             'totalQuestions',
-            'percentage',
-            'duration'
+            'score',
+            'duration',
+            'hasMCQ',
+            'hasLSQ',
         ));
     }
     
@@ -793,10 +804,5 @@ class AdminController extends Controller
         }
     
         return back()->with('error', 'Could not create zip file.');
-    }
-
-    public function calculateScore($correct_answers, $wrong_answers, $totalQuestions)
-    {
-        return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
     }
 }

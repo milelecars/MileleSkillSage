@@ -62,16 +62,16 @@
                     {{-- content for candidates --}}
                     @if(Auth::guard('candidate')->check())
                         @if($isTestCompleted)
-                            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6" role="alert">
+                            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 rounded-lg p-4 mb-6" role="alert">
                                 <p>You have already completed this test.</p>
                                 <a href="{{ route('tests.result', ['id' => $test->id]) }}" class="font-bold underline">View Results</a>
                             </div>
                         @elseif($isInvitationExpired)
-                            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6" role="alert">
+                            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 rounded-lg p-4 mb-6" role="alert">
                                 <p>The invitation for this test has expired.</p>
                             </div>
                         @elseif($isTestStarted)
-                            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+                            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 rounded-lg p-4 mb-6" role="alert">
                                 <p>You have an ongoing test session.</p>
                                 <a href="{{ route('tests.start', ['id' => $test->id]) }}" class="font-bold underline">Continue Test</a>
                             </div>
@@ -96,91 +96,125 @@
                                 </ul>
                             </div>
                             
+                            <form action="{{ route('tests.start', $test->id) }}" method="POST" class="mt-8">
+                                @csrf
+                                <div class="p-2 flex items-center space-x-2">
+                                    <input type="checkbox" name="agreement" id="agreement" class="rounded-lg border-black" required>
+                                    <label for="agreement" class="text-sm text-gray-600">
+                                        I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">Guidelines</a>
+                                    </label>
+                                </div>
+                                <div class="flex justify-end ">
+                                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                        Start Test
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </form>
                         @endif
                     @endif
+                    
 
-                    @if($questions->count() > 0)
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Test Preview</h2>
-                        <div class=" space-y-8">
-                            @foreach ($questions->take(8) as $index => $question)
-                                <div class="bg-gray-50 p-6 rounded-lg shadow">
-                                    <p class="text-lg mb-4 font-medium text-gray-800">
-                                        {{$index + 1}}. {{ $question->question_text }}
-                                    </p>
+                    @if(Auth::guard('web')->check() || (Auth::guard('candidate')->check() && $hasMCQ))
+                        @if($questions->count() > 0)
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Test Preview</h2>
+                            <div class=" space-y-8">
+                                @foreach ($questions->take(8) as $index => $question)
+                                    <div class="bg-gray-50 p-6 rounded-lg shadow">
+                                        <p class="text-lg mb-4 font-medium text-gray-800">
+                                            {{$index + 1}}. {{ $question->question_text }}
+                                        </p>
 
-                                    @if($question->media && $question->media instanceof \Illuminate\Database\Eloquent\Collection)
-                                        @foreach($question->media as $media)
-                                            @if($media->image_url)
-                                                <img src="{{ $media->image_url }}" 
-                                                    alt="{{ $media->description ?? 'Question Image' }}" 
-                                                    class="mb-4 max-w-full h-auto rounded">
-                                            @endif
-                                        @endforeach
-                                    @elseif($question->media && isset($question->media->image_url))
-                                        <img src="{{ $question->media->image_url }}" 
-                                            alt="{{ $question->media->description ?? 'Question Image' }}" 
-                                            class="mb-4 max-w-full h-auto rounded border border-black">
-                                    @endif
-                                    
-                                    <div class="space-y-2 ml-4 mb-4">
-                                        @foreach($question->choices as $choice)
-                                            <div class="text-gray-700">
-                                                {{ chr(65 + $loop->index) }}. {{ $choice->choice_text }}
+                                        {{-- LSQ Scale (1-5) --}}
+                                        @if($hasLSQ)
+                                            <div class="space-y-4 flex flex-col items-center justify-center ">
+                                                <input 
+                                                    type="range" 
+                                                    name="lsq_answers[{{ $question->id }}]" 
+                                                    min="1" 
+                                                    max="5" 
+                                                    step="1" 
+                                                    value="{{ old('lsq_answers.' . $question->id, 3) }}" 
+                                                    class="w-[90%] cursor-pointer"
+                                                    oninput="this.nextElementSibling.value = this.value"
+                                                    required
+                                                >
+
+                                                <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
+                                                    <div class="w-30 text-center -ml-6">Strongly Disagree</div>
+                                                    <div class="w-16 text-center -ml-6">Disagree</div>
+                                                    <div class="w-14 text-center -ml-1">Neutral</div>
+                                                    <div class="w-12 text-center -mr-5">Agree</div>
+                                                    <div class="w-28 text-center -mr-6">Strongly Agree</div>
+                                                </div>
                                             </div>
-                                        @endforeach
+                                        @endif
+
+                                        
+                                        {{-- MCQ --}}
+                                        @if($hasMCQ)
+                                            @if($question->media && $question->media instanceof \Illuminate\Database\Eloquent\Collection)
+                                                @foreach($question->media as $media)
+                                                    @if($media->image_url)
+                                                        <img src="{{ $media->image_url }}" 
+                                                            alt="{{ $media->description ?? 'Question Image' }}" 
+                                                            class="mb-4 max-w-full h-auto rounded">
+                                                    @endif
+                                                @endforeach
+                                            @elseif($question->media && isset($question->media->image_url))
+                                                <img src="{{ $question->media->image_url }}" 
+                                                    alt="{{ $question->media->description ?? 'Question Image' }}" 
+                                                    class="mb-4 max-w-full h-auto rounded border border-black">
+                                            @endif
+                                            
+                                            <div class="space-y-2 ml-4 mb-4">
+                                                @foreach($question->choices as $choice)
+                                                    <div class="text-gray-700">
+                                                        {{ chr(65 + $loop->index) }}. {{ $choice->choice_text }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                            
+                                            @php
+                                                $correctChoice = $question->choices->firstWhere('is_correct', true);
+                                                $correctIndex = $correctChoice ? $question->choices->search($correctChoice) : null;
+                                            @endphp
+                                            @if($correctIndex !== null)
+                                                <p class="mt-4 font-semibold text-green-600">
+                                                    Answer: {{ chr(65 + $correctIndex) }}
+                                                </p>
+                                            @endif
+
+                                            @if($test->title == "General Mental Ability (GMA)" && Auth::guard('candidate')->check())
+                                                <span>
+                                                    {{$questionsExplained[$index]}}
+                                                </span>
+                                            @endif
+                                        @endif
+
                                     </div>
-                                    
-                                    @php
-                                        $correctChoice = $question->choices->firstWhere('is_correct', true);
-                                        $correctIndex = $correctChoice ? $question->choices->search($correctChoice) : null;
-                                    @endphp
-                                    @if($correctIndex !== null)
-                                        <p class="mt-4 font-semibold text-green-600">
-                                            Answer: {{ chr(65 + $correctIndex) }}
+                                @endforeach
+
+                                {{-- test preview for admin users --}}
+                                @if(Auth::guard('web')->check())
+                                    @if($questions->count() > 10)
+                                        <p class="text-gray-600 italic mt-4">
+                                            Showing 10 out of {{ $questions->count() }} questions...
                                         </p>
                                     @endif
-
-                                    @if($test->title == "General Mental Ability (GMA)" && Auth::guard('candidate')->check())
-                                        <span>
-                                            {{$questionsExplained[$index]}}
-                                        </span>
-                                    @endif
-                                </div>
-                            @endforeach
-
-                            {{-- test preview for admin users --}}
-                            @if(Auth::guard('web')->check())
-                                @if($questions->count() > 10)
-                                    <p class="text-gray-600 italic mt-4">
-                                        Showing 10 out of {{ $questions->count() }} questions...
-                                    </p>
                                 @endif
-                            @endif
 
-                        </div>
-                    @else
-                        <p class="text-gray-600 italic">No questions available for this test.</p>
+                            </div>
+                        @else
+                            <p class="text-gray-600 italic">No questions available for this test.</p>
+                        @endif
                     @endif
                         
                     {{-- content for candidates --}}
                     @if(Auth::guard('candidate')->check())
-                        <form action="{{ route('tests.start', $test->id) }}" method="POST" class="mt-8">
-                            @csrf
-                            <div class="p-2 flex items-center space-x-2">
-                                <input type="checkbox" name="agreement" id="agreement" class="rounded-lg border-black" required>
-                                <label for="agreement" class="text-sm text-gray-600">
-                                    I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">Guidelines</a>
-                                </label>
-                            </div>
-                            <div class="flex justify-end ">
-                                <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                    Start Test
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </form>
+                        
                     @endif
                 </div>
             </div>
