@@ -20,7 +20,7 @@
                 <div class="bg-white rounded-lg shadow-md overflow-hidden w-full">
                     <div class="md:flex">
                         <!-- Question Section -->
-                        <div class="md:w-2/3 p-6 border-r">
+                        <div class="md:w-[60%] p-6 border-r">
                             <div class="mb-4 text-sm text-gray-600">
                                 Question {{ $currentQuestionIndex + 1 }} of {{ $questions->count() }}
                             </div>
@@ -47,7 +47,7 @@
                         </div>
 
                         <!-- Answer Section -->
-                        <div class="md:w-1/3 p-6 bg-gray-50">
+                        <div class="md:w-[40%] p-6 bg-gray-50">
                             <form id="questionForm" method="POST" 
                                   action="{{ $currentQuestionIndex === $questions->count() - 1 
                                     ? route('tests.submit', ['id' => $test->id]) 

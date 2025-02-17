@@ -212,10 +212,7 @@
                         @endif
                     @endif
                         
-                    {{-- content for candidates --}}
-                    @if(Auth::guard('candidate')->check())
-                        
-                    @endif
+                   
                 </div>
             </div>
         </div>

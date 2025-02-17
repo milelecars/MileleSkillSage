@@ -96,8 +96,12 @@ class TestReportService
                 ->count();
         }
 
-        $hasMCQ = $totalQuestions->contains('question_type', 'MCQ');
-        $hasLSQ = $totalQuestions->contains('question_type', 'LSQ');
+        $questions = DB::table('questions')
+            ->where('test_id', $testId)
+            ->get(); 
+
+        $hasMCQ = $questions->contains('question_type', 'MCQ');
+        $hasLSQ = $questions->contains('question_type', 'LSQ');
 
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
