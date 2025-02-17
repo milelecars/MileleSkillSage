@@ -1437,7 +1437,8 @@ class TestController extends Controller
 
         $candidate->tests()->updateExistingPivot($test->id, [
             'ip_address' => $realIP,
-            'status' => 'completed'
+            'status' => 'completed',
+            'completed_at' => $completed_at
         ]);
 
         if ($question->question_type === 'MCQ') {
