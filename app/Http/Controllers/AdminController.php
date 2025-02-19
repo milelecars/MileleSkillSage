@@ -145,6 +145,14 @@ class AdminController extends Controller
             foreach ($emailTestMap as $email => $testIds) {
                 if (empty($testIds)) continue;
             
+                $candidate = DB::table('candidates')->where('email', $email)->first();
+
+                if ($candidate && !empty($candidate->name)) {
+                    $nameParts = explode(' ', trim($candidate->name), 2);
+                    $firstName = $nameParts[0] ?? 'Unknown';
+                    $lastName = $nameParts[1] ?? 'User';
+                }
+
                 foreach ($testIds as $testId) {
                     $invitation = Invitation::where('test_id', $testId)->firstOrFail();
                     
@@ -154,6 +162,9 @@ class AdminController extends Controller
                     if (!collect($currentInvites)->contains('email', $email)) {
                         $currentInvites[] = [
                             'email' => $email,
+                            'firstName' => $firstName,
+                            'lastName' => $lastName,
+                            'role' => $role,
                             'invited_at' => now()->toISOString(),
                             'deadline' => now()->addDays(2)->toISOString() 
                         ];
