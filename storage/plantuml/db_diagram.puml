@@ -31,15 +31,21 @@ entity "Candidate Test" {
   * started_at : datetime
   * completed_at : datetime
   * score : int
-  * report_path: string
+  * red_flags : JSON 
+  * correct_answers : int 
+  * wrong_answers : int 
+  * report_path : string
   * ip_address : text
   * status : enam
+  * created_at : datetime
+  * updated_at : datetime
 }
 
 entity "Candidate Test Screenshots" {
   * id : int
   --
-  * candidate_test_id : int
+  * test_id : int
+  * candidate_id : int
   * screenshot_path : varchar
   * created_at : datetime
   * updated_at : datetime
@@ -51,6 +57,9 @@ entity "Questions" {
   * test_id : int
   * question_text : text
   * question_type : varchar (e.g., 'mcq', 'short_answer')
+  * category : text
+  * reverse : boolean
+  * red_flag : boolean 
   * created_at : datetime
   * updated_at : datetime
 }

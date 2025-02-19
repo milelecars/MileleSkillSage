@@ -87,8 +87,9 @@ class AdminController extends Controller
             DB::beginTransaction();
             
             $emailTestMap = $request->input('email_test_map');
+            $role = $request->input('role');
             $oAuthController = new OAuthController();
-            
+
             try {
                 $client = $oAuthController->getClient();
                 $service = new Gmail($client);
@@ -110,8 +111,8 @@ class AdminController extends Controller
     
                         
                         $htmlContent = str_replace(
-                            ['{{ $testName }}', '{{ $invitationLink }}'],
-                            [$test->title, $invitation->invitation_link],
+                            ['{{ $testName }}', '{{ $invitationLink }}', '{{ $role }}'],
+                            [$test->title, $invitation->invitation_link,  $role],
                             $template
                         );
     
