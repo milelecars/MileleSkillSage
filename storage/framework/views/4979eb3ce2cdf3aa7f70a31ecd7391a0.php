@@ -424,6 +424,14 @@
             border-radius: 10px;
         }
 
+        .th-1 {
+            border-top-left-radius: 10px;
+        }
+
+        .th-2 {
+            border-top-right-radius: 10px;
+        }
+
         .red-flag-th {
             background: #f8d7da;
             font-size: 14px;
@@ -431,9 +439,6 @@
             padding: 10px;
             text-align: left;
             border-bottom: 2px solid #e63946;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-
         }
 
         .red-flag-td {
@@ -500,16 +505,17 @@
                 <div class="stat-value black"><?php echo e($status); ?></div>
             </td>
             <td>
-                <div class="stat-label center">Average score</div>
-                <div class="stat-value"><?php echo e($averageScore); ?>%</div>
-            </td>
-            <td>
-                <div class="stat-label center">Weighted</div>
-                <div class="stat-value"><?php echo e($weightedScore); ?>%</div>
+                <div class="stat-label center">Score</div>
+                <div class="stat-value"><?php echo e($score); ?> <?php echo e($hasMCQ ? $score . '%' : ''); ?></div>
             </td>
             <td>
                 <div class="stat-label">Scoring method</div>
-                <div class="stat-value black">Percentage of correct answers</div>
+                <?php if($hasMCQ): ?>
+                    <div class="stat-value black">Percentage of correct answers</div>
+                <?php endif; ?>
+                <?php if($hasLSQ): ?>
+                <div class="stat-value black">Accumulated points, adjusted for reverse & excluding red flags</div>
+                <?php endif; ?>
             </td>
         </tr>
     </table>
@@ -541,39 +547,41 @@
     </div>
 
     <!-- Red-Flagged LSQ Questions Grouped by Category -->
-    <div class="red-flag-section">
-        <h2 class="red-flag-title">⚠️ Red-Flagged LSQ Questions</h2>
+    <?php if($hasLSQ): ?>
+        <div class="red-flag-section">
+            <h2 class="red-flag-title">⚠️ Red-Flagged LSQ Questions</h2>
 
-        <?php $__currentLoopData = $groupedQuestions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $questions): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-            <div class="red-flag-category">
-                <h3 class="category-title"><?php echo e($category); ?></h3> 
-                <table class="red-flag-table">
-                    <tr>
-                        <th class="red-flag-th">Question</th>
-                        <th class="red-flag-th">Answer</th>
-                    </tr>
+            <?php $__currentLoopData = $groupedQuestions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $questions): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <div class="red-flag-category">
+                    <h3 class="category-title"><?php echo e($category); ?></h3> 
+                    <table class="red-flag-table">
+                        <tr>
+                            <th class="red-flag-th th-1">Question</th>
+                            <th class="red-flag-th th-2">Answer</th>
+                        </tr>
 
-                    <?php $__currentLoopData = $questions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $question): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-    <tr class="red-flag-row">
-        <td class="red-flag-td"><?php echo e($question->question_text); ?></td>
-        <td class="red-flag-td">
-            <?php
-                $answer = $redFlaggedAnswers->where('question_id', $question->id)->first();
-            ?>
-            <?php if($answer): ?>
-                <?php echo e($answer['meaning']); ?>
+                        <?php $__currentLoopData = $questions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $question): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <tr class="red-flag-row">
+            <td class="red-flag-td"><?php echo e($question->question_text); ?></td>
+            <td class="red-flag-td">
+                <?php
+                    $answer = $redFlaggedAnswers->where('question_id', $question->id)->first();
+                ?>
+                <?php if($answer): ?>
+                    <?php echo e($answer['meaning']); ?>
 
-            <?php else: ?>
-                No answer provided
-            <?php endif; ?>
-        </td>
-    </tr>
-<?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-
-                </table>
-            </div>
+                <?php else: ?>
+                    No answer provided
+                <?php endif; ?>
+            </td>
+        </tr>
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-    </div>
+
+                    </table>
+                </div>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </div>
+    <?php endif; ?>
 
 
     <!-- Test Sections -->

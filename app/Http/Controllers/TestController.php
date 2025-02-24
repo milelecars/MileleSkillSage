@@ -763,7 +763,13 @@ class TestController extends Controller
             $startTime = now();
             $endTime = $startTime->copy()->addMinutes($test->duration);
             $allQuestionIds = $questions->pluck('id')->toArray();
-            
+
+            // Randomize LSQ questions
+            $hasLSQ = $test->questions->contains('question_type', 'LSQ');
+            if ($hasLSQ) {
+                shuffle($allQuestionIds);
+            }
+
             $testSession = [
                 'test_id' => $test->id,
                 'start_time' => $startTime->toDateTimeString(),
@@ -773,49 +779,13 @@ class TestController extends Controller
                 'question_order' => $allQuestionIds,
                 'total_questions' => count($allQuestionIds)
             ];
+            session(['test_session' => $testSession]);        
+            
             $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
             $candidate->tests()->updateExistingPivot($id, [
                 'started_at' => $startTime,
                 'status' => 'in progress'
             ]);
-    
-            Log::info('Test session initialized', [
-                'test_id' => $test->id,
-                'start_time' => $startTime,
-                'candidate_id' => $candidate->id
-            ]);
-
-            //    Randomization
-            // $startTime = now();
-            // $endTime = $startTime->copy()->addMinutes($test->duration);
-            
-            // $allQuestionIds = $questions->pluck('id')->toArray();
-
-            // $indices = range(0, count($allQuestionIds) - 1);
-            // for ($i = count($indices) - 1; $i > 0; $i--) {
-            //     $j = random_int(0, $i);
-            //     [$indices[$i], $indices[$j]] = [$indices[$j], $indices[$i]];
-            // }
-            
-            // $allQuestionIds = array_map(function($index) use ($allQuestionIds) {
-            //     return $allQuestionIds[$index];
-            // }, $indices);
-            
-            // $testSession = [
-            //     'test_id' => $test->id,
-            //     'start_time' => $startTime->toDateTimeString(),
-            //     'end_time' => $endTime->toDateTimeString(),
-            //     'current_question' => 0,
-            //     'answers' => [],
-            //     'question_order' => $allQuestionIds,
-            //     'total_questions' => count($allQuestionIds)
-            // ];        
-            
-            // $existingAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
-            // $candidate->tests()->updateExistingPivot($id, [
-            //     'started_at' => $startTime,
-            //     'status' => 'in progress'
-            // ]);
             
         } else {
             $startTime = Carbon::parse($testSession['start_time']);
@@ -826,11 +796,7 @@ class TestController extends Controller
             } else {
                 $endTime = Carbon::parse($testSession['end_time']);
             }
-        }
-        $allQuestionIds = $questions->pluck('id')->toArray();
-        if (!isset($testSession['question_order'])) {
-            $testSession['question_order'] = $allQuestionIds;
-        }            
+        }        
     
         $questions = $questions->sortBy(function($question) use ($testSession) {
             return array_search($question->id, $testSession['question_order']);
@@ -922,7 +888,7 @@ class TestController extends Controller
         }
 
         $currentIndex = intval($request->input('current_index', 0));
-
+        $allQuestionIds = $testSession['question_order'];
 
         if ($test->title == "General Mental Ability (GMA)") {
             $questions = $test->questions()
@@ -934,8 +900,8 @@ class TestController extends Controller
             $questions = $test->questions;
         }
 
-        $questions = $questions->sortBy(function ($question) use ($testSession) {
-            return array_search($question->id, $testSession['question_order']);
+        $questions = $questions->sortBy(function($question) use ($allQuestionIds) {
+            return array_search($question->id, $allQuestionIds);
         })->values();
 
         // Ensure questions array is not empty
@@ -949,8 +915,13 @@ class TestController extends Controller
                 ->with('error', 'Invalid question index or no questions found.');
         }
 
+        
+        if ($currentIndex >= count($questions)) {
+            return $this->submitTest($request, $id);
+        }
+
+
         $currentQuestion = $questions[$currentIndex];
-        // Debugging: Log the request data
         Log::info('Request Data', $request->all());
 
         // Check the current question type
@@ -959,7 +930,6 @@ class TestController extends Controller
             'question_type' => $currentQuestion->question_type
         ]);
 
-        // Dynamic validation based on question type
         $validationRules = [
             'current_index' => 'required|numeric',
         ];
@@ -1004,7 +974,6 @@ class TestController extends Controller
         // Save LSQ Answer
         if ($currentQuestion->question_type === 'LSQ' && $request->has("lsq_answers.{$currentQuestion->id}")) {
             $lsqValue = intval($request->input("lsq_answers.{$currentQuestion->id}"));
-            Log::info('hi', ['value' => $lsqValue]);
 
             Answer::updateOrCreate(
                 [
@@ -1045,6 +1014,12 @@ class TestController extends Controller
 
         try { 
             $candidate = Auth::guard('candidate')->user();
+            $testSession = session('test_session');
+
+            if (!$testSession || $testSession['test_id'] != $id) {
+                return redirect()->route('tests.start', ['id' => $id])
+                    ->with('error', 'Invalid test session.');
+            }
 
             $test = Test::with([
                 'questions.choices' => function ($query) {
@@ -1065,10 +1040,20 @@ class TestController extends Controller
 
             // Filter questions based on test type
             if ($test->title == "General Mental Ability (GMA)") {
-                $questions = $test->questions()->with(['choices', 'media'])->skip(8)->take(PHP_INT_MAX)->get();
+                $questions = $test->questions()
+                    ->with(['choices', 'media'])
+                    ->skip(8)
+                    ->take(PHP_INT_MAX)
+                    ->get();
             } else {
                 $questions = $test->questions;
             }
+            
+            $allQuestionIds = $testSession['question_order'];
+    
+            $questions = $questions->sortBy(function($question) use ($allQuestionIds) {
+                return array_search($question->id, $allQuestionIds);
+            })->values();
             
             Log::info('Total Questions After Filtering:', [
                 'test_id' => $id,
@@ -1226,6 +1211,7 @@ class TestController extends Controller
             Log::info("Location Data", $location);
 
             $started_at = Carbon::parse($testAttempt->pivot->started_at);
+
             $candidate->tests()->updateExistingPivot($id, [
                 'completed_at' => now() > $started_at->copy()->addMinutes($test->duration)
                 ? $started_at->copy()->addMinutes($test->duration)
@@ -1577,6 +1563,20 @@ class TestController extends Controller
         }
 
         return false;
+    }
+
+    private function getQuestions($testSession)
+    {
+        $allQuestionIds = $testSession['question_order'];
+        $questions = Question::with(['choices', 'media'])
+            ->whereIn('id', $allQuestionIds)
+            ->get()
+            ->sortBy(function($question) use ($allQuestionIds) {
+                return array_search($question->id, $allQuestionIds);
+            })
+            ->values();
+
+        return $questions;
     }
 
     public function calculateMCQScore($correct_answers, $wrong_answers, $totalQuestions)
