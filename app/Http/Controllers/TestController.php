@@ -1606,18 +1606,17 @@ class TestController extends Controller
     {
         $request->validate([
             'description' => 'required|string',
-            'evidence' => 'required|file|mimes:jpg,png,pdf|max:2048',
+            'evidence' => 'required|file|mimes:jpg,png',
         ]);
 
         $candidate = Auth::guard('candidate')->user();
 
-        // Save the unsuspension request details
         DB::table('candidate_test')
             ->where('candidate_id', $candidate->id)
             ->where('test_id', $testId)
             ->update([
-                'suspension_reason' => $request->description, // Store the candidate's description
-                'evidence_path' => $request->file('evidence')->store('unsuspension_evidence'), // Store the evidence file path
+                'suspension_reason' => $request->description,
+                'evidence_path' => $request->file('evidence')->store('unsuspension_evidence'), 
             ]);
 
         return redirect()->route('candidate.dashboard')
@@ -1630,7 +1629,6 @@ class TestController extends Controller
             'testId' => 'required|exists:tests,id',
             'candidateId' => 'required|exists:candidates,id',
             'violationType' => 'required|string',
-            // 'remainingTime' => 'required|integer',
         ]);
 
         $candidateTest = DB::table('candidate_test')
@@ -1638,7 +1636,6 @@ class TestController extends Controller
             ->where('test_id', $request->testId)
             ->first();
 
-        // Check if the test has already been suspended
         if ($candidateTest->is_suspended) {
             return response()->json([
                 'success' => false,
@@ -1646,17 +1643,17 @@ class TestController extends Controller
             ], 400);
         }
 
-        // Update the candidate_test record with suspension details
         DB::table('candidate_test')
             ->where('candidate_id', $request->candidateId)
             ->where('test_id', $request->testId)
             ->update([
                 'status' => 'suspended',
-                // 'remaining_time' => $request->remainingTime,
                 'suspended_at' => now(),
                 'suspension_reason' => $request->violationType,
                 'is_suspended' => true,
             ]);
+
+        Log::info('Test is suspended.');
 
         return response()->json([
             'success' => true,
@@ -1664,4 +1661,22 @@ class TestController extends Controller
         ]);
     }
 
+    public function getUnsuspendCount(Request $request)
+    {
+        $request->validate([
+            'testId' => 'required|integer',
+            'candidateId' => 'required|integer',
+        ]);
+
+        $candidateTest = DB::table('candidate_test')
+            ->where('candidate_id', $request->candidateId)
+            ->where('test_id', $request->testId)
+            ->first();
+
+        Log::info('here is', [$candidateTest->unsuspend_count]);
+
+        return response()->json([
+            'unsuspend_count' => $candidateTest ? $candidateTest->unsuspend_count : 0,
+        ]);
+    }
 }

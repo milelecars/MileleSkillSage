@@ -119,6 +119,7 @@ Route::middleware('auth:candidate')->group(function () {
     Route::get('/tests/{testId}/suspended', [TestController::class, 'showSuspended'])->name('tests.suspended');
     Route::post('/tests/{testId}/request-unsuspension', [TestController::class, 'requestUnsuspension'])->name('tests.request-unsuspension');
     Route::post('/log-suspension', [TestController::class, 'logSuspension'])->name('tests.log-suspension');
+    Route::post('/get-unsuspend-count', [TestController::class, 'getUnsuspendCount']);
 });
 
 // Logout route (accessible to both admins and candidates)

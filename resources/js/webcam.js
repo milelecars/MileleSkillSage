@@ -10,10 +10,11 @@ class WebcamManager {
         // Check if we're on a test page with camera enabled
         this.testId = document.getElementById('test-id')?.value ?? null;
         this.candidateId = document.getElementById('candidate-id')?.value ?? null;
+        this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         this.specificPageRegex = /^\/tests\/\d+\/setup$/;
 
-        this.violationThreshold = 3; // Threshold for violations
-        this.violationThresholdCameraOff = 2; // Threshold for violations
+        this.violationThreshold = 30;
+        this.violationThresholdCameraOff = 30;
         this.violationCounts = {
             multiplePeople: 0,
             cameraTurnedOff: 0,
@@ -204,15 +205,61 @@ class WebcamManager {
         
     }
 
+    handleViolation(metricName, message) {
+        this.violationCounts[metricName] = (this.violationCounts[metricName] || 0) + 1;
+        const currentCount = this.violationCounts[metricName];
+
+        console.log(`⚠️ ${message} (Count: ${currentCount})`);
+        this.updateViolationLog(`${message} (${currentCount})`);
+
+        if (this.violationCounts[metricName] >= this.violationThreshold) {
+            this.suspendTest(metricName);
+        }
+    }
+
+    updateViolationLog(message) {
+        const logDiv = document.getElementById('violation-log');
+        if (logDiv) {
+            logDiv.textContent = message;
+        }
+    }
+
     async suspendTest(violationType) {
         console.log(`Test suspended due to excessive ${violationType}`);
     
-        // const remainingTime = this.calculateRemainingTime();
+        try { 
+            await this.logSuspension(violationType);
+            
+            const response = await fetch('/get-unsuspend-count', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                },
+                body: JSON.stringify({
+                    testId: this.testId,
+                    candidateId: this.candidateId,
+                }),
+            });
     
-        // await this.logSuspension(violationType, remainingTime);
-        await this.logSuspension(violationType);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
     
-        window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+            const data = await response.json();
+    
+            if (data.unsuspend_count == 1) {
+                window.location.href = '/candidate/dashboard';
+                return;
+            }else{
+                window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+            }
+    
+           
+    
+        } catch (error) {
+            console.error('Error during suspension:', error);
+        }
     }
     
     // async calculateRemainingTime() {
@@ -270,13 +317,12 @@ class WebcamManager {
     //     }
     // }
     
-    async logSuspension(violationType, remainingTime) {
+    async logSuspension(violationType) {
         try {
             console.log('Sending suspension data to backend:', {
                 testId: this.testId,
                 candidateId: this.candidateId,
                 violationType: violationType,
-                remainingTime: remainingTime,
             });
     
             const response = await fetch('/log-suspension', {
@@ -289,7 +335,6 @@ class WebcamManager {
                     testId: this.testId,
                     candidateId: this.candidateId,
                     violationType: violationType,
-                    remainingTime: remainingTime,
                 }),
             });
     
@@ -384,57 +429,66 @@ class WebcamManager {
         let statusMessage = '';
         const now = Date.now();
     
-        // Helper function to handle violations
-        const handleViolation = (condition, type) => {
-            if (condition) {
-                this.violationFrameCounters[type]++;
-                
-                if (this.violationFrameCounters[type] >= this.FRAME_THRESHOLD) {
-                    const timeSinceLastViolation = now - this.lastViolationTimes[type];
-                    
-                    if (timeSinceLastViolation >= this.COOLDOWN_PERIOD) {
-                        document.dispatchEvent(new CustomEvent('webcamViolation', {
-                            detail: { violation: type }
-                        }));
-                        this.lastViolationTimes[type] = now;
-                        console.log(`Violation recorded for ${type}`);
-                    }
-                    this.violationFrameCounters[type] = 0;
-                }
-            } else {
-                this.violationFrameCounters[type] = 0;
-            }
-        };
-    
-        // Update status message and handle violations
+        
+        // Multiple people detected
         if (personCount > 1) {
             statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
-            handleViolation(true, 'More than One Person');
+            this.handleViolation('multiplePeople', 'Multiple people detected!');
             this.hideNoPersonPopup(); // Hide popup if multiple people are detected
         } else if (personCount === 0) {
             statusMessage += "<p style='color: red;'>No one is present!</p>";
-            handleViolation(false, 'More than One Person');
             this.showNoPersonPopup(); // Show popup if no person is detected
         } else {
             statusMessage += "<p style='color: green;'>One person detected</p>";
-            handleViolation(false, 'More than One Person');
             this.hideNoPersonPopup(); // Hide popup if one person is detected
         }
     
+        // Book detected
         if (hasBook) {
-            statusMessage += "<p>Book detected</p>";
-            handleViolation(true, 'Book');
-        } else {
-            handleViolation(false, 'Book');
+            statusMessage += "<p style='color: orange;'>Book detected!</p>";
+            this.handleViolation('bookDetected', 'Book detected!');
         }
-    
+
+        // Cell phone detected
         if (hasCellPhone) {
-            statusMessage += "<p>Cell phone detected</p>";
-            handleViolation(true, 'Cellphone');
-        } else {
-            handleViolation(false, 'Cellphone');
+            statusMessage += "<p style='color: orange;'>Cell phone detected!</p>";
+            this.handleViolation('cellPhoneDetected', 'Cell phone detected!');
         }
-    
+
+        // Update status message
+        if (this.detectionStatus) {
+            this.detectionStatus.innerHTML = statusMessage;
+        }
+
+        // Multiple people detected
+        if (personCount > 1) {
+            this.violationCounts.multiplePeople++;
+            statusMessage += `<p style='color: orange;'>${personCount} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`;
+
+            // Check if violation threshold is exceeded
+            if (this.violationCounts.multiplePeople >= this.violationThreshold) {
+                this.suspendTest('multiplePeople');
+            }
+        } else {
+            // Reset the count if no violation
+            this.violationCounts.multiplePeople = 0;
+        }
+
+        // Camera turned off
+        if (!this.stream || !this.stream.active) {
+            this.violationCounts.cameraTurnedOff++;
+            statusMessage += `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`;
+
+            // Check if violation threshold is exceeded
+            if (this.violationCounts.cameraTurnedOff >= this.violationThresholdCameraOff) {
+                this.suspendTest('cameraTurnedOff');
+            }
+        } else {
+            // Reset the count if camera is active
+            this.violationCounts.cameraTurnedOff = 0;
+        }
+
+        // Update status message
         if (this.detectionStatus) {
             this.detectionStatus.innerHTML = statusMessage;
         }

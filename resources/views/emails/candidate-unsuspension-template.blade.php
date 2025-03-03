@@ -23,7 +23,7 @@
             <li>The test is timed, so please ensure you have a quiet, uninterrupted period to complete it.</li>
             <li>Make sure you have a stable internet connection before starting.</li>
             <li>Read all instructions carefully before beginning each section.</li>
-            <li>The test link will remain active for 48 hours, so please ensure you complete it within this period.</li>
+            <li>Please ensure you complete the test within 48 hours of the original invitation time.</li>
         </ul>
         
         <p>For any technical issues or inquiries, please feel free to reach out to our HR department at <a href="mailto:testsupport@milele.com">testsupport@milele.com</a></p>

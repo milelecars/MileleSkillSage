@@ -12,7 +12,7 @@ class TestMonitoring {
             this.candidateId = candidateId;
             this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             this.metrics = {};
-            this.violationThreshold = 3; // Threshold for violations
+            this.violationThreshold = 3; 
             this.violationCounts = {
                 windowBlurs: 0,
                 tabSwitches: 0,
@@ -51,21 +51,17 @@ class TestMonitoring {
             event.preventDefault();
         }
         
-        // Increment local metric
         this.metrics[metricName] = (this.metrics[metricName] || 0) + 1;
-        const currentCount = this.metrics[metricName];// Increment violation count
+        const currentCount = this.metrics[metricName];
         this.violationCounts[metricName] = (this.violationCounts[metricName] || 0) + 1;
         
-        // Log to console and UI
         console.log(`⚠️ ${message} (Count: ${currentCount})`);
         this.updateViolationLog(`${message} (${currentCount})`);
         
-        // Check if threshold is exceeded
         if (this.violationCounts[metricName] >= this.violationThreshold) {
             this.suspendTest(metricName);
         }
 
-        // Log to backend
         const flagType = this.getFlagTypeFromMetric(metricName);
         this.logSuspiciousBehavior(flagType, currentCount);
     }
@@ -74,13 +70,39 @@ class TestMonitoring {
     async suspendTest(violationType) {
         console.log(`Test suspended due to excessive ${violationType}`);
     
-        // const remainingTime = this.calculateRemainingTime();
+        try { 
+            await this.logSuspension(violationType);
+            
+            const response = await fetch('/get-unsuspend-count', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                },
+                body: JSON.stringify({
+                    testId: this.testId,
+                    candidateId: this.candidateId,
+                }),
+            });
     
-        // await this.logSuspension(violationType, remainingTime);
-        await this.logSuspension(violationType);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
     
-
-        window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+            const data = await response.json();
+    
+            if (data.unsuspend_count == 1) {
+                window.location.href = '/candidate/dashboard';
+                return;
+            }else{
+                window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+            }
+    
+           
+    
+        } catch (error) {
+            console.error('Error during suspension:', error);
+        }
     }
     
     // async calculateRemainingTime() {
@@ -138,13 +160,12 @@ class TestMonitoring {
     //     }
     // }
     
-    async logSuspension(violationType, remainingTime) {
+    async logSuspension(violationType) {
         try {
             console.log('Sending suspension data to backend:', {
                 testId: this.testId,
                 candidateId: this.candidateId,
                 violationType: violationType,
-                remainingTime: remainingTime,
             });
     
             const response = await fetch('/log-suspension', {
@@ -157,15 +178,12 @@ class TestMonitoring {
                     testId: this.testId,
                     candidateId: this.candidateId,
                     violationType: violationType,
-                    remainingTime: remainingTime,
                 }),
             });
     
             if (!response.success) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-    
-            // console.log('hi');
             
             // if (response.success) {
             //     window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
