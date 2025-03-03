@@ -631,7 +631,7 @@ class AdminController extends Controller
     }
     
 
-    private function sendEmailWithGmail($candidate, $template, $subject)
+    private function sendEmailWithGmail($candidate, $template, $subject, $test = null)
     {
         try {
             $oAuthController = new OAuthController();
@@ -641,8 +641,8 @@ class AdminController extends Controller
             // Get email template and replace variables
             $template = file_get_contents(resource_path("views/emails/{$template}.blade.php"));
             $htmlContent = str_replace(
-                '{{ $candidate->name }}',
-                $candidate->name,
+                ['{{ $candidate->name }}', '{{ $testName }}'],
+                [$candidate->name, ($test ? $test->title : 'N/A')],
                 $template
             );
 
@@ -744,7 +744,13 @@ class AdminController extends Controller
                 ->first();
 
             $candidate = DB::table('candidates')
-            ->where('candidate_id', $candidateId);
+            ->where('id', $candidateId)->first();
+
+            $test = DB::table('tests')
+            ->where('id', $testId)
+            ->first();
+
+            Log::info([$candidate]);
 
             if (!$candidateTest) {
                 return redirect()->back()->with('error', 'Candidate test record not found.');
@@ -754,7 +760,8 @@ class AdminController extends Controller
             $emailSent = $this->sendEmailWithGmail(
                 $candidate, 
                 'candidate-unsuspension-template',
-                'Your Test Status - Milele Motors'
+                'Your Test Status - Milele Motors',
+                $test,
             );
 
             // Check if the test has already been unsuspended

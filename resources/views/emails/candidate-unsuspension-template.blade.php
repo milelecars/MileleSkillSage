@@ -11,22 +11,11 @@
         
         <p>We hope this email finds you well.</p>
         
-        <p>We are writing to inform you that your access to the <strong>"{{ $testName }}"</strong> assessment has been reinstated. This is your final opportunity to complete the test as part of our evaluation process for the role of <strong>"{{ $role }}"</strong>.</p>
+        <p>We are writing to inform you that your access to the <strong>"{{ $testName }}"</strong> assessment has been reinstated. This is your final opportunity to complete the test as part of our evaluation process.</p>
         
-        <p>Please note that this will be your <strong>last chance</strong> to complete the test. You will not be given another opportunity to take the test after this reinstatement.</p>
+        <p>Please note that this will be your <strong><u>last chance</u></strong> to complete the test. You will not be given another opportunity to take the test after this reinstatement.</p>
         
-        <p>To begin the test, please click on the link below:</p>
-
-        <p style="text-align: center;">
-            <a href="{{ $invitationLink }}" 
-            style="background-color: #0056b3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-            Start the Test
-            </a>
-        </p>
-
-        <div style="background-color: #ffeeee; border: 1px solid #ff0000; padding: 10px; margin: 10px 0; text-align: center; border-radius: 5px;">
-            ⚠️This test can ONLY be accessed from a desktop or laptop computer.
-        </div>
+        <p>To access the test, please use the same link shared previously.</p>
         
         <p>Important Information:</p>
         <ul>

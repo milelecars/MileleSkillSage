@@ -151,7 +151,7 @@
 
                                         <td class="py-4">
                                             <div class="relative" x-data="{ open: false, showDeadlineModal: false }">
-                                                @if($candidate['status'] === 'completed' || $candidate['status'] === 'suspended')
+                                                @if($candidate['status'] === 'completed' || ($candidate['status'] === 'suspended' && $candidate['unsuspend_count'] < 1))
                                                     <button @click="open = !open" class="text-gray-600 hover:text-gray-800">
                                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
@@ -162,7 +162,7 @@
                                                         @click.away="open = false" 
                                                         class="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg py-1 z-50">
                                                         
-                                                        @if($candidate['is_suspended'] && $candidate['unsuspend_count'] < 1)
+                                                        @if($candidate['status'] === 'suspended' && $candidate['unsuspend_count'] < 1)
                                                             <form action="{{ route('admin.unsuspend-test', [$candidate['id'], $candidate['test_id']]) }}" method="POST" class="block"
                                                                 onsubmit="return confirm('Are you sure you want to unsuspend this test?');">
                                                                 @csrf
