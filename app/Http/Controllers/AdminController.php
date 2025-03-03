@@ -743,6 +743,9 @@ class AdminController extends Controller
                 ->where('test_id', $testId)
                 ->first();
 
+            $candidate = DB::table('candidates')
+            ->where('candidate_id', $candidateId);
+
             if (!$candidateTest) {
                 return redirect()->back()->with('error', 'Candidate test record not found.');
             }
