@@ -66,6 +66,7 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
     Route::get('/admin/manage-candidates', [AdminController::class, 'manageCandidates'])->name('admin.manage-candidates');
+    Route::post('/admin/unsuspend-test/{candidateId}/{testId}', [AdminController::class, 'unsuspendTest'])->name('admin.unsuspend-test');
     Route::get('/admin/candidate-result/{test}/{candidate}', [AdminController::class, 'candidateResult'])
     ->name('admin.candidate-result');
     Route::get('private-screenshot/{testId}/{candidateId}/{filename}', [AdminController::class, 'getPrivateScreenshot'])
@@ -114,6 +115,9 @@ Route::middleware('auth:candidate')->group(function () {
     Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
     Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
     Route::post('/candidate-flags', [FlagController::class, 'store'])->name('candidate-flags.store'); 
+    Route::get('/tests/{testId}/suspended', [TestController::class, 'showSuspended'])->name('tests.suspended');
+    Route::post('/tests/{testId}/request-unsuspension', [TestController::class, 'requestUnsuspension'])->name('tests.request-unsuspension');
+    Route::post('/log-suspension', [TestController::class, 'logSuspension'])->name('tests.log-suspension');
 });
 
 // Logout route (accessible to both admins and candidates)

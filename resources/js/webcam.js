@@ -10,6 +10,14 @@ class WebcamManager {
         // Check if we're on a test page with camera enabled
         this.testId = document.getElementById('test-id')?.value ?? null;
         this.candidateId = document.getElementById('candidate-id')?.value ?? null;
+        this.specificPageRegex = /^\/tests\/\d+\/setup$/;
+
+        this.violationThreshold = 3; // Threshold for violations
+        this.violationThresholdCameraOff = 2; // Threshold for violations
+        this.violationCounts = {
+            multiplePeople: 0,
+            cameraTurnedOff: 0,
+        };
 
         console.log('Test session data:', {
             test_id: this.testId,
@@ -69,7 +77,232 @@ class WebcamManager {
 
         this.initialize();
     }
+    
 
+    // No person detected
+    isSpecificPage() {
+        return this.specificPageRegex.test(window.location.pathname);
+    }
+    
+    showNoPersonPopup() {
+        if (!this.isSpecificPage()) {
+            return; // Do nothing if not on the specific page
+        }
+
+        // Create an overlay to blur the background
+        const overlay = document.createElement('div');
+        overlay.id = 'no-person-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backdropFilter = 'blur(10px)';
+        overlay.style.zIndex = '999';
+        document.body.appendChild(overlay);
+    
+        // Create the pop-up
+        const popup = document.createElement('div');
+        popup.id = 'no-person-popup';
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.backgroundColor = 'white';
+        popup.style.color = 'black';
+        popup.style.padding = '20px';
+        popup.style.borderRadius = '10px';
+        popup.style.zIndex = '1000';
+        popup.style.textAlign = 'center';
+        popup.style.boxShadow = '0 2px 2px rgba(0, 0, 0, 0.1)'; 
+        popup.innerText = 'No person detected!';
+        document.body.appendChild(popup);
+    }
+    
+    hideNoPersonPopup() {
+        if (!this.isSpecificPage()) {
+            return; // Do nothing if not on the specific page
+        }
+        
+        const popup = document.getElementById('no-person-popup');
+        const overlay = document.getElementById('no-person-overlay');
+        if (popup) {
+            popup.remove();
+        }
+        if (overlay) {
+            overlay.remove();
+        }
+    }
+
+    cleanup() {
+        this.stopPeriodicScreenshots();
+        this.hideNoPersonPopup(); // Ensure the popup is removed
+        
+        // Try to process any remaining screenshots before cleanup
+        if (this.screenshotQueue.length > 0) {
+            console.log(`Attempting to process ${this.screenshotQueue.length} remaining screenshots...`);
+            this.processScreenshotQueue().finally(() => {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                }
+            });
+        } else if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+        }
+    }
+
+    async initialize() {
+        try {
+            // Hide the pop-up during initialization
+            this.hideNoPersonPopup();
+    
+            const permission = await this.checkServerPermission();
+            this.permissionGranted = permission?.granted || false;
+            this.deviceId = permission?.deviceId || null;
+            
+            console.log("Initial permission status from server:", this.permissionGranted);
+            console.log("Current path:", window.location.pathname);
+            
+            if (this.shouldActivateCamera()) {
+                await this.initializeCamera();
+            }
+        } catch (error) {
+            console.error("Initialization error:", error);
+            this.handleCameraError("Failed to initialize camera permissions");
+        }
+    }
+
+    // Suspension
+    updateStatus(personCount, hasBook, hasCellPhone) {
+        let statusMessage = '';
+        const now = Date.now();
+    
+        // Multiple people detected
+        if (personCount > 1) {
+            this.violationCounts.multiplePeople++;
+            statusMessage += `<p style='color: orange;'>${personCount} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`;
+
+            if (this.violationCounts.multiplePeople >= this.violationThreshold) {
+                this.suspendTest('multiplePeople');
+            }
+        }
+
+        // Camera turned off
+        if (!this.stream || !this.stream.active) {
+            this.violationCounts.cameraTurnedOff++;
+            statusMessage += `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`;
+
+            if (this.violationCounts.cameraTurnedOff >= this.violationThresholdCameraOff) {
+                this.suspendTest('cameraTurnedOff');
+            }
+        }
+
+        // Update status message
+        if (this.detectionStatus) {
+            this.detectionStatus.innerHTML = statusMessage;
+        }
+        
+    }
+
+    async suspendTest(violationType) {
+        console.log(`Test suspended due to excessive ${violationType}`);
+    
+        // const remainingTime = this.calculateRemainingTime();
+    
+        // await this.logSuspension(violationType, remainingTime);
+        await this.logSuspension(violationType);
+    
+        window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+    }
+    
+    // async calculateRemainingTime() {
+    //     try {
+    //         // Fetch the started_at time from the candidate_test table
+    //         const response = await fetch('/get-test-start-time', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'X-CSRF-TOKEN': this.csrfToken,
+    //             },
+    //             body: JSON.stringify({
+    //                 testId: this.testId,
+    //                 candidateId: this.candidateId,
+    //             }),
+    //         });
+    
+    //         if (!response.ok) {
+    //             throw new Error(`HTTP error! status: ${response.status}`);
+    //         }
+    
+    //         const data = await response.json();
+    //         const startedAt = new Date(data.started_at); // Parse the start time
+    //         const testDuration = parseInt(sessionStorage.getItem('test_duration'), 10); // Total test duration in seconds
+    
+    //         // Check if the values are valid
+    //         if (isNaN(startedAt.getTime())) {
+    //             console.error('Invalid started_at time:', data.started_at);
+    //             return 0; // Return 0 or handle the error appropriately
+    //         }
+    
+    //         if (isNaN(testDuration)) {
+    //             console.error('Invalid test_duration:', testDuration);
+    //             return 0; // Return 0 or handle the error appropriately
+    //         }
+    
+    //         // Get the current time
+    //         const now = new Date();
+    
+    //         // Calculate the elapsed time since the test started (in seconds)
+    //         const elapsedTime = Math.floor((now - startedAt) / 1000);
+    
+    //         // Calculate the remaining time by deducting the elapsed time from the total test duration
+    //         const remainingTimeInSeconds = Math.max(0, testDuration - elapsedTime);
+    
+    //         // Convert remaining time from seconds to minutes (rounded up)
+    //         const remainingTimeInMinutes = Math.ceil(remainingTimeInSeconds / 60);
+    
+    //         console.log('Remaining time in minutes:', remainingTimeInMinutes);
+    
+    //         return remainingTimeInMinutes; // Return the remaining time in minutes
+    //     } catch (error) {
+    //         console.error('Error calculating remaining time:', error);
+    //         return 0; // Return 0 or handle the error appropriately
+    //     }
+    // }
+    
+    async logSuspension(violationType, remainingTime) {
+        try {
+            console.log('Sending suspension data to backend:', {
+                testId: this.testId,
+                candidateId: this.candidateId,
+                violationType: violationType,
+                remainingTime: remainingTime,
+            });
+    
+            const response = await fetch('/log-suspension', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                },
+                body: JSON.stringify({
+                    testId: this.testId,
+                    candidateId: this.candidateId,
+                    violationType: violationType,
+                    remainingTime: remainingTime,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            console.log('Suspension logged successfully');
+    
+        } catch (error) {
+            console.error('Error logging suspension:', error);
+        }
+    }
 
     initializeCanvas() {
         try {
@@ -100,12 +333,12 @@ class WebcamManager {
         
         this.video = document.getElementById('video');
         this.detectionStatus = document.getElementById('detection-status');
-
+    
         if (!this.video || !this.detectionStatus) {
             console.error("Required elements not found");
             return;
         }
-
+    
         // Wait for video to be ready before starting screenshots
         this.video.addEventListener('loadedmetadata', () => {
             console.log('Video metadata loaded, dimensions:', this.video.videoWidth, 'x', this.video.videoHeight);
@@ -114,15 +347,18 @@ class WebcamManager {
                 this.screenshotCanvas.height = this.video.videoHeight;
             }
         });
-
+    
         await this.requestCameraAccess();
-
+    
         // Only start screenshots if canvas was initialized successfully
         if (this.screenshotCanvas && this.screenshotContext) {
             this.startPeriodicScreenshots(this.screenshotIntervalTime);
         } else {
             console.error('Cannot start screenshots - canvas not initialized');
         }
+    
+        // Set a flag to indicate that the camera has been initialized
+        this.cameraInitialized = true;
     }
 
     async initialize() {
@@ -147,7 +383,7 @@ class WebcamManager {
     updateStatus(personCount, hasBook, hasCellPhone) {
         let statusMessage = '';
         const now = Date.now();
-
+    
         // Helper function to handle violations
         const handleViolation = (condition, type) => {
             if (condition) {
@@ -169,33 +405,36 @@ class WebcamManager {
                 this.violationFrameCounters[type] = 0;
             }
         };
-
+    
         // Update status message and handle violations
         if (personCount > 1) {
             statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
             handleViolation(true, 'More than One Person');
+            this.hideNoPersonPopup(); // Hide popup if multiple people are detected
         } else if (personCount === 0) {
             statusMessage += "<p style='color: red;'>No one is present!</p>";
             handleViolation(false, 'More than One Person');
+            this.showNoPersonPopup(); // Show popup if no person is detected
         } else {
             statusMessage += "<p style='color: green;'>One person detected</p>";
             handleViolation(false, 'More than One Person');
+            this.hideNoPersonPopup(); // Hide popup if one person is detected
         }
-
+    
         if (hasBook) {
             statusMessage += "<p>Book detected</p>";
             handleViolation(true, 'Book');
         } else {
             handleViolation(false, 'Book');
         }
-
+    
         if (hasCellPhone) {
             statusMessage += "<p>Cell phone detected</p>";
             handleViolation(true, 'Cellphone');
         } else {
             handleViolation(false, 'Cellphone');
         }
-
+    
         if (this.detectionStatus) {
             this.detectionStatus.innerHTML = statusMessage;
         }

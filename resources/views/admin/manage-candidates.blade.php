@@ -114,6 +114,8 @@
                                                 <span class="text-blue-800 bg-blue-100 px-2 py-1 rounded-full">Completed</span>
                                             @elseif($candidate['status'] === 'in_progress')
                                                 <span class="text-yellow-800 bg-yellow-100 px-2 py-1 rounded-full">In Progress</span>
+                                            @elseif($candidate['status'] === 'suspended')
+                                                <span class="text-orange-800 bg-orange-100 px-2 py-1 rounded-full">Suspended</span>
                                             @elseif($candidate['status'] === 'expired')
                                                 <span class="text-red-800 bg-red-100 px-2 py-1 rounded-full">Expired</span>
                                             @else
@@ -149,7 +151,7 @@
 
                                         <td class="py-4">
                                             <div class="relative" x-data="{ open: false, showDeadlineModal: false }">
-                                                @if($candidate['status'] === 'completed')
+                                                @if($candidate['status'] === 'completed' || $candidate['status'] === 'suspended')
                                                     <button @click="open = !open" class="text-gray-600 hover:text-gray-800">
                                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
@@ -160,31 +162,44 @@
                                                         @click.away="open = false" 
                                                         class="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg py-1 z-50">
                                                         
-                                                        <form action="{{ route('candidate.accept', $candidate['id']) }}" method="POST" class="block"
-                                                            onsubmit="return confirm('Are you sure you want to accept this candidate?');">
-                                                            @csrf @method('PUT')
-                                                            <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
-                                                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-gray-100">
-                                                                Accept
-                                                            </button>
-                                                        </form>
+                                                        @if($candidate['is_suspended'] && $candidate['unsuspend_count'] < 1)
+                                                            <form action="{{ route('admin.unsuspend-test', [$candidate['id'], $candidate['test_id']]) }}" method="POST" class="block"
+                                                                onsubmit="return confirm('Are you sure you want to unsuspend this test?');">
+                                                                @csrf
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-orange-800 hover:bg-gray-100">
+                                                                    Unsuspend Test
+                                                                </button>
+                                                            </form>
+                                                        @endif
 
-                                                        <form action="{{ route('candidate.reject', $candidate['id']) }}" method="POST" class="block"
-                                                            onsubmit="return confirm('Are you sure you want to reject this candidate?');">
-                                                            @csrf @method('PUT')
-                                                            <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
-                                                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-gray-100">
-                                                                Reject
-                                                            </button>
-                                                        </form>
+                                                        @if($candidate['status'] === 'completed')
+                                                            <form action="{{ route('candidate.accept', $candidate['id']) }}" method="POST" class="block"
+                                                                onsubmit="return confirm('Are you sure you want to accept this candidate?');">
+                                                                @csrf @method('PUT')
+                                                                <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-gray-100">
+                                                                    Accept
+                                                                </button>
+                                                            </form>
 
-                                                        <form action="{{ route('candidate.delete', [$candidate['id'], $candidate['test_id']]) }}" method="POST" class="block"
-                                                            onsubmit="return confirm('Are you sure you want to delete this candidate?');">
-                                                            @csrf @method('DELETE')
-                                                            <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                                                                Delete
-                                                            </button>
-                                                        </form>
+                                                            <form action="{{ route('candidate.reject', $candidate['id']) }}" method="POST" class="block"
+                                                                onsubmit="return confirm('Are you sure you want to reject this candidate?');">
+                                                                @csrf @method('PUT')
+                                                                <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-gray-100">
+                                                                    Reject
+                                                                </button>
+                                                            </form>
+
+                                                            <form action="{{ route('candidate.delete', [$candidate['id'], $candidate['test_id']]) }}" method="POST" class="block"
+                                                                onsubmit="return confirm('Are you sure you want to delete this candidate?');">
+                                                                @csrf @method('DELETE')
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        @endif
+
                                                     </div>
                                                 @elseif($candidate['status'] === 'expired')
                                                     <button @click="showDeadlineModal = true" class="text-blue-600 hover:text-blue-800 text-sm">

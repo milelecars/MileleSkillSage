@@ -756,9 +756,37 @@ class TestController extends Controller
             return redirect()->route('tests.result', ['id' => $id])
                 ->with('info', 'You have already completed this test.');
         }
-    
+
+        $testAttempt = $candidate->tests()
+            ->wherePivot('test_id', $id)
+            ->first();
+
         $testSession = session('test_session', []);
+        $endTime = null;
     
+        if (!$testAttempt) {
+            $candidate->tests()->attach($id, [
+                'started_at' => now(),
+                'status' => 'in progress'
+            ]);
+            Log::info('New test attempt created', [
+                'test_id' => $test->id,
+                'candidate_id' => $candidate->id
+            ]);
+
+        } else {
+            if ($testAttempt->pivot->status !== 'in progress') {
+                $candidate->tests()->updateExistingPivot($id, [
+                    'status' => 'in progress',
+                    'updated_at' => now()
+                ]);
+                Log::info('Test attempt status updated to "in progress"', [
+                    'test_id' => $test->id,
+                    'candidate_id' => $candidate->id
+                ]);
+            }
+        }
+
         if (!isset($testSession['test_id']) || $testSession['test_id'] != $id) {
             $startTime = now();
             $endTime = $startTime->copy()->addMinutes($test->duration);
@@ -805,32 +833,7 @@ class TestController extends Controller
         if (!isset($testSession['current_question']) || $testSession['current_question'] >= count($questions)) {
             $testSession['current_question'] = 0;
         }
-    
-        $testAttempt = $candidate->tests()
-            ->wherePivot('test_id', $id)
-            ->first();
-    
-        if ($testAttempt && $testAttempt->pivot->status == 'not started') {
-            $candidate->tests()->attach($id, [
-                'started_at' => now(),
-                'status' => 'in progress'
-            ]);
-            Log::info('New test attempt created', [
-                'test_id' => $test->id,
-                'candidate_id' => $candidate->id
-            ]);
-        } else {
-            if ($testAttempt->pivot->status !== 'in progress') {
-                $candidate->tests()->updateExistingPivot($id, [
-                    'status' => 'in progress'
-                ]);
-                Log::info('Test attempt status updated to "in progress"', [
-                    'test_id' => $test->id,
-                    'candidate_id' => $candidate->id
-                ]);
-            }
-        }
-    
+            
         if (now()->gt($endTime)) {
             return $this->handleTimeout($test);
         }
@@ -1584,15 +1587,81 @@ class TestController extends Controller
         return $correct_answers > 0 ? round((($correct_answers - (1/3 * $wrong_answers)) / $totalQuestions) * 100, 2) : 0;
     }
 
-    // public function calculateLSQScore($total_questions, $total_score)
-    // {
-    //     $total_questions_without_red_flags = $total_questions - 12;
+    public function showSuspended($testId, Request $request)
+    {
+        $reason = $request->query('reason');
+        $formattedReason = preg_replace('/([A-Z])/', ' $1', $reason);
+        $formattedReason = strtolower($formattedReason);
+        $reason = trim($formattedReason); 
 
-    //     if ($total_questions_without_red_flags <= 0) {
-    //         return 0;
-    //     }
+        
 
-    //     return round($total_score / ($total_questions_without_red_flags * 5) * $total_questions_without_red_flags, 2);
-    // }
+        return view('tests.suspended', [
+            'testId' => $testId,
+            'reason' => $reason,
+        ]);
+    }
+
+    public function requestUnsuspension($testId, Request $request)
+    {
+        $request->validate([
+            'description' => 'required|string',
+            'evidence' => 'required|file|mimes:jpg,png,pdf|max:2048',
+        ]);
+
+        $candidate = Auth::guard('candidate')->user();
+
+        // Save the unsuspension request details
+        DB::table('candidate_test')
+            ->where('candidate_id', $candidate->id)
+            ->where('test_id', $testId)
+            ->update([
+                'suspension_reason' => $request->description, // Store the candidate's description
+                'evidence_path' => $request->file('evidence')->store('unsuspension_evidence'), // Store the evidence file path
+            ]);
+
+        return redirect()->route('candidate.dashboard')
+            ->with('success', 'Your unsuspension request has been submitted.');
+    }
+    
+    public function logSuspension(Request $request)
+    {
+        $request->validate([
+            'testId' => 'required|exists:tests,id',
+            'candidateId' => 'required|exists:candidates,id',
+            'violationType' => 'required|string',
+            // 'remainingTime' => 'required|integer',
+        ]);
+
+        $candidateTest = DB::table('candidate_test')
+            ->where('candidate_id', $request->candidateId)
+            ->where('test_id', $request->testId)
+            ->first();
+
+        // Check if the test has already been suspended
+        if ($candidateTest->is_suspended) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Test has already been suspended.',
+            ], 400);
+        }
+
+        // Update the candidate_test record with suspension details
+        DB::table('candidate_test')
+            ->where('candidate_id', $request->candidateId)
+            ->where('test_id', $request->testId)
+            ->update([
+                'status' => 'suspended',
+                // 'remaining_time' => $request->remainingTime,
+                'suspended_at' => now(),
+                'suspension_reason' => $request->violationType,
+                'is_suspended' => true,
+            ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Suspension logged successfully.',
+        ]);
+    }
 
 }

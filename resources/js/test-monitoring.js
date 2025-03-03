@@ -12,6 +12,12 @@ class TestMonitoring {
             this.candidateId = candidateId;
             this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             this.metrics = {};
+            this.violationThreshold = 3; // Threshold for violations
+            this.violationCounts = {
+                windowBlurs: 0,
+                tabSwitches: 0,
+                windowMinimizations: 0
+            };
             
             console.log('TestMonitoring initialized with:', {
                 testId: this.testId,
@@ -47,15 +53,128 @@ class TestMonitoring {
         
         // Increment local metric
         this.metrics[metricName] = (this.metrics[metricName] || 0) + 1;
-        const currentCount = this.metrics[metricName];
+        const currentCount = this.metrics[metricName];// Increment violation count
+        this.violationCounts[metricName] = (this.violationCounts[metricName] || 0) + 1;
         
         // Log to console and UI
         console.log(`⚠️ ${message} (Count: ${currentCount})`);
         this.updateViolationLog(`${message} (${currentCount})`);
         
+        // Check if threshold is exceeded
+        if (this.violationCounts[metricName] >= this.violationThreshold) {
+            this.suspendTest(metricName);
+        }
+
         // Log to backend
         const flagType = this.getFlagTypeFromMetric(metricName);
         this.logSuspiciousBehavior(flagType, currentCount);
+    }
+
+    // Suspension
+    async suspendTest(violationType) {
+        console.log(`Test suspended due to excessive ${violationType}`);
+    
+        // const remainingTime = this.calculateRemainingTime();
+    
+        // await this.logSuspension(violationType, remainingTime);
+        await this.logSuspension(violationType);
+    
+
+        window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+    }
+    
+    // async calculateRemainingTime() {
+    //     try {
+    //         // Fetch the started_at time from the candidate_test table
+    //         const response = await fetch('/get-test-start-time', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'X-CSRF-TOKEN': this.csrfToken,
+    //             },
+    //             body: JSON.stringify({
+    //                 testId: this.testId,
+    //                 candidateId: this.candidateId,
+    //             }),
+    //         });
+    
+    //         if (!response.ok) {
+    //             throw new Error(`HTTP error! status: ${response.status}`);
+    //         }
+    
+    //         const data = await response.json();
+    //         const startedAt = new Date(data.started_at); // Parse the start time
+    //         const testDuration = parseInt(sessionStorage.getItem('test_duration'), 10); // Total test duration in seconds
+    
+    //         // Check if the values are valid
+    //         if (isNaN(startedAt.getTime())) {
+    //             console.error('Invalid started_at time:', data.started_at);
+    //             return 0; // Return 0 or handle the error appropriately
+    //         }
+    
+    //         if (isNaN(testDuration)) {
+    //             console.error('Invalid test_duration:', testDuration);
+    //             return 0; // Return 0 or handle the error appropriately
+    //         }
+    
+    //         // Get the current time
+    //         const now = new Date();
+    
+    //         // Calculate the elapsed time since the test started (in seconds)
+    //         const elapsedTime = Math.floor((now - startedAt) / 1000);
+    
+    //         // Calculate the remaining time by deducting the elapsed time from the total test duration
+    //         const remainingTimeInSeconds = Math.max(0, testDuration - elapsedTime);
+    
+    //         // Convert remaining time from seconds to minutes (rounded up)
+    //         const remainingTimeInMinutes = Math.ceil(remainingTimeInSeconds / 60);
+    
+    //         console.log('Remaining time in minutes:', remainingTimeInMinutes);
+    
+    //         return remainingTimeInMinutes; // Return the remaining time in minutes
+    //     } catch (error) {
+    //         console.error('Error calculating remaining time:', error);
+    //         return 0; // Return 0 or handle the error appropriately
+    //     }
+    // }
+    
+    async logSuspension(violationType, remainingTime) {
+        try {
+            console.log('Sending suspension data to backend:', {
+                testId: this.testId,
+                candidateId: this.candidateId,
+                violationType: violationType,
+                remainingTime: remainingTime,
+            });
+    
+            const response = await fetch('/log-suspension', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                },
+                body: JSON.stringify({
+                    testId: this.testId,
+                    candidateId: this.candidateId,
+                    violationType: violationType,
+                    remainingTime: remainingTime,
+                }),
+            });
+    
+            if (!response.success) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            // console.log('hi');
+            
+            // if (response.success) {
+            //     window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+            //     console.log('Suspension logged successfully');
+
+            // }
+        } catch (error) {
+            console.error('Error logging suspension:', error);
+        }
     }
 
     updateViolationLog(message) {
@@ -92,9 +211,9 @@ class TestMonitoring {
             });
         });
     
-        document.addEventListener('contextmenu', (e) => {
-            this.handleViolation(e, 'rightClicks', 'Right clicking is not allowed!');
-        });
+        // document.addEventListener('contextmenu', (e) => {
+        //     this.handleViolation(e, 'rightClicks', 'Right clicking is not allowed!');
+        // });
     
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && 
