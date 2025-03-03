@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-BPRyV10I.css",
+    "file": "assets/app-DTtY3n2w.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -11,13 +11,13 @@
     "isEntry": true
   },
   "resources/js/test-monitoring.js": {
-    "file": "assets/test-monitoring-MqHrcf0C.js",
+    "file": "assets/test-monitoring-DvB4WzRT.js",
     "name": "test-monitoring",
     "src": "resources/js/test-monitoring.js",
     "isEntry": true
   },
   "resources/js/webcam.js": {
-    "file": "assets/webcam-C5f4CeFM.js",
+    "file": "assets/webcam-Bm-KV1eR.js",
     "name": "webcam",
     "src": "resources/js/webcam.js",
     "isEntry": true

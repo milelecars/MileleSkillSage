@@ -9,6 +9,13 @@ class WebcamManager {
     this.deviceId = null;
     this.testId = ((_a = document.getElementById("test-id")) == null ? void 0 : _a.value) ?? null;
     this.candidateId = ((_b = document.getElementById("candidate-id")) == null ? void 0 : _b.value) ?? null;
+    this.specificPageRegex = /^\/tests\/\d+\/setup$/;
+    this.violationThreshold = 3;
+    this.violationThresholdCameraOff = 2;
+    this.violationCounts = {
+      multiplePeople: 0,
+      cameraTurnedOff: 0
+    };
     console.log("Test session data:", {
       test_id: this.testId,
       candidate_id: this.candidateId,
@@ -60,6 +67,182 @@ class WebcamManager {
     this.COOLDOWN_PERIOD = 3e4;
     this.initialize();
   }
+  // No person detected
+  isSpecificPage() {
+    return this.specificPageRegex.test(window.location.pathname);
+  }
+  showNoPersonPopup() {
+    if (!this.isSpecificPage()) {
+      return;
+    }
+    const overlay = document.createElement("div");
+    overlay.id = "no-person-overlay";
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.backdropFilter = "blur(10px)";
+    overlay.style.zIndex = "999";
+    document.body.appendChild(overlay);
+    const popup = document.createElement("div");
+    popup.id = "no-person-popup";
+    popup.style.position = "fixed";
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.backgroundColor = "white";
+    popup.style.color = "black";
+    popup.style.padding = "20px";
+    popup.style.borderRadius = "10px";
+    popup.style.zIndex = "1000";
+    popup.style.textAlign = "center";
+    popup.style.boxShadow = "0 2px 2px rgba(0, 0, 0, 0.1)";
+    popup.innerText = "No person detected!";
+    document.body.appendChild(popup);
+  }
+  hideNoPersonPopup() {
+    if (!this.isSpecificPage()) {
+      return;
+    }
+    const popup = document.getElementById("no-person-popup");
+    const overlay = document.getElementById("no-person-overlay");
+    if (popup) {
+      popup.remove();
+    }
+    if (overlay) {
+      overlay.remove();
+    }
+  }
+  cleanup() {
+    this.stopPeriodicScreenshots();
+    this.hideNoPersonPopup();
+    if (this.screenshotQueue.length > 0) {
+      console.log(`Attempting to process ${this.screenshotQueue.length} remaining screenshots...`);
+      this.processScreenshotQueue().finally(() => {
+        if (this.stream) {
+          this.stream.getTracks().forEach((track) => track.stop());
+        }
+      });
+    } else if (this.stream) {
+      this.stream.getTracks().forEach((track) => track.stop());
+    }
+  }
+  async initialize() {
+    try {
+      this.hideNoPersonPopup();
+      const permission = await this.checkServerPermission();
+      this.permissionGranted = (permission == null ? void 0 : permission.granted) || false;
+      this.deviceId = (permission == null ? void 0 : permission.deviceId) || null;
+      console.log("Initial permission status from server:", this.permissionGranted);
+      console.log("Current path:", window.location.pathname);
+      if (this.shouldActivateCamera()) {
+        await this.initializeCamera();
+      }
+    } catch (error) {
+      console.error("Initialization error:", error);
+      this.handleCameraError("Failed to initialize camera permissions");
+    }
+  }
+  // Suspension
+  updateStatus(personCount, hasBook, hasCellPhone) {
+    let statusMessage = "";
+    if (personCount > 1) {
+      this.violationCounts.multiplePeople++;
+      statusMessage += `<p style='color: orange;'>${personCount} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`;
+      if (this.violationCounts.multiplePeople >= this.violationThreshold) {
+        this.suspendTest("multiplePeople");
+      }
+    }
+    if (!this.stream || !this.stream.active) {
+      this.violationCounts.cameraTurnedOff++;
+      statusMessage += `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`;
+      if (this.violationCounts.cameraTurnedOff >= this.violationThresholdCameraOff) {
+        this.suspendTest("cameraTurnedOff");
+      }
+    }
+    if (this.detectionStatus) {
+      this.detectionStatus.innerHTML = statusMessage;
+    }
+  }
+  async suspendTest(violationType) {
+    console.log(`Test suspended due to excessive ${violationType}`);
+    await this.logSuspension(violationType);
+    window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+  }
+  // async calculateRemainingTime() {
+  //     try {
+  //         // Fetch the started_at time from the candidate_test table
+  //         const response = await fetch('/get-test-start-time', {
+  //             method: 'POST',
+  //             headers: {
+  //                 'Content-Type': 'application/json',
+  //                 'X-CSRF-TOKEN': this.csrfToken,
+  //             },
+  //             body: JSON.stringify({
+  //                 testId: this.testId,
+  //                 candidateId: this.candidateId,
+  //             }),
+  //         });
+  //         if (!response.ok) {
+  //             throw new Error(`HTTP error! status: ${response.status}`);
+  //         }
+  //         const data = await response.json();
+  //         const startedAt = new Date(data.started_at); // Parse the start time
+  //         const testDuration = parseInt(sessionStorage.getItem('test_duration'), 10); // Total test duration in seconds
+  //         // Check if the values are valid
+  //         if (isNaN(startedAt.getTime())) {
+  //             console.error('Invalid started_at time:', data.started_at);
+  //             return 0; // Return 0 or handle the error appropriately
+  //         }
+  //         if (isNaN(testDuration)) {
+  //             console.error('Invalid test_duration:', testDuration);
+  //             return 0; // Return 0 or handle the error appropriately
+  //         }
+  //         // Get the current time
+  //         const now = new Date();
+  //         // Calculate the elapsed time since the test started (in seconds)
+  //         const elapsedTime = Math.floor((now - startedAt) / 1000);
+  //         // Calculate the remaining time by deducting the elapsed time from the total test duration
+  //         const remainingTimeInSeconds = Math.max(0, testDuration - elapsedTime);
+  //         // Convert remaining time from seconds to minutes (rounded up)
+  //         const remainingTimeInMinutes = Math.ceil(remainingTimeInSeconds / 60);
+  //         console.log('Remaining time in minutes:', remainingTimeInMinutes);
+  //         return remainingTimeInMinutes; // Return the remaining time in minutes
+  //     } catch (error) {
+  //         console.error('Error calculating remaining time:', error);
+  //         return 0; // Return 0 or handle the error appropriately
+  //     }
+  // }
+  async logSuspension(violationType, remainingTime) {
+    try {
+      console.log("Sending suspension data to backend:", {
+        testId: this.testId,
+        candidateId: this.candidateId,
+        violationType,
+        remainingTime
+      });
+      const response = await fetch("/log-suspension", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": this.csrfToken
+        },
+        body: JSON.stringify({
+          testId: this.testId,
+          candidateId: this.candidateId,
+          violationType,
+          remainingTime
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      console.log("Suspension logged successfully");
+    } catch (error) {
+      console.error("Error logging suspension:", error);
+    }
+  }
   initializeCanvas() {
     try {
       this.screenshotCanvas = document.createElement("canvas");
@@ -97,6 +280,7 @@ class WebcamManager {
     } else {
       console.error("Cannot start screenshots - canvas not initialized");
     }
+    this.cameraInitialized = true;
   }
   async initialize() {
     try {
@@ -137,12 +321,15 @@ class WebcamManager {
     if (personCount > 1) {
       statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
       handleViolation(true, "More than One Person");
+      this.hideNoPersonPopup();
     } else if (personCount === 0) {
       statusMessage += "<p style='color: red;'>No one is present!</p>";
       handleViolation(false, "More than One Person");
+      this.showNoPersonPopup();
     } else {
       statusMessage += "<p style='color: green;'>One person detected</p>";
       handleViolation(false, "More than One Person");
+      this.hideNoPersonPopup();
     }
     if (hasBook) {
       statusMessage += "<p>Book detected</p>";

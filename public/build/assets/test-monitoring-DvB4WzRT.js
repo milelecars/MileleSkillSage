@@ -11,6 +11,12 @@ class TestMonitoring {
       this.candidateId = candidateId;
       this.csrfToken = (_a = document.querySelector('meta[name="csrf-token"]')) == null ? void 0 : _a.getAttribute("content");
       this.metrics = {};
+      this.violationThreshold = 3;
+      this.violationCounts = {
+        windowBlurs: 0,
+        tabSwitches: 0,
+        windowMinimizations: 0
+      };
       console.log("TestMonitoring initialized with:", {
         testId: this.testId,
         candidateId: this.candidateId,
@@ -40,10 +46,92 @@ class TestMonitoring {
     }
     this.metrics[metricName] = (this.metrics[metricName] || 0) + 1;
     const currentCount = this.metrics[metricName];
+    this.violationCounts[metricName] = (this.violationCounts[metricName] || 0) + 1;
     console.log(`⚠️ ${message} (Count: ${currentCount})`);
     this.updateViolationLog(`${message} (${currentCount})`);
+    if (this.violationCounts[metricName] >= this.violationThreshold) {
+      this.suspendTest(metricName);
+    }
     const flagType = this.getFlagTypeFromMetric(metricName);
     this.logSuspiciousBehavior(flagType, currentCount);
+  }
+  // Suspension
+  async suspendTest(violationType) {
+    console.log(`Test suspended due to excessive ${violationType}`);
+    await this.logSuspension(violationType);
+    window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+  }
+  // async calculateRemainingTime() {
+  //     try {
+  //         // Fetch the started_at time from the candidate_test table
+  //         const response = await fetch('/get-test-start-time', {
+  //             method: 'POST',
+  //             headers: {
+  //                 'Content-Type': 'application/json',
+  //                 'X-CSRF-TOKEN': this.csrfToken,
+  //             },
+  //             body: JSON.stringify({
+  //                 testId: this.testId,
+  //                 candidateId: this.candidateId,
+  //             }),
+  //         });
+  //         if (!response.ok) {
+  //             throw new Error(`HTTP error! status: ${response.status}`);
+  //         }
+  //         const data = await response.json();
+  //         const startedAt = new Date(data.started_at); // Parse the start time
+  //         const testDuration = parseInt(sessionStorage.getItem('test_duration'), 10); // Total test duration in seconds
+  //         // Check if the values are valid
+  //         if (isNaN(startedAt.getTime())) {
+  //             console.error('Invalid started_at time:', data.started_at);
+  //             return 0; // Return 0 or handle the error appropriately
+  //         }
+  //         if (isNaN(testDuration)) {
+  //             console.error('Invalid test_duration:', testDuration);
+  //             return 0; // Return 0 or handle the error appropriately
+  //         }
+  //         // Get the current time
+  //         const now = new Date();
+  //         // Calculate the elapsed time since the test started (in seconds)
+  //         const elapsedTime = Math.floor((now - startedAt) / 1000);
+  //         // Calculate the remaining time by deducting the elapsed time from the total test duration
+  //         const remainingTimeInSeconds = Math.max(0, testDuration - elapsedTime);
+  //         // Convert remaining time from seconds to minutes (rounded up)
+  //         const remainingTimeInMinutes = Math.ceil(remainingTimeInSeconds / 60);
+  //         console.log('Remaining time in minutes:', remainingTimeInMinutes);
+  //         return remainingTimeInMinutes; // Return the remaining time in minutes
+  //     } catch (error) {
+  //         console.error('Error calculating remaining time:', error);
+  //         return 0; // Return 0 or handle the error appropriately
+  //     }
+  // }
+  async logSuspension(violationType, remainingTime) {
+    try {
+      console.log("Sending suspension data to backend:", {
+        testId: this.testId,
+        candidateId: this.candidateId,
+        violationType,
+        remainingTime
+      });
+      const response = await fetch("/log-suspension", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": this.csrfToken
+        },
+        body: JSON.stringify({
+          testId: this.testId,
+          candidateId: this.candidateId,
+          violationType,
+          remainingTime
+        })
+      });
+      if (!response.success) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error logging suspension:", error);
+    }
   }
   updateViolationLog(message) {
     const logDiv = document.getElementById("violation-log");
@@ -71,9 +159,6 @@ class TestMonitoring {
       document.addEventListener(eventType, (e) => {
         this.handleViolation(e, "copyCutAttempts", `${eventType} is not allowed!`);
       });
-    });
-    document.addEventListener("contextmenu", (e) => {
-      this.handleViolation(e, "rightClicks", "Right clicking is not allowed!");
     });
     document.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "f12"].includes(e.key.toLowerCase())) {
