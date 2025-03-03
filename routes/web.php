@@ -66,11 +66,12 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::get('/description', [DescriptionController::class, 'showDescription'])->name('description');
     Route::get('/admin/manage-candidates', [AdminController::class, 'manageCandidates'])->name('admin.manage-candidates');
-    Route::post('/admin/unsuspend-test/{candidateId}/{testId}', [AdminController::class, 'unsuspendTest'])->name('admin.unsuspend-test');
     Route::get('/admin/candidate-result/{test}/{candidate}', [AdminController::class, 'candidateResult'])
     ->name('admin.candidate-result');
     Route::get('private-screenshot/{testId}/{candidateId}/{filename}', [AdminController::class, 'getPrivateScreenshot'])
     ->name('private.screenshot');
+    
+    Route::post('/admin/unsuspend-test/{candidateId}/{testId}', [AdminController::class, 'unsuspendTest'])->name('admin.unsuspend-test');
     Route::put('/candidates/{candidate}/accept', [AdminController::class, 'acceptCandidate'])
     ->name('candidate.accept');
     Route::put('/candidates/{candidate}/reject', [AdminController::class, 'rejectCandidate'])

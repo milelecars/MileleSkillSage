@@ -747,27 +747,40 @@ class AdminController extends Controller
                 return redirect()->back()->with('error', 'Candidate test record not found.');
             }
 
+            // First try to send the email
+            $emailSent = $this->sendEmailWithGmail(
+                $candidate, 
+                'candidate-unsuspension-template',
+                'Your Test Status - Milele Motors'
+            );
+
             // Check if the test has already been unsuspended
             // if ($candidateTest->unsuspend_count >= 1) {
             //     return redirect()->back()->with('error', 'This test can only be unsuspended once.');
             // }
 
-            DB::table('candidate_test')
-                ->where('candidate_id', $candidateId)
-                ->where('test_id', $testId)
-                ->update([
-                    'is_suspended' => false, 
-                    'unsuspend_count' => $candidateTest->unsuspend_count + 1, 
-                    'suspended_at' => null, 
-                    'suspension_reason' => null, 
-                    'evidence_path' => null, 
-                    'started_at' => null, 
-                    'status' => 'not started'
-                ]);
+            if ($emailSent) {
+                DB::table('candidate_test')
+                    ->where('candidate_id', $candidateId)
+                    ->where('test_id', $testId)
+                    ->update([
+                        'is_suspended' => false, 
+                        'unsuspend_count' => $candidateTest->unsuspend_count + 1, 
+                        'suspended_at' => null, 
+                        'suspension_reason' => null, 
+                        'evidence_path' => null, 
+                        'started_at' => null, 
+                        'status' => 'not started'
+                    ]);
+    
+                DB::commit();
+    
+                return redirect()->back()->with('success', 'Test unsuspended successfully.');
+            } else {
+                DB::rollback();
+                return redirect()->back()->with('error', 'Failed to send notification email. Status not updated.');
+            }
 
-            DB::commit();
-
-            return redirect()->back()->with('success', 'Test unsuspended successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to unsuspend test:', [
