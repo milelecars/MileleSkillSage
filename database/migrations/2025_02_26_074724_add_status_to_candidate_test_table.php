@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('candidate_test', function (Blueprint $table) {
-            $table->enum('status', ['not started', 'in progress', 'completed', 'accepted', 'rejected'])->default('not started')->after('ip_address');
+            $table->enum('status', ['not started', 'in progress', 'suspended', 'completed', 'accepted', 'rejected'])->default('not started')->after('ip_address');
         });
     }
 

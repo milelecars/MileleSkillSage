@@ -230,7 +230,7 @@ class AdminController extends Controller
 
         $activeTestCandidates = Candidate::with(['tests' => function ($query) {
             $query->select('tests.id', 'title', 'description', 'duration')
-                ->withPivot('started_at', 'completed_at', 'score', 'red_flags',  'correct_answers', 'wrong_answers' , 'ip_address', 'status');
+                ->withPivot('started_at', 'completed_at', 'score', 'red_flags',  'correct_answers', 'wrong_answers' , 'ip_address', 'status',  'is_suspended', 'unsuspend_count');
         }])
         ->whereHas('tests', function($query) use ($testFilter) {
             if ($testFilter) {
@@ -251,6 +251,8 @@ class AdminController extends Controller
                 // If status is "not_started" and we have a record in candidate_test,
                 // this means they've logged in
                 $hasLoggedIn = $status === 'not_started' && $test->pivot->created_at;
+                $isSuspended = $test->pivot->is_suspended;
+                $unsuspendCount = $test->pivot->unsuspend_count;
 
                 if ($test->title == "General Mental Ability (GMA)") {
                     $questions = $test->questions()
@@ -271,6 +273,8 @@ class AdminController extends Controller
                     'test_title' => $test->title,
                     'test_id' => $test->id,
                     'status' => $status,
+                    'is_suspended' => $isSuspended,
+                    'unsuspend_count' => $unsuspendCount,
                     'started_at' => $test->pivot->started_at,
                     'completed_at' => $test->pivot->completed_at,
                     'score'=> $test->pivot->score,
@@ -572,15 +576,19 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'No test found for this candidate.');
         }
     
-        if ($test->pivot->started_at && $test->pivot->completed_at) {
+        if ($test->pivot->started_at && ($test->pivot->completed_at || $test->pivot->is_suspended)) {
             $startedAt = Carbon::parse($test->pivot->started_at);
             $completedAt = Carbon::parse($test->pivot->completed_at);
             $duration = $startedAt->diff($completedAt);
             $durationInMinutes = $duration->days * 24 * 60 + $duration->h * 60 + $duration->i;
             $durationInSeconds = $duration->s;
+            $duration = $durationInMinutes . ' ' . Str::plural('minute', $durationInMinutes) . ' and ' . $durationInSeconds . ' ' . Str::plural('second', $durationInSeconds);
+        }else{
+            $startedAt = Carbon::parse($test->pivot->started_at);
+            $completedAt = Carbon::parse($test->pivot->completed_at);
+            $duration = 0;
         }
     
-        $duration = $durationInMinutes . ' ' . Str::plural('minute', $durationInMinutes) . ' and ' . $durationInSeconds . ' ' . Str::plural('second', $durationInSeconds);
     
         $screenshots = DB::table('candidate_test_screenshots')
             ->where('candidate_id', $candidate->id)
@@ -607,6 +615,7 @@ class AdminController extends Controller
         $score = $test->pivot->score;
         $hasMCQ = $questions->contains('question_type', 'MCQ');
         $hasLSQ = $questions->contains('question_type', 'LSQ');
+        $suspensionReason = $test->pivot->suspension_reason;
     
         return view('admin.candidate-result', compact(
             'candidate',
@@ -617,6 +626,7 @@ class AdminController extends Controller
             'duration',
             'hasMCQ',
             'hasLSQ',
+            'suspensionReason'
         ));
     }
     
@@ -720,6 +730,52 @@ class AdminController extends Controller
             DB::rollback();
             Log::error('Failed to reject candidate: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to process rejection. Please try again.');
+        }
+    }
+
+    public function unsuspendTest($candidateId, $testId, Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $candidateTest = DB::table('candidate_test')
+                ->where('candidate_id', $candidateId)
+                ->where('test_id', $testId)
+                ->first();
+
+            if (!$candidateTest) {
+                return redirect()->back()->with('error', 'Candidate test record not found.');
+            }
+
+            // Check if the test has already been unsuspended
+            // if ($candidateTest->unsuspend_count >= 1) {
+            //     return redirect()->back()->with('error', 'This test can only be unsuspended once.');
+            // }
+
+            DB::table('candidate_test')
+                ->where('candidate_id', $candidateId)
+                ->where('test_id', $testId)
+                ->update([
+                    'is_suspended' => false, 
+                    'unsuspend_count' => $candidateTest->unsuspend_count + 1, 
+                    'suspended_at' => null, 
+                    'suspension_reason' => null, 
+                    'evidence_path' => null, 
+                    'started_at' => null, 
+                    'status' => 'not started'
+                ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Test unsuspended successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to unsuspend test:', [
+                'candidate_id' => $candidateId,
+                'test_id' => $testId,
+                'error' => $e->getMessage(),
+            ]);
+            return redirect()->back()->with('error', 'Failed to unsuspend test. Please try again.');
         }
     }
 

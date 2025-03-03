@@ -120,6 +120,24 @@
                                         </div>
                                     </a>
                                 </div>
+
+                                <!-- Suspension Reason -->
+                                <?php if($test->pivot->is_suspended): ?>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-gray-600">Suspension Reason</p>
+                                            <p class="font-semibold">
+                                                <?php echo e($suspensionReason); ?>
+
+                                            </p>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         </div>
 
@@ -148,6 +166,10 @@
                                         <?php elseif($test->pivot->status === 'in_progress'): ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-yellow-800 bg-yellow-100">
                                                 In Progress
+                                            </span>
+                                        <?php elseif($test->pivot->status === 'suspended'): ?>
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-orange-800 bg-orange-100">
+                                                Suspended
                                             </span>
                                         <?php else: ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-gray-800 bg-gray-100">

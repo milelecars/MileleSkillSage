@@ -48,6 +48,7 @@
                                                 <span class="px-2 inline-flex text-base leading-5 font-semibold rounded-full 
                                                     @if($test['status'] === 'completed') bg-green-100 text-green-800
                                                     @elseif($test['status'] === 'in_progress') bg-yellow-100 text-yellow-800
+                                                    @elseif($test['status'] === 'suspended') bg-orange-100 text-orange-800
                                                     @elseif($test['status'] === 'not_started') bg-gray-100 text-gray-800
                                                     @elseif($test['status'] === 'expired') bg-red-100 text-red-800
                                                     @endif">
@@ -71,7 +72,7 @@
                                             </td>
                                             <td class="px-2 py-4">
                                                 <div class="flex justify-center gap-2">
-                                                    @if($test['status'] === 'expired')
+                                                    @if(in_array($test['status'], ['suspended',  'expired']))
                                                         <span>-</span>
                                                     @elseif(!in_array($test['status'], ['completed', 'accepted', 'rejected']))
                                                         <a href="{{ route('tests.setup', $test['test_id']) }}" class="text-blue-600 hover:text-blue-800"> 

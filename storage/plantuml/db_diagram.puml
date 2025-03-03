@@ -36,7 +36,11 @@ entity "Candidate Test" {
   * wrong_answers : int 
   * report_path : string
   * ip_address : text
-  * status : enam
+  * status : enum
+  * remaining_time : int (nullable) // Remaining time in seconds
+  * suspended_at : datetime (nullable) // Timestamp of suspension
+  * suspension_reason : text (nullable) // Reason for suspension
+  * is_suspended : boolean (default: false) // Flag to indicate suspension
   * created_at : datetime
   * updated_at : datetime
 }
