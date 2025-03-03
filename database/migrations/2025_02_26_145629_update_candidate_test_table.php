@@ -13,7 +13,7 @@ class UpdateCandidateTestTable extends Migration
     {
         Schema::table('candidate_test', function (Blueprint $table) {
             // Add new columns here
-            $table->timestamp('suspended_at')->nullable()->after('remaining_time'); 
+            $table->timestamp('suspended_at')->nullable()->after('wrong-answers'); 
             $table->text('suspension_reason')->nullable()->after('suspended_at');
             $table->boolean('is_suspended')->default(false)->after('suspension_reason'); 
             $table->integer('unsuspend_count')->default(0)->after('is_suspended'); 
