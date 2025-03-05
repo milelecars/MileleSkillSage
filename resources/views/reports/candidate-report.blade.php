@@ -506,7 +506,7 @@
             </td>
             <td>
                 <div class="stat-label center">Score</div>
-                <div class="stat-value">{{ $score }} {{ $hasMCQ ? $score . '%' : '' }}</div>
+                <div class="stat-value">{{ $score }} {{ $hasMCQ ?  '%' : '' }}</div>
             </td>
             <td>
                 <div class="stat-label">Scoring method</div>
