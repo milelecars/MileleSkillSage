@@ -100,6 +100,8 @@ class CandidateController extends Controller
                         'correct_answers' => $candidateTest ? $candidateTest->correct_answers : null,
                         'wrong_answers' => $candidateTest ? $candidateTest->wrong_answers : null,
                         'questions_count' => $invitation->test->questions->count(),
+                        'hasMCQ' => $hasMCQ,
+                        'hasLSQ' => $hasLSQ,
                         'has_started' => $candidateTest ? true : false
                     ];
 
