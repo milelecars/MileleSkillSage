@@ -1,6 +1,6 @@
 class WebcamManager {
   constructor() {
-    var _a, _b;
+    var _a, _b, _c;
     this.video = null;
     this.detectionStatus = null;
     this.model = null;
@@ -9,9 +9,10 @@ class WebcamManager {
     this.deviceId = null;
     this.testId = ((_a = document.getElementById("test-id")) == null ? void 0 : _a.value) ?? null;
     this.candidateId = ((_b = document.getElementById("candidate-id")) == null ? void 0 : _b.value) ?? null;
+    this.csrfToken = (_c = document.querySelector('meta[name="csrf-token"]')) == null ? void 0 : _c.getAttribute("content");
     this.specificPageRegex = /^\/tests\/\d+\/setup$/;
-    this.violationThreshold = 3;
-    this.violationThresholdCameraOff = 2;
+    this.violationThreshold = 30;
+    this.violationThresholdCameraOff = 30;
     this.violationCounts = {
       multiplePeople: 0,
       cameraTurnedOff: 0
@@ -165,10 +166,49 @@ class WebcamManager {
       this.detectionStatus.innerHTML = statusMessage;
     }
   }
+  handleViolation(metricName, message) {
+    this.violationCounts[metricName] = (this.violationCounts[metricName] || 0) + 1;
+    const currentCount = this.violationCounts[metricName];
+    console.log(`⚠️ ${message} (Count: ${currentCount})`);
+    this.updateViolationLog(`${message} (${currentCount})`);
+    if (this.violationCounts[metricName] >= this.violationThreshold) {
+      this.suspendTest(metricName);
+    }
+  }
+  updateViolationLog(message) {
+    const logDiv = document.getElementById("violation-log");
+    if (logDiv) {
+      logDiv.textContent = message;
+    }
+  }
   async suspendTest(violationType) {
     console.log(`Test suspended due to excessive ${violationType}`);
-    await this.logSuspension(violationType);
-    window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+    try {
+      await this.logSuspension(violationType);
+      const response = await fetch("/get-unsuspend-count", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": this.csrfToken
+        },
+        body: JSON.stringify({
+          testId: this.testId,
+          candidateId: this.candidateId
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.unsuspend_count == 1) {
+        window.location.href = "/candidate/dashboard";
+        return;
+      } else {
+        window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+      }
+    } catch (error) {
+      console.error("Error during suspension:", error);
+    }
   }
   // async calculateRemainingTime() {
   //     try {
@@ -214,13 +254,12 @@ class WebcamManager {
   //         return 0; // Return 0 or handle the error appropriately
   //     }
   // }
-  async logSuspension(violationType, remainingTime) {
+  async logSuspension(violationType) {
     try {
       console.log("Sending suspension data to backend:", {
         testId: this.testId,
         candidateId: this.candidateId,
-        violationType,
-        remainingTime
+        violationType
       });
       const response = await fetch("/log-suspension", {
         method: "POST",
@@ -231,8 +270,7 @@ class WebcamManager {
         body: JSON.stringify({
           testId: this.testId,
           candidateId: this.candidateId,
-          violationType,
-          remainingTime
+          violationType
         })
       });
       if (!response.ok) {
@@ -299,49 +337,45 @@ class WebcamManager {
   }
   updateStatus(personCount, hasBook, hasCellPhone) {
     let statusMessage = "";
-    const now = Date.now();
-    const handleViolation = (condition, type) => {
-      if (condition) {
-        this.violationFrameCounters[type]++;
-        if (this.violationFrameCounters[type] >= this.FRAME_THRESHOLD) {
-          const timeSinceLastViolation = now - this.lastViolationTimes[type];
-          if (timeSinceLastViolation >= this.COOLDOWN_PERIOD) {
-            document.dispatchEvent(new CustomEvent("webcamViolation", {
-              detail: { violation: type }
-            }));
-            this.lastViolationTimes[type] = now;
-            console.log(`Violation recorded for ${type}`);
-          }
-          this.violationFrameCounters[type] = 0;
-        }
-      } else {
-        this.violationFrameCounters[type] = 0;
-      }
-    };
     if (personCount > 1) {
       statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
-      handleViolation(true, "More than One Person");
+      this.handleViolation("multiplePeople", "Multiple people detected!");
       this.hideNoPersonPopup();
     } else if (personCount === 0) {
       statusMessage += "<p style='color: red;'>No one is present!</p>";
-      handleViolation(false, "More than One Person");
       this.showNoPersonPopup();
     } else {
       statusMessage += "<p style='color: green;'>One person detected</p>";
-      handleViolation(false, "More than One Person");
       this.hideNoPersonPopup();
     }
     if (hasBook) {
-      statusMessage += "<p>Book detected</p>";
-      handleViolation(true, "Book");
-    } else {
-      handleViolation(false, "Book");
+      statusMessage += "<p style='color: orange;'>Book detected!</p>";
+      this.handleViolation("bookDetected", "Book detected!");
     }
     if (hasCellPhone) {
-      statusMessage += "<p>Cell phone detected</p>";
-      handleViolation(true, "Cellphone");
+      statusMessage += "<p style='color: orange;'>Cell phone detected!</p>";
+      this.handleViolation("cellPhoneDetected", "Cell phone detected!");
+    }
+    if (this.detectionStatus) {
+      this.detectionStatus.innerHTML = statusMessage;
+    }
+    if (personCount > 1) {
+      this.violationCounts.multiplePeople++;
+      statusMessage += `<p style='color: orange;'>${personCount} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`;
+      if (this.violationCounts.multiplePeople >= this.violationThreshold) {
+        this.suspendTest("multiplePeople");
+      }
     } else {
-      handleViolation(false, "Cellphone");
+      this.violationCounts.multiplePeople = 0;
+    }
+    if (!this.stream || !this.stream.active) {
+      this.violationCounts.cameraTurnedOff++;
+      statusMessage += `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`;
+      if (this.violationCounts.cameraTurnedOff >= this.violationThresholdCameraOff) {
+        this.suspendTest("cameraTurnedOff");
+      }
+    } else {
+      this.violationCounts.cameraTurnedOff = 0;
     }
     if (this.detectionStatus) {
       this.detectionStatus.innerHTML = statusMessage;

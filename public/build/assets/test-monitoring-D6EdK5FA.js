@@ -58,8 +58,32 @@ class TestMonitoring {
   // Suspension
   async suspendTest(violationType) {
     console.log(`Test suspended due to excessive ${violationType}`);
-    await this.logSuspension(violationType);
-    window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+    try {
+      await this.logSuspension(violationType);
+      const response = await fetch("/get-unsuspend-count", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": this.csrfToken
+        },
+        body: JSON.stringify({
+          testId: this.testId,
+          candidateId: this.candidateId
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      if (data.unsuspend_count == 1) {
+        window.location.href = "/candidate/dashboard";
+        return;
+      } else {
+        window.location.href = `/tests/${this.testId}/suspended?reason=${violationType}`;
+      }
+    } catch (error) {
+      console.error("Error during suspension:", error);
+    }
   }
   // async calculateRemainingTime() {
   //     try {
@@ -105,13 +129,12 @@ class TestMonitoring {
   //         return 0; // Return 0 or handle the error appropriately
   //     }
   // }
-  async logSuspension(violationType, remainingTime) {
+  async logSuspension(violationType) {
     try {
       console.log("Sending suspension data to backend:", {
         testId: this.testId,
         candidateId: this.candidateId,
-        violationType,
-        remainingTime
+        violationType
       });
       const response = await fetch("/log-suspension", {
         method: "POST",
@@ -122,8 +145,7 @@ class TestMonitoring {
         body: JSON.stringify({
           testId: this.testId,
           candidateId: this.candidateId,
-          violationType,
-          remainingTime
+          violationType
         })
       });
       if (!response.success) {

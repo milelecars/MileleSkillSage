@@ -63,8 +63,8 @@
         <?php else: ?>
             <link rel="stylesheet" href="/build/assets/app-DTtY3n2w.css">
             <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
-            <script src="/build/assets/webcam-Bm-KV1eR.js" defer></script>
-            <script src="/build/assets/test-monitoring-DvB4WzRT.js" defer></script>
+            <script src="/build/assets/webcam-DUR4quTq.js" defer></script>
+            <script src="/build/assets/test-monitoring-D6EdK5FA.js" defer></script>
         <?php endif; ?>
 
         <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
