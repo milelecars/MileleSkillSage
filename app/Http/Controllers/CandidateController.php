@@ -89,6 +89,9 @@ class CandidateController extends Controller
                         $status = $candidateTest ? str_replace(' ', '_', $candidateTest->status) : 'not_started';
                     }
 
+                    $hasMCQ = $questions->contains('question_type', 'MCQ');
+                    $hasLSQ = $questions->contains('question_type', 'LSQ');
+
                     $testData = [
                         'title' => $invitation->test->title,
                         'test_id' => $invitation->test->id,
