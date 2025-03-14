@@ -231,7 +231,7 @@
                                                                 <span class="block font-medium"><?php echo e(\Carbon\Carbon::parse($candidate['expiration_date'])->format('M d, Y H:i')); ?></span>
                                                             </div>
                                                             
-                                                            <form action="<?php echo e(route('invitations.extend-deadline')); ?>" method="POST">
+                                                            <form action="<?php echo e(route('invitations.extend-deadline')); ?>" method="POST" onsubmit="return validateDeadline()">
                                                                 <?php echo csrf_field(); ?>
                                                                 <input type="hidden" name="test_id" value="<?php echo e($candidate['test_id']); ?>">
                                                                 <input type="hidden" name="email" value="<?php echo e($candidate['email']); ?>">
@@ -239,20 +239,19 @@
                                                                 <div class="flex gap-2 items-center mb-4">
                                                                     <label class="text-gray-600">New Deadline:</label>
                                                                     <input type="datetime-local" 
+                                                                        id="new_deadline"
                                                                         name="new_deadline" 
-                                                                        class=" border border-gray-300 rounded-md p-2"
+                                                                        class="border border-gray-300 rounded-md p-2"
                                                                         min="<?php echo e(now()->format('Y-m-d\TH:i')); ?>"
                                                                         required>
+                                                                    <span id="error-message" class="text-red-600 text-sm hidden">Date and time are required.</span>
                                                                 </div>
                                                                 
                                                                 <div class="flex justify-end space-x-3">
-                                                                    <button type="button" 
-                                                                            @click="showDeadlineModal = false"
-                                                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                                                                    <button type="button" @click="showDeadlineModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                                                                         Cancel
                                                                     </button>
-                                                                    <button type="submit"
-                                                                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                                                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                                                                         Update Deadline
                                                                     </button>
                                                                 </div>
@@ -292,4 +291,19 @@
 <?php if (isset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54)): ?>
 <?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
 <?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
-<?php endif; ?><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/admin/manage-candidates.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+
+<script>
+    function validateDeadline() {
+        const deadlineInput = document.getElementById('new_deadline').value;
+        const errorMessage = document.getElementById('error-message');
+
+        if (!deadlineInput) {
+            errorMessage.classList.remove('hidden');
+            return false;
+        }
+        
+        errorMessage.classList.add('hidden');
+        return true;
+    }
+</script><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/admin/manage-candidates.blade.php ENDPATH**/ ?>

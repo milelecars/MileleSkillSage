@@ -28,7 +28,7 @@ class CandidateController extends Controller
     {
         $candidate = Auth::guard('candidate')->user();
         \Log::debug('Current candidate:', ['candidate_id' => $candidate->id, 'email' => $candidate->email]);
-        
+
         if (!$candidate) {
             \Log::warning('No authenticated candidate found');
             return redirect()->route('invitation.candidate-auth');
@@ -42,177 +42,96 @@ class CandidateController extends Controller
                 ->get();
 
             \Log::debug('Retrieved all invitations:', [
-                'count' => $allInvitations->count(),
-                'invitations' => $allInvitations->map(function($inv) {
-                    return [
-                        'test_id' => $inv->test_id,
-                        'invited_emails' => $inv->invited_emails
-                    ];
-                })
+                'count' => $allInvitations->count()
             ]);
 
-            // First, collect all non-expired invites for this candidate
-            $validInvites = collect();
-            foreach ($allInvitations as $invitation) {
+            // Fetch all tests (valid and expired)
+            $allTests = $allInvitations->flatMap(function ($invitation) use ($candidate) {
                 $invites = collect($invitation->invited_emails['invites']);
                 $candidateInvites = $invites->where('email', $candidate->email);
-                
-                \Log::debug('Processing invitation for candidate:', [
-                    'test_id' => $invitation->test_id,
-                    'candidate_email' => $candidate->email,
-                    'matching_invites_found' => $candidateInvites->count(),
-                    'invites' => $candidateInvites->toArray()
-                ]);
 
-                foreach ($candidateInvites as $invite) {
+                return $candidateInvites->map(function ($invite) use ($invitation, $candidate) {
                     $deadline = Carbon::parse($invite['deadline']);
                     $isExpired = now()->greaterThan($deadline);
                     
-                    \Log::debug('Checking invite expiration:', [
-                        'test_id' => $invitation->test_id,
-                        'invite' => $invite,
-                        'deadline' => $deadline->toIso8601String(),
-                        'current_time' => now()->toIso8601String(),
-                        'is_expired' => $isExpired
+                    \Log::debug('isExpired:', [
+                        $isExpired
                     ]);
 
-                    if (!$isExpired) {
-                        $validInvites->push([
-                            'invitation' => $invitation,
-                            'invite' => $invite
-                        ]);
+                    // Retrieve candidate_test record if exists
+                    $candidateTest = DB::table('candidate_test')
+                        ->where('candidate_id', $candidate->id)
+                        ->where('test_id', $invitation->test_id)
+                        ->first();
+
+                    // Default status determination
+                    if ($isExpired) {
+                        if ($candidateTest) {
+                            \Log::debug('Expired test found in candidate_test:', [
+                                'candidate_id' => $candidate->id,
+                                'test_id' => $invitation->test_id,
+                                'existing_status' => $candidateTest->status
+                            ]);
+                    
+                            if (str_replace(' ', '_', strtolower($candidateTest->status)) !== 'not_started') {
+                                $status = str_replace(' ', '_', $candidateTest->status);
+                            } else {
+                                $status = 'expired';
+                            }
+                            \Log::debug('$candidateTest->status !== not started:', [
+                               str_replace(' ', '_', strtolower($candidateTest->status)) !== 'not_started'
+                            ]);
+                        } else {
+                            $status = 'expired';
+                        }
+                    }else {
+                        // If not expired, check candidate_test status
+                        $status = $candidateTest ? str_replace(' ', '_', $candidateTest->status) : 'not_started';
                     }
-                }
-            }
 
-            \Log::debug('Valid non-expired invites:', [
-                'count' => $validInvites->count(),
-                'invites' => $validInvites->map(function($item) {
-                    return [
-                        'test_id' => $item['invitation']->test_id,
-                        'invite' => $item['invite']
-                    ];
-                })
-            ]);
-
-            $candidateTests = $validInvites->map(function ($item) use ($candidate) {
-                $invitation = $item['invitation'];
-                $questions = Question::where('test_id', $invitation->test_id)->get();
-                $candidateTest = DB::table('candidate_test')
-                    ->where('candidate_id', $candidate->id)
-                    ->where('test_id', $invitation->test_id)
-                    ->first();
-
-                \Log::debug('Checking candidate_test table:', [
-                    'test_id' => $invitation->test_id,
-                    'candidate_id' => $candidate->id,
-                    'record_found' => !is_null($candidateTest),
-                    'record' => $candidateTest
-                ]);
-                
-                $hasMCQ = $questions->contains('question_type', 'MCQ');
-                $hasLSQ = $questions->contains('question_type', 'LSQ');
-
-                if ($candidateTest) {
                     $testData = [
                         'title' => $invitation->test->title,
                         'test_id' => $invitation->test->id,
-                        'status' => str_replace(' ', '_', $candidateTest->status), 
-                        'started_at' => $candidateTest->started_at,
-                        'completed_at' => $candidateTest->completed_at,
-                        'score'=> $candidateTest->score,
-                        'red_flags'=> $candidateTest->red_flags,
-                        'correct_answers' => $candidateTest->correct_answers,
-                        'wrong_answers' => $candidateTest->wrong_answers,
+                        'status' => $status,
+                        'started_at' => $candidateTest ? $candidateTest->started_at : null,
+                        'completed_at' => $candidateTest ? $candidateTest->completed_at : null,
+                        'score' => $candidateTest ? $candidateTest->score : null,
+                        'red_flags' => $candidateTest ? $candidateTest->red_flags : null,
+                        'correct_answers' => $candidateTest ? $candidateTest->correct_answers : null,
+                        'wrong_answers' => $candidateTest ? $candidateTest->wrong_answers : null,
                         'questions_count' => $invitation->test->questions->count(),
-                        'has_started' => true,
-                        'hasMCQ' => $hasMCQ,
-                        'hasLSQ' => $hasLSQ,
+                        'has_started' => $candidateTest ? true : false
                     ];
-                    \Log::debug('Returning existing test data:', $testData);
-                    return $testData;
-                }
 
-                // If no record in candidate_test table, return as not started
-                $testData = [
-                    'title' => $invitation->test->title,
-                    'test_id' => $invitation->test->id,
-                    'status' => 'not_started',
-                    'started_at' => null,
-                    'completed_at' => null,
-                    'score'=> null,
-                    'red_flags'=> null,
-                    'correct_answers' => null,
-                    'wrong_answers' => null,
-                    'questions_count' => $invitation->test->questions->count(),
-                    'has_started' => false,
-                    'hasMCQ' => $hasMCQ,
-                    'hasLSQ' => $hasLSQ,
-                ];
-                \Log::debug('Returning not started test data:', $testData);
-                return $testData;
-            });
-
-            // Get all expired invites and add them to the results
-            $expiredTests = $allInvitations->flatMap(function ($invitation) use ($candidate) {
-                $invites = collect($invitation->invited_emails['invites']);
-                $candidateInvites = $invites->where('email', $candidate->email);
-                
-                return $candidateInvites->filter(function ($invite) {
-                    return now()->greaterThan(Carbon::parse($invite['deadline']));
-                })->map(function ($invite) use ($invitation) {
-                    $testData = [
-                        'title' => $invitation->test->title,
-                        'test_id' => $invitation->test->id,
-                        'status' => 'expired',
-                        'started_at' => null,
-                        'completed_at' => null,
-                        'score'=> null,
-                        'red_flags'=> null,
-                        'correct_answers' => null,
-                        'wrong_answers' => null,
-                        'questions_count' => $invitation->test->questions->count(),
-                        'has_started' => false
-                    ];
-                    \Log::debug('Adding expired test:', $testData);
+                    \Log::debug('Processed test data:', $testData);
                     return $testData;
                 });
             });
 
-            // Combine and sort all tests
-            $allTests = $candidateTests->concat($expiredTests)->sortBy(function ($test) {
+            // Sort tests by status priority
+            $sortedTests = $allTests->sortBy(function ($test) {
                 $sortOrder = [
                     'in_progress' => 1,
                     'not_started' => 2,
                     'completed' => 3,
-                    'accepted' => 4,
-                    'rejected' => 5,
-                    'expired' => 6
+                    'suspended' => 4,
+                    'accepted' => 5,
+                    'rejected' => 6,
+                    'expired' => 7
                 ];
                 return $sortOrder[$test['status']] ?? 7;
             });
 
             \Log::debug('Final test list:', [
-                'total_count' => $allTests->count(),
-                'status_breakdown' => $allTests->groupBy('status')
-                    ->map(function($group) { return $group->count(); })
+                'total_count' => $sortedTests->count(),
+                'status_breakdown' => $sortedTests->groupBy('status')->map->count()
             ]);
 
-            $invitation = $this->validateSession();
-            
-            return view('candidate.dashboard', [
-                'candidateTests' => $allTests,
-                'invitation' => $invitation
-            ]);
+            return view('candidate.dashboard', ['candidateTests' => $sortedTests]);
         } catch (\Exception $e) {
-            \Log::error('Error in dashboard:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return view('candidate.dashboard', [
-                'candidateTests' => collect([]), 
-                'invitation' => null
-            ])->withErrors(['message' => 'Error loading tests. Please try again.']);
+            \Log::error('Error in dashboard:', ['error' => $e->getMessage()]);
+            return view('candidate.dashboard', ['candidateTests' => collect([])])
+                ->withErrors(['message' => 'Error loading tests. Please try again.']);
         }
     }
     

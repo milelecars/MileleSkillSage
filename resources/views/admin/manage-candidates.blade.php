@@ -217,7 +217,7 @@
                                                                 <span class="block font-medium">{{ \Carbon\Carbon::parse($candidate['expiration_date'])->format('M d, Y H:i') }}</span>
                                                             </div>
                                                             
-                                                            <form action="{{ route('invitations.extend-deadline') }}" method="POST">
+                                                            <form action="{{ route('invitations.extend-deadline') }}" method="POST" onsubmit="return validateDeadline()">
                                                                 @csrf
                                                                 <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
                                                                 <input type="hidden" name="email" value="{{ $candidate['email'] }}">
@@ -225,20 +225,19 @@
                                                                 <div class="flex gap-2 items-center mb-4">
                                                                     <label class="text-gray-600">New Deadline:</label>
                                                                     <input type="datetime-local" 
+                                                                        id="new_deadline"
                                                                         name="new_deadline" 
-                                                                        class=" border border-gray-300 rounded-md p-2"
+                                                                        class="border border-gray-300 rounded-md p-2"
                                                                         min="{{ now()->format('Y-m-d\TH:i') }}"
                                                                         required>
+                                                                    <span id="error-message" class="text-red-600 text-sm hidden">Date and time are required.</span>
                                                                 </div>
                                                                 
                                                                 <div class="flex justify-end space-x-3">
-                                                                    <button type="button" 
-                                                                            @click="showDeadlineModal = false"
-                                                                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                                                                    <button type="button" @click="showDeadlineModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                                                                         Cancel
                                                                     </button>
-                                                                    <button type="submit"
-                                                                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                                                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                                                                         Update Deadline
                                                                     </button>
                                                                 </div>
@@ -269,3 +268,18 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    function validateDeadline() {
+        const deadlineInput = document.getElementById('new_deadline').value;
+        const errorMessage = document.getElementById('error-message');
+
+        if (!deadlineInput) {
+            errorMessage.classList.remove('hidden');
+            return false;
+        }
+        
+        errorMessage.classList.add('hidden');
+        return true;
+    }
+</script>
