@@ -123,7 +123,7 @@
                             <div class=" space-y-8">
                                 @foreach ($questions->take(8) as $index => $question)
                                     <div class="bg-gray-50 p-6 rounded-lg shadow">
-                                        <p class="text-lg mb-4 font-medium text-gray-800">
+                                        <p class="text-lg mb-4 font-medium text-gray-800 text-wrap">
                                             {{$index + 1}}. {{ $question->question_text }}
                                         </p>
 

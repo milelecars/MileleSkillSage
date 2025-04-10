@@ -457,25 +457,26 @@ class TestController extends Controller
         return view('tests.invite', compact('id'));
     }
 
-    protected function getQuestionsFromExcel($file, $test)
+    protected function getQuestionsFromExcel($file, $test) 
     {
         Log::info('Starting Excel import', [
             'file_name' => $file->getClientOriginalName()
         ]);
-    
+        
         try {
             $import = new QuestionsImport($test);
-            $collection = Excel::toCollection($import, $file);
-            $data = $collection->first()->toArray();
-    
+            Excel::import($import, $file);
+            
+            // Get the sanitized data from the import
+            $data = $import->getCleanedData();
+            
             Log::info('Excel import completed', [
                 'test_id' => $test->id,
                 'row_count' => count($data),
                 'sample_data' => !empty($data) ? $data[0] : null
             ]);
-    
+            
             return $data;
-    
         } catch (\Exception $e) {
             Log::error('Excel import failed', [
                 'error' => $e->getMessage(),
@@ -484,7 +485,7 @@ class TestController extends Controller
             throw $e;
         }
     }
-
+    
     public function setup($id)
     {
         $candidate = Auth::guard('candidate')->user();

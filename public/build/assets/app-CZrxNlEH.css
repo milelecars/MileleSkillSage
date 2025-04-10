@@ -1392,6 +1392,9 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.text-wrap {
+  text-wrap: wrap;
+}
 .break-words {
   overflow-wrap: break-word;
 }

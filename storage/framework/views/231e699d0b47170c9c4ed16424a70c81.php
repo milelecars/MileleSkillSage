@@ -134,7 +134,7 @@
                             <div class=" space-y-8">
                                 <?php $__currentLoopData = $questions->take(8); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $question): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="bg-gray-50 p-6 rounded-lg shadow">
-                                        <p class="text-lg mb-4 font-medium text-gray-800">
+                                        <p class="text-lg mb-4 font-medium text-gray-800 text-wrap">
                                             <?php echo e($index + 1); ?>. <?php echo e($question->question_text); ?>
 
                                         </p>
