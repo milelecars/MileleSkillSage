@@ -250,9 +250,84 @@ class AdminController extends Controller
                 $status = $test->pivot->status;
                 // If status is "not_started" and we have a record in candidate_test,
                 // this means they've logged in
-                $hasLoggedIn = $status === 'not_started' && $test->pivot->created_at;
+                $hasLoggedIn = $status === 'not started' && $test->pivot->created_at;
                 $isSuspended = $test->pivot->is_suspended;
                 $unsuspendCount = $test->pivot->unsuspend_count;
+
+                $isExpired = false;
+
+                Log::debug('Candidate login status:', ['hasLoggedIn' => $hasLoggedIn]);
+                Log::debug('Candidate :', ['candidate' => $candidate]);
+
+                if ($hasLoggedIn) {
+                    Log::debug('Attempting to find invitation for candidate.', [
+                        'candidate_email' => $candidate->email,
+                        'test_id' => $test->id,
+                    ]);
+
+                    $invitation = Invitation::where('test_id', $test->id)
+                        ->whereJsonLength('invited_emails->invites', '>', 0)
+                        ->get()
+                        ->first(function ($invitation) use ($candidate) {
+                            $invites = is_string($invitation->invited_emails) 
+                                ? json_decode($invitation->invited_emails, true)['invites'] ?? []
+                                : ($invitation->invited_emails['invites'] ?? []);
+                            
+                            Log::debug('Checking invitation for candidate in invites list.', [
+                                'invites' => $invites
+                            ]);
+
+                            return collect($invites)->contains(function ($invite) use ($candidate) {
+                                return $invite['email'] === $candidate->email;
+                            });
+                        });
+
+                    if ($invitation) {
+                        Log::debug('Invitation found for candidate.');
+
+                        $invites = is_string($invitation->invited_emails) 
+                            ? json_decode($invitation->invited_emails, true)['invites'] ?? []
+                            : ($invitation->invited_emails['invites'] ?? []);
+
+                        $candidateInvite = collect($invites)->first(function ($invite) use ($candidate) {
+                            return $invite['email'] === $candidate->email;
+                        });
+
+                        Log::debug('Candidate invite extracted.', ['invite' => $candidateInvite]);
+
+                        if ($candidateInvite && isset($candidateInvite['deadline'])) {
+                            $deadline = Carbon::parse($candidateInvite['deadline']);
+                            $isExpired = now()->greaterThan($deadline);
+
+                            Log::debug('Deadline check for candidate.', [
+                                'deadline' => $deadline->toDateTimeString(),
+                                'now' => now()->toDateTimeString(),
+                                'isExpired' => $isExpired
+                            ]);
+
+                            if ($isExpired ) {
+                                $status = 'expired';
+
+                                Log::debug('Status expired. Updating candidate_test record.', [
+                                    'candidate_id' => $candidate->id,
+                                    'test_id' => $test->id,
+                                    'new_status' => $status
+                                ]);
+
+                                DB::table('candidate_test')
+                                    ->where('candidate_id', $candidate->id)
+                                    ->where('test_id', $test->id)
+                                    ->update(['status' => 'expired']);
+                            }
+                        } else {
+                            Log::debug('No deadline found in candidate invite.');
+                        }
+                    } else {
+                        Log::debug('No matching invitation found for candidate.');
+                    }
+                } else {
+                    Log::debug('Candidate has not logged in. Skipping invitation check.');
+                }
 
                 if ($test->title == "General Mental Ability (GMA)") {
                     $questions = $test->questions()
@@ -277,6 +352,7 @@ class AdminController extends Controller
                     'unsuspend_count' => $unsuspendCount,
                     'started_at' => $test->pivot->started_at,
                     'completed_at' => $test->pivot->completed_at,
+                    'expiration_date' => $isExpired ?? $candidateInvite['deadline'],
                     'score'=> $test->pivot->score,
                     'hasMCQ' => $hasMCQ,
                     'hasLSQ' => $hasLSQ,

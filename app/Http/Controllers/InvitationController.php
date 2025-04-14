@@ -150,11 +150,22 @@ class InvitationController extends Controller
            }
    
            
-           DB::table('invitations')
+            DB::table('invitations')
                ->where('test_id', $request->test_id)
                ->update([
                    'invited_emails' => json_encode(['invites' => $invites])
-               ]);
+                ]);
+
+
+            $candidate = DB::table('candidates')->where('email', $request->email)->first();
+            if (!$candidate) {
+                throw new \Exception('Candidate not found.');
+            }
+
+            DB::table('candidate_test')
+                ->where('candidate_id', $candidate->id)
+                ->where('test_id', $request->test_id)
+                ->update(['status' => 'not started']);
    
            Log::info('Deadline extended successfully', [
                'test_id' => $request->test_id,
