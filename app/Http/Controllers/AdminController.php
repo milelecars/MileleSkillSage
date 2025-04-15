@@ -428,15 +428,23 @@ class AdminController extends Controller
             ->pluck('completed_count', 'test_id')
             ->toArray();
 
-        $allCandidates = $activeTestCandidates->concat($invitedEmails)
-        ->sortBy(function ($item) {
-            return [
-                $item['sort_order'],                    
-                !($item['has_logged_in'] ?? false),    
-                !isset($item['name']),                  
-                $item['email']                         
-            ];
-        });
+        $allCandidates = $activeTestCandidates->concat($invitedEmails);
+        if ($testFilter) {
+            // Sort descending: higher percentile first (Top performers)
+            $allCandidates = $allCandidates->sortByDesc(function ($item) {
+                return $item['percentile'] ?? 0;
+            });
+        } else {
+            // Existing sort
+            $allCandidates = $allCandidates->sortBy(function ($item) {
+                return [
+                    $item['sort_order'],
+                    !($item['has_logged_in'] ?? false),
+                    !isset($item['name']),
+                    $item['email']
+                ];
+            });
+        }
 
         $candidates = new \Illuminate\Pagination\LengthAwarePaginator(
             $allCandidates->forPage(request()->get('page', 1), 10),
