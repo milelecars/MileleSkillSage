@@ -155,11 +155,8 @@
                                         </td>
                                         
                                         <td class="px-2 py-4 text-sm">
-                                            <?php if(isset($candidate['percentile'])): ?>
-                                                <span class="font-medium">
-                                                <?php echo e($candidate['percentile']); ?>
-
-                                                </span>
+                                            <?php if(isset($row['percentile'])): ?>
+                                                Top <?php echo e(100 - floor($row['percentile'])); ?>%
                                             <?php else: ?>
                                                 -
                                             <?php endif; ?>
