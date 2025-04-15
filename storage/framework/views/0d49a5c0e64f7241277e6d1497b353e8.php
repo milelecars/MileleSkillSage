@@ -155,8 +155,14 @@
                                         </td>
                                         
                                         <td class="px-2 py-4 text-sm">
-                                            <?php if(isset($row['percentile'])): ?>
-                                                Top <?php echo e(100 - floor($row['percentile'])); ?>%
+                                            <?php if(!is_null($candidate['percentile'])): ?>
+                                                <?php if($candidate['percentile'] >= 99): ?>
+                                                    Top 1%
+                                                <?php elseif($candidate['percentile'] > 0): ?>
+                                                    Top <?php echo e(100 - floor($candidate['percentile'])); ?>%
+                                                <?php else: ?>
+                                                    Bottom Performer
+                                                <?php endif; ?>
                                             <?php else: ?>
                                                 -
                                             <?php endif; ?>

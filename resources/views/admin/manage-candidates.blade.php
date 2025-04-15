@@ -141,8 +141,14 @@
                                         </td>
                                         
                                         <td class="px-2 py-4 text-sm">
-                                            @if (isset($row['percentile']))
-                                                Top {{ 100 - floor($row['percentile']) }}%
+                                            @if (!is_null($candidate['percentile']))
+                                                @if ($candidate['percentile'] >= 99)
+                                                    Top 1%
+                                                @elseif ($candidate['percentile'] > 0)
+                                                    Top {{ 100 - floor($candidate['percentile']) }}%
+                                                @else
+                                                    Bottom Performer
+                                                @endif
                                             @else
                                                 -
                                             @endif
