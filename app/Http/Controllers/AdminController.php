@@ -224,11 +224,10 @@ class AdminController extends Controller
 
     private function calculatePercentile(int $score, array $allScores): float {
         $count = count($allScores);
-
         if ($count === 0) return 0;
 
-        $below = count(array_filter($allScores, fn($s) => $s < $score));
-        return round(($below / $count) * 100, 2);
+        $belowOrEqual  = count(array_filter($allScores, fn($s) => $s <= $score));
+        return round(($belowOrEqual  / $count) * 100, 2);
     }
 
     public function manageCandidates(Request $request)

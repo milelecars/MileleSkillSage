@@ -141,10 +141,8 @@
                                         </td>
                                         
                                         <td class="px-2 py-4 text-sm">
-                                            @if(isset($candidate['percentile']))
-                                                <span class="font-medium">
-                                                {{$candidate['percentile']}}
-                                                </span>
+                                            @if ($row['status'] === 'completed' && isset($row['percentile']))
+                                                Top {{ 100 - floor($row['percentile']) }}%
                                             @else
                                                 -
                                             @endif
