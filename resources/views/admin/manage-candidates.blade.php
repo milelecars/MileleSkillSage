@@ -82,13 +82,13 @@
                                 <tr>
                                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Candidate</th>
                                     <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Test</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Started At</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Completed At</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Score</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Percentile</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Report</th>
-                                    <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+                                    <th class="px-8 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Started At</th>
+                                    <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase">Completed At</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Score</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Percentile</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Report</th>
+                                    <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 text-center">
@@ -141,7 +141,7 @@
                                         </td>
                                         
                                         <td class="px-2 py-4 text-sm">
-                                            @if (!is_null($candidate['percentile']))
+                                            @if (isset($candidate['percentile']))
                                                 @if ($candidate['percentile'] >= 99)
                                                     Top 1%
                                                 @elseif ($candidate['percentile'] > 0)

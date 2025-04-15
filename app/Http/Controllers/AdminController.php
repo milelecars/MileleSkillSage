@@ -236,8 +236,9 @@ class AdminController extends Controller
         $search = $request->input('search');
         $testFilter = $request->input('test_filter');
 
-        $activeTestCandidates = Candidate::with(['tests' => function ($query) {
+        $activeTestCandidates = Candidate::with(['tests' => function ($query) use ($testFilter) {
             $query->select('tests.id', 'title', 'description', 'duration')
+                ->when($testFilter, fn($q) => $q->where('tests.id', $testFilter))
                 ->withPivot('started_at', 'completed_at', 'score', 'red_flags',  'correct_answers', 'wrong_answers' , 'ip_address', 'status',  'is_suspended', 'unsuspend_count');
         }])
         ->whereHas('tests', function($query) use ($testFilter) {
@@ -445,6 +446,10 @@ class AdminController extends Controller
         );
 
         $candidates->withPath(request()->url());
+        $candidates->appends([
+            'search' => $search,
+            'test_filter' => $testFilter,
+        ]);
 
         $stats = [
             'totalInvited' => $totalInvited,
