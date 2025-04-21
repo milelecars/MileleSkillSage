@@ -15,6 +15,9 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use Google\Client;
 use Google\Service\Gmail;
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
 
 
 class AdminController extends Controller
@@ -230,6 +233,62 @@ class AdminController extends Controller
         return round(($belowOrEqual  / $count) * 100, 2);
     }
 
+    public function exportCandidates(Request $request)
+    {
+        // Get the same data as your index method
+        $search = $request->input('search');
+        $testFilter = $request->input('test_filter');
+        
+        // Fetch candidates with the same filters as your main page
+        $query = CandidateTest::query()
+            ->with(['candidate', 'test'])
+            ->join('candidates', 'candidate_test.candidate_id', '=', 'candidates.id')
+            ->join('tests', 'candidate_test.test_id', '=', 'tests.id');
+        
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('candidates.name', 'like', '%' . $search . '%')
+                ->orWhere('candidates.email', 'like', '%' . $search . '%');
+            });
+        }
+        
+        if ($testFilter) {
+            $query->where('candidate_test.test_id', $testFilter);
+        }
+        
+        $candidates = $query->get()->map(function ($item) {
+            // Format the data as needed
+            return [
+                'Name' => $item->candidate->name ?? '',
+                'Email' => $item->candidate->email,
+                'Test' => $item->test->title,
+                'Status' => ucfirst($item->status),
+                'Started At' => $item->started_at ? \Carbon\Carbon::parse($item->started_at)->format('M d, Y H:i') : '',
+                'Completed At' => $item->completed_at ? \Carbon\Carbon::parse($item->completed_at)->format('M d, Y H:i') : '',
+                'Score' => $item->score ?? '',
+                'Percentile' => isset($item->percentile) ? ($item->percentile >= 99 ? 'Top 1%' : ($item->percentile > 0 ? 'Top ' . (100 - floor($item->percentile)) . '%' : 'Bottom Performer')) : '',
+            ];
+        });
+        
+        // Create CSV content
+        $headers = array_keys($candidates->first() ?? []);
+        $csv = implode(',', $headers) . "\n";
+        
+        foreach ($candidates as $row) {
+            $csv .= implode(',', array_map(function($field) {
+                // Escape quotes and wrap fields in quotes
+                return '"' . str_replace('"', '""', $field) . '"';
+            }, $row)) . "\n";
+        }
+        
+        $filename = 'candidates_export_' . date('Y-m-d_H-i-s') . '.csv';
+        
+        return Response::make($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
     public function manageCandidates(Request $request)
     {
 
@@ -430,12 +489,10 @@ class AdminController extends Controller
 
         $allCandidates = $activeTestCandidates->concat($invitedEmails);
         if ($testFilter) {
-            // Sort descending: higher percentile first (Top performers)
             $allCandidates = $allCandidates->sortByDesc(function ($item) {
                 return $item['percentile'] ?? 0;
             });
         } else {
-            // Existing sort
             $allCandidates = $allCandidates->sortBy(function ($item) {
                 return [
                     $item['sort_order'],

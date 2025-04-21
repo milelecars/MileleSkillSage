@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\RegisteredAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ScreenshotController;
 use App\Http\Controllers\OAuthController;
+use App\Http\Controllers\ExcelExportController;
 
 Route::get('/google/login/{testId}', [OAuthController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('/oauth2/callback', [OAuthController::class, 'handleGoogleCallback']);
@@ -70,7 +71,9 @@ Route::middleware('auth:web')->group(function () {
     ->name('admin.candidate-result');
     Route::get('private-screenshot/{testId}/{candidateId}/{filename}', [AdminController::class, 'getPrivateScreenshot'])
     ->name('private.screenshot');
-    
+        
+    Route::get('/admin/export-candidates', [ExcelExportController::class, 'exportCandidates'])
+    ->name('admin.export-candidates');
     Route::post('/admin/unsuspend-test/{candidateId}/{testId}', [AdminController::class, 'unsuspendTest'])->name('admin.unsuspend-test');
     Route::put('/candidates/{candidate}/accept', [AdminController::class, 'acceptCandidate'])
     ->name('candidate.accept');
