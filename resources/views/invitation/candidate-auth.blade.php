@@ -1,8 +1,8 @@
 <x-guest-layout>
     <div class="max-w-md mx-auto my-6 px-4">
         <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-800">Test Invitation</h2>
-            <p class="text-gray-600 mt-2">Please enter your details to access the test.</p>
+            <h2 class="text-lg md:text-2xl font-bold text-gray-800">Test Invitation</h2>
+            <p class="text-sm md:text-base text-gray-600 mt-2">Please enter your details to access the test.</p>
         </div>
 
         @if (session('error'))
@@ -45,7 +45,7 @@
 
             <div class="flex items-center justify-center mt-6">
                 <button type="submit" 
-                        class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline">
+                        class="bg-blue-700 hover:bg-blue-600 text-sm md:text-base text-white font-bold py-2 px-6 rounded-lg focus:outline-none focus:shadow-outline">
                     Enter
                 </button>
             </div>
