@@ -1,6 +1,6 @@
 <div>
     @if($testStarted)
-        <div class="flex flex-col items-center text-xl font-bold" wire:poll.1s>
+        <div class="flex flex-col items-center text-base md:text-xl font-bold" wire:poll.1s>
             <div>
                 Remaining Time:
                 <p class="inline {{ $timeLeft <= 60 ? 'text-red-600 animate-pulse' : '' }}">
@@ -14,7 +14,7 @@
             @endif
         </div>
     @else
-        <div class="text-xl font-bold">
+        <div class="text-base md:text-xl font-bold">
             Test not started
         </div>
     @endif

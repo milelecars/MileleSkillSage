@@ -1,12 +1,12 @@
 <x-app-layout>
     <div class="text-theme" id="dashboard-container">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             {{-- header --}}
-            <div class="p-6 pb-4 mt-5 mb-10 border-b-2 border-gray-800">
-                <h1 class="text-3xl font-bold text-gray-900">
+            <div class="p-4 sm:p-6 pb-4 mt-4 sm:mt-5 mb-6 sm:mb-10 border-b-2 border-gray-800">
+                <h1 class="text-xl md:text-3xl font-bold text-gray-900">
                     Welcome, {{ Auth::guard('candidate')->user()->name}} 👋
                 </h1>
-                <div class="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                <div class="text-xs text-gray-600 mt-2 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                         <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
@@ -17,35 +17,35 @@
 
             {{-- content --}}
             <div class="bg-white shadow rounded-lg">
-                <div class="p-6">
-                    <h2 class="text-xl font-semibold mb-4">Your Tests</h2>
+                <div class="p-4 sm:p-6">
+                    <h2 class="text-base md:text-xl font-semibold mb-4">Your Tests</h2>
                     
                     @if($candidateTests->isEmpty())
                         <div class="text-gray-500 text-center py-4">
                             No tests available yet.
                         </div>
                     @else
-                        <div class="overflow-x-auto rounded-lg">
+                        <div class="overflow-x-auto rounded-lg w-full block">
                             <table class="min-w-full divide-y divide-gray-200 border border-gray-200">
                                 <thead class="bg-gray-50">
                                     <tr>
-                                        <th class="px-4 py-3 text-base font-semibold text-gray-500 uppercase">Test Title</th>
-                                        <th class="px-4 py-3 text-base font-semibold text-gray-500 uppercase">Status</th>
-                                        <th class="px-4 py-3 text-base font-semibold text-gray-500 uppercase">Started At</th>
-                                        <th class="px-4 py-3 text-base font-semibold text-gray-500 uppercase">Completed At</th>
-                                        <th class="px-4 py-3 text-base font-semibold text-gray-500 uppercase">Score</th>
-                                        <th class="px-4 py-3 text-base font-semibold text-gray-500 uppercase">Actions</th>
+                                        <th class="px-4 py-3 text-xs md:text-base font-semibold text-gray-500 uppercase">Test Title</th>
+                                        <th class="px-4 py-3 text-xs md:text-base font-semibold text-gray-500 uppercase">Status</th>
+                                        <th class="px-4 py-3 text-xs md:text-base font-semibold text-gray-500 uppercase">Started At</th>
+                                        <th class="px-4 py-3 text-xs md:text-base font-semibold text-gray-500 uppercase">Completed At</th>
+                                        <th class="px-4 py-3 text-xs md:text-base font-semibold text-gray-500 uppercase">Score</th>
+                                        <th class="px-4 py-3 text-xs md:text-base font-semibold text-gray-500 uppercase">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
                                     @foreach($candidateTests as $test)
                                         <tr class="text-center">
-                                            <td class="px-2 py-4 text-base">
+                                            <td class="px-2 py-4 text-xs md:text-base">
                                                 <div class="font-medium text-gray-900">{{ $test['title'] }}</div>
-                                                <div class="text-base text-gray-500">{{ $test['questions_count'] }} questions</div>
+                                                <div class="text-xs md:text-base text-gray-500">{{ $test['questions_count'] }} questions</div>
                                             </td>
-                                            <td class="px-2 py-4 text-base">
-                                                <span class="px-2 inline-flex text-base leading-5 font-semibold rounded-full 
+                                            <td class="py-3 px-2 md:py-4 text-xs md:text-base">
+                                                <span class="px-2 inline-flex text-xs md:text-base leading-5 font-semibold rounded-full 
                                                     @if($test['status'] === 'completed') bg-green-100 text-green-800
                                                     @elseif($test['status'] === 'in_progress') bg-yellow-100 text-yellow-800
                                                     @elseif($test['status'] === 'suspended') bg-orange-100 text-orange-800
@@ -55,13 +55,13 @@
                                                     {{ ucfirst(str_replace('_', ' ', $test['status'])) }}
                                                 </span>
                                             </td>
-                                            <td class="px-2 py-4 text-base">
+                                            <td class="px-2 py-4 text-xs md:text-base">
                                                 {{ $test['started_at'] ? \Carbon\Carbon::parse($test['started_at'])->format('M d, Y H:i') : '-' }}
                                             </td>
-                                            <td class="px-2 py-4 text-base">
+                                            <td class="px-2 py-4 text-xs md:text-base">
                                                 {{ $test['completed_at'] ? \Carbon\Carbon::parse($test['completed_at'])->format('M d, Y H:i') : '-' }}
                                             </td>
-                                            <td class="px-2 py-4 text-base">
+                                            <td class="px-2 py-4 text-xs md:text-base">
                                                 @if($test['score'] !== null)
                                                     <span class="font-medium">
                                                         {{ $test['score'] }}{{ $test['hasMCQ'] ? '%' : '' }}
@@ -76,13 +76,13 @@
                                                         <span>-</span>
                                                     @elseif(!in_array($test['status'], ['completed', 'accepted', 'rejected']))
                                                         <a href="{{ route('tests.setup', $test['test_id']) }}" class="text-blue-600 hover:text-blue-800"> 
-                                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                                                             </svg>
                                                         </a>
                                                     @else
                                                         <a href="{{ route('tests.result', $test['test_id']) }}" class="text-blue-600 hover:text-blue-800">
-                                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                                                                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                                             </svg>

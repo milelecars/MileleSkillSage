@@ -1,12 +1,12 @@
 <x-guest-layout>
-    <div class="max-w-md mx-auto my-8 px-4">
+    <div class="max-w-md mx-auto my-6 px-4">
         <div class="mb-6">
             <h2 class="text-2xl font-bold text-gray-800">Test Invitation</h2>
             <p class="text-gray-600 mt-2">Please enter your details to access the test.</p>
         </div>
 
         @if (session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative mb-4" role="alert">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-3 sm:px-4 py-2 sm:py-3 rounded-lg relative mb-4 text-sm sm:text-base" role="alert">
                 <span class="block sm:inline">{{ session('error') }}</span>
             </div>
         @endif
@@ -14,7 +14,7 @@
         <form action="{{ route('invitation.validate', ['token' => $invitation->invitation_token]) }}" method="POST">
             @csrf
 
-            <div class="mb-4">
+            <div class="mb-3 sm:mb-4">
                 <label for="name" class="block text-gray-700 text-sm font-bold mb-2">Full Name</label>
                 <input id="name" 
                        type="text" 
@@ -28,7 +28,7 @@
                 @enderror
             </div>
             
-            <div class="mb-4">
+            <div class="mb-3 sm:mb-4">
                 <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
                 <input id="email" 
                        type="email" 

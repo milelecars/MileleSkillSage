@@ -3,10 +3,10 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {{-- header --}}
             <div class="p-6 pb-4 mt-5 mb-10 border-b-2 border-gray-800">
-                <h1 class="text-3xl font-bold text-gray-900">
+                <h1 class="text-xl md:text-3xl font-bold text-gray-900">
                     Welcome, {{ Auth::guard('candidate')->user()->name}} 👋
                 </h1>
-                <div class="text-sm text-gray-600 mt-2 flex items-center gap-2">
+                <div class="text-xs sm:text-sm text-gray-600 mt-2 flex items-start sm:items-center gap-1 sm:gap-2 flex-wrap">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                         <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
@@ -16,11 +16,11 @@
             </div>
 
             {{-- content --}}
-            <div class="grid grid-cols-2 gap-4 mx-4 pb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mx-2 sm:mx-4 pb-6 sm:pb-8">
                 {{-- Camera Section --}}
-                <div class="bg-white rounded-xl p-8">
+                <div class="bg-white rounded-xl p-4 sm:p-6 md:p-8">
                     <div class="mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                        <h2 class="text-base md:text-xl font-semibold text-gray-900 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                             </svg>
@@ -69,31 +69,31 @@
 
 
                     @if(isset($test))
-                        <div class="mb-6">
+                        <div class="mb-6 text-sm md:text-base">
                             @if($testAttempt && $testAttempt->pivot->status == "completed")
                                 {{-- Test completed --}}
-                                <div class="flex justify-between items-center bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
+                                <div class="flex justify-between gap-4 items-center bg-green-100 border-l-4 border-green-500 rounded-lg p-4 mb-4">
                                     <p class="text-green-700">You have completed this test.</p>
                                     <a href="{{ route('tests.result', ['id' => $test->id]) }}"
-                                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                                    class="text-sm md:text-base md:inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
                                         View Results
                                     </a>
                                 </div>
                             @elseif($testAttempt && $testAttempt->pivot->status == "in progress")
                                 {{-- Test in progress --}}
-                                <div class="flex justify-between items-center bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
+                                <div class="flex justify-between gap-4 items-center bg-blue-100 border-l-4 border-blue-500 rounded-lg p-4 mb-4">
                                     <p class="text-blue-700">You have a test in progress.</p>
                                     <a href="{{ route('tests.start', ['id' => $test->id]) }}"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    class="text-sm md:text-base md:inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         Continue Test
                                     </a>
                                 </div>
                             @else
                                 {{-- Test not started --}}
-                                <div class="flex w-full justify-between items-center bg-gray-100 border-l-4 border-blue-600 rounded-lg p-4 pr-0 mb-4">
+                                <div class="flex w-full justify-between gap-4 items-center bg-gray-100 border-l-4 border-blue-600 rounded-lg p-4 pr-0 mb-4">
                                     <p class="text-gray-700">Please review the guidelines before starting the test.</p>
                                     <a href="{{ route('tests.show', ['id' => $test->id]) }}"
-                                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    class="text-sm md:text-base md:inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         View Guidelines
                                     </a>
                                 </div>

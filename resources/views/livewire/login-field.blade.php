@@ -58,11 +58,11 @@
 
     {{-- Submit Button --}}
     <div class="flex items-center justify-between mt-7">
-        <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-sm md:text-base text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
             Log in
         </button>
         
-        <a href="{{ route('register') }}" class="inline-block align-baseline font-bold text-sm text-theme hover:text-blue-600">
+        <a href="{{ route('register') }}" class="inline-block align-baseline font-bold text-sm md:text-base text-theme hover:text-blue-600">
             Need an account?
         </a>
     </div>
