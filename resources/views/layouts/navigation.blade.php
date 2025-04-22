@@ -86,11 +86,11 @@
         <div class="pt-4 pb-1 border-t border-gray-200">
             <div class="px-4">
                 @if(Auth::guard('web')->check())
-                    <div class="font-medium text-[11px] md:text-xs md:text-sm md:text-base text-gray-800">{{ Auth::user()->name }}</div>
-                    <div class="font-medium text-[11px] md:text-xs md:text-sm text-gray-500">{{ Auth::user()->email }}</div>
+                    <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
+                    <div class="font-medium text-base text-gray-500">{{ Auth::user()->email }}</div>
                 @elseif(Auth::guard('candidate')->check())
-                    <div class="font-medium text-[11px] md:text-xs md:text-sm md:text-base text-gray-800">{{ Auth::guard('candidate')->user()->name }}</div>
-                    <div class="font-medium text-[11px] md:text-xs md:text-sm text-gray-500">{{ Auth::guard('candidate')->user()->email }}</div>
+                    <div class="font-medium text-base text-gray-800">{{ Auth::guard('candidate')->user()->name }}</div>
+                    <div class="font-medium text-base text-gray-500">{{ Auth::guard('candidate')->user()->email }}</div>
                 @endif
             </div>
             
