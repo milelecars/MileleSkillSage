@@ -35,7 +35,7 @@
         </script>
 
         <!-- Device detection -->
-        <script>
+        <!-- <script>
             function blockMobileAccess() {
                 const mobileDevices = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
                 if (mobileDevices.test(navigator.userAgent) && window.innerWidth <= 768) {
@@ -49,7 +49,7 @@
             }
 
             window.onload = blockMobileAccess;
-        </script>
+        </script> -->
 
         <!-- External Scripts -->
         <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>

@@ -26,17 +26,17 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-6 sm:p-10">
-                    <h1 class="text-3xl font-bold text-gray-900 mb-6">Test Results</h1>
+                    <h1 class="text-xl md:text-3xl font-bold text-gray-900 mb-6">Test Results</h1>
                     
-                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-20 rounded-lg">
-                        <p class="text-blue-700">Thank you for completing the test!</p>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-10 md:mb-20 rounded-lg">
+                        <p class="text-sm md:text-base text-blue-700">Thank you for completing the test!</p>
                     </div>
 
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h2 class="text-xl font-semibold mb-3">Test Information</h2>
-                            <ul class="space-y-2">
+                            <h2 class="text-base md:text-xl font-semibold mb-3">Test Information</h2>
+                            <ul class="space-y-2 text-sm md:text-base">
                                 <li><strong>Test Name:</strong> {{ $test->title }}</li>
                                 <li><strong>Started At:</strong>
                                     @if($testAttempt->pivot->started_at)
@@ -82,9 +82,9 @@
                         </div>
                         
                         <div>
-                            <h2 class="text-xl font-semibold mb-3">Score Summary</h2>
+                            <h2 class="text-base md:text-xl font-semibold mb-3">Score Summary</h2>
                             <div class="bg-gray-100 p-4 rounded-lg">
-                            <div class="text-4xl font-bold text-center text-blue-600">
+                            <div class="text-2xl md:text-4xl font-bold text-center text-blue-600">
                                 {{$calculatedScore}}{{ $hasMCQ ? '%' : '' }}
                             </div>
 
@@ -94,8 +94,8 @@
 
                     @if($hasMCQ)
                         <div class="mt-10">
-                            <h2 class="text-xl font-semibold mb-3">🌟Performance Feedback🌟</h2>
-                            <p class="text-gray-700">
+                            <h2 class="text-base md:text-xl font-semibold mb-3">🌟Performance Feedback🌟</h2>
+                            <p class="text-gray-700 text-sm md:text-base">
                                 @if($calculatedScore >= 0.8)
                                     Excellent work! Your high score demonstrates a strong understanding of the subject matter.
                                 @elseif($calculatedScore >= 0.6)
@@ -108,7 +108,7 @@
                     @endif
 
                     <div class="mt-20 flex justify-end w-full">
-                        <a href="{{ route('candidate.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold  text-white hover:bg-blue-500 disabled:opacity-25 transition ease-in-out duration-150">
+                        <a href="{{ route('candidate.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-sm md:text-base text-white hover:bg-blue-500 disabled:opacity-25 transition ease-in-out duration-150">
                             Return to Dashboard
                         </a>
                     </div>

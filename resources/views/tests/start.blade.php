@@ -18,13 +18,13 @@
         <div class="py-8">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
                 <div class="bg-white rounded-lg shadow-md overflow-hidden w-full">
-                    <div class="flex">
+                    <div class="flex flex-col md:flex-row">
                         <!-- Question Section -->
-                        <div class="w-[60%] p-6 border-r">
-                            <div class="mb-4 text-sm text-gray-600">
+                        <div class="w-full md:w-[60%] p-4 sm:p-6 border-b md:border-b-0 md:border-r">
+                            <div class="mb-4 text-xs md:text-sm text-gray-600">
                                 Question {{ $currentQuestionIndex + 1 }} of {{ $questions->count() }}
                             </div>
-                            <h2 class="text-xl font-medium mb-6">
+                            <h2 class="text-base md:text-xl font-medium mb-6">
                                 {{ $questions[$currentQuestionIndex]->question_text }}
                             </h2>
 
@@ -47,7 +47,7 @@
                         </div>
 
                         <!-- Answer Section -->
-                        <div class="w-[40%] p-6 bg-gray-50">
+                        <div class="w-full md:w-[40%] p-6 bg-gray-50">
                             <form id="questionForm" method="POST" 
                                   action="{{ $currentQuestionIndex === $questions->count() - 1 
                                     ? route('tests.submit', ['id' => $test->id]) 
@@ -67,7 +67,7 @@
                                                     {{ session()->get("test_session.answers.$currentQuestionIndex") === $choice->id ? 'checked' : '' }}
                                                     required>
                                                 <span class="ml-3">
-                                                    <span class="font-medium">{{ chr(65 + $loop->index) }}.</span>
+                                                    <span class="font-medium text-sm md:text-base">{{ chr(65 + $loop->index) }}.</span>
                                                     {{ $choice->choice_text }}
                                                 </span>
                                             </label>
@@ -91,11 +91,11 @@
                                     >
 
                                     <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
-                                        <div class="w-12 text-center -ml-6">Strongly Disagree</div>
-                                        <div class="w-16 text-center -ml-1">Disagree</div>
-                                        <div class="w-14 text-center -ml-1">Neutral</div>
-                                        <div class="w-12 text-center mr-1">Agree</div>
-                                        <div class="w-12 text-center -mr-6">Strongly Agree</div>
+                                        <div class="w-12 text-sm md:text-base text-center -ml-6">Strongly Disagree</div>
+                                        <div class="w-16 text-sm md:text-base text-center -ml-1">Disagree</div>
+                                        <div class="w-14 text-sm md:text-base text-center -ml-1">Neutral</div>
+                                        <div class="w-12 text-sm md:text-base text-center mr-1">Agree</div>
+                                        <div class="w-12 text-sm md:text-base text-center -mr-6">Strongly Agree</div>
                                     </div>
                                 </div>
                                 @endif
@@ -103,7 +103,7 @@
                                 {{-- Submit Button --}}
                                 <div class="mt-6">
                                     <button type="submit" 
-                                            class="w-full text-white py-3 px-6 rounded-lg 
+                                            class="w-full text-sm md:text-base text-white py-3 px-6 rounded-lg 
                                             {{ $currentQuestionIndex === $questions->count() - 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }}">
                                         {{ $currentQuestionIndex === $questions->count() - 1 ? 'Submit Test' : 'Next Question' }}
                                     </button>
@@ -126,14 +126,11 @@
 
     @push('scripts')
     <script>
-        // Prevent form resubmission on page refresh
         if (window.history.replaceState) {
             window.history.replaceState(null, null, window.location.href);
         }
 
-        // Add form submission handling
         document.getElementById('questionForm').addEventListener('submit', function(e) {
-            // Disable submit button to prevent double submission
             const submitButton = this.querySelector('button[type="submit"]');
             submitButton.disabled = true;
         });

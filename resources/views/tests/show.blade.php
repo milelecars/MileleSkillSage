@@ -2,22 +2,22 @@
     <div class="py-12 text-theme bg-gray-100">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-                <div class="p-8">
+                <div class="p-4 sm:p-6 md:p-8">
                     {{-- Camera Section --}}
                     @if(Auth::guard('candidate')->check())
-                        <div class="rounded-lg overflow-hidden bg-gray-50 p-4 hidden">
-                            <video id="video" class="w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
-                            <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
+                        <div class="hidden rounded-lg overflow-hidden bg-gray-50 p-4 ">
+                            <video id="video" class=" w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
+                            <div id="detection-status" class=" mt-3 text-sm text-gray-600"></div>
                         </div>
                     @endif
 
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="flex flex-row md:justify-between md:items-center gap-4 mb-4">
                         <div class="flex flex-col justify-between">
-                            <h1 class="text-2xl font-extrabold text-gray-900">{{$test->title}}</h1>
+                            <h1 class="text-xl md:text-2xl font-extrabold text-gray-900">{{$test->title}}</h1>
                             
                         </div>  
                         @if(Auth::guard('web')->check())
-                            <div class="flex space-x-1">
+                            <div class="flex md:space-x-1 ">
                                 <a href="{{ route('tests.edit', $test->id) }}" class="text-yellow-500 hover:text-yellow-600 p-2 rounded-lg hover:bg-yellow-100 transition duration-150 ease-in-out" title="Edit Test">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -44,7 +44,7 @@
                         </div>
                     @endif
                     <div class="mb-10">
-                        <p class="text-lg text-gray-700 leading-relaxed text-justify">
+                        <p class="text-base md:text-lg text-gray-700 leading-relaxed text-justify">
                             {{$test->description}}
                         </p>
 
@@ -104,10 +104,10 @@
                                         I agree to the <a href="#" class="text-blue-600 hover:underline">Terms of Service</a> and acknowledge that I have read the <a href="#" class="text-blue-600 hover:underline">Guidelines</a>
                                     </label>
                                 </div>
-                                <div class="flex justify-end ">
-                                    <button type="submit" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                <div class="flex justify-end text-sm md:text-base mt-3">
+                                    <button type="submit" class="inline-flex items-center px-3 py-2 md:px-6 md:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         Start Test
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 ml-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 md:w-5 md:h-5 ml-2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                                         </svg>
                                     </button>
@@ -119,11 +119,11 @@
 
                     @if(Auth::guard('web')->check() || (Auth::guard('candidate')->check() && $hasMCQ))
                         @if($questions->count() > 0)
-                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Test Preview</h2>
+                            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 mt-5">Test Preview</h2>
                             <div class=" space-y-8">
                                 @foreach ($questions->take(8) as $index => $question)
                                     <div class="bg-gray-50 p-6 rounded-lg shadow">
-                                        <p class="text-lg mb-4 font-medium text-gray-800 text-wrap">
+                                        <p class="text-base md:text-lg mb-4 font-medium text-gray-800 text-wrap">
                                             {{$index + 1}}. {{ $question->question_text }}
                                         </p>
 
@@ -171,7 +171,7 @@
                                             
                                             <div class="space-y-2 ml-4 mb-4">
                                                 @foreach($question->choices as $choice)
-                                                    <div class="text-gray-700">
+                                                    <div class="text-gray-700 text-sm md:text-base">
                                                         {{ chr(65 + $loop->index) }}. {{ $choice->choice_text }}
                                                     </div>
                                                 @endforeach
@@ -182,13 +182,13 @@
                                                 $correctIndex = $correctChoice ? $question->choices->search($correctChoice) : null;
                                             @endphp
                                             @if($correctIndex !== null)
-                                                <p class="mt-4 font-semibold text-green-600">
+                                                <p class="mt-4 font-semibold text-green-600 text-sm md:text-base">
                                                     Answer: {{ chr(65 + $correctIndex) }}
                                                 </p>
                                             @endif
 
                                             @if($test->title == "General Mental Ability (GMA)" && Auth::guard('candidate')->check())
-                                                <span>
+                                                <span class="text-sm md:text-base">
                                                     {{$questionsExplained[$index]}}
                                                 </span>
                                             @endif
@@ -200,7 +200,7 @@
                                 {{-- test preview for admin users --}}
                                 @if(Auth::guard('web')->check())
                                     @if($questions->count() > 10)
-                                        <p class="text-gray-600 italic mt-4">
+                                        <p class="text-gray-600 italic mt-4 text-sm md:text-base">
                                             Showing 10 out of {{ $questions->count() }} questions...
                                         </p>
                                     @endif
@@ -208,7 +208,7 @@
 
                             </div>
                         @else
-                            <p class="text-gray-600 italic">No questions available for this test.</p>
+                            <p class="text-gray-600 italic text-sm md:text-base">No questions available for this test.</p>
                         @endif
                     @endif
                         
