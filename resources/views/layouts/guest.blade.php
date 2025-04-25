@@ -15,16 +15,16 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js'])
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.webp') }}" />
-        <div class="relative min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
-            <div>
-                <div  class="w-[80%] md:w-[30%] mx-auto my-2 block object-contain">
+        <div class="min-h-screen bg-gray-100 flex flex-col justify-center items-center">
+            <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.webp') }}" />
+            <div class="relative min-h-screen flex flex-col items-center justify-center selection:text-white">
+                <div class="w-[70%] md:w-[30%] mx-auto my-2 mb-16 block object-contain">
                     <x-application-logo />
-                </div>
-            </div>
+                </div> 
 
-            <div class="w-full sm:max-w-md mt-10 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
+                <div class="w-full sm:max-w-md mt-10 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+                    {{ $slot }}
+                </div>
             </div>
         </div>
     </body>
