@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="<?php echo e(str_replace('_', '-', app()->getLocale())); ?>">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
         <!-- For Safari -->
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -12,7 +12,7 @@
         <meta http-equiv="ScreenOrientation" content="autoRotate:disabled">
 
 
-        <title>{{ config('app.name', 'Milele SkillSage') }}</title>
+        <title><?php echo e(config('app.name', 'Milele SkillSage')); ?></title>
 
         <!-- Fonts and External CSS -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -58,36 +58,41 @@
         <!-- <link src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" as="script" defer></link> -->
 
         <!-- Application Assets -->
-        @if (app()->environment('local'))
-            @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js'])
-        @else
+        <?php if(app()->environment('local')): ?>
+            <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js']); ?>
+        <?php else: ?>
             <link rel="stylesheet" href="/build/assets/app-CDbIhxdv.css">
             <link rel="preload" src="/build/assets/app-Dh5OhEi1.js" as="script" defer></link>
             <link rel="preload" src="/build/assets/webcam-DRWO0hBV.js" as="script" defer></link>
             <link rel="preload" src="/build/assets/test-monitoring-D6EdK5FA.js" as="script" defer></link>
-        @endif
+        <?php endif; ?>
 
-        @livewireStyles
+        <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>
+
     </head>
 
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
-            @include('layouts.navigation')
+            <?php echo $__env->make('layouts.navigation', \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>
 
             <!-- Page Heading -->
-            @isset($header)
+            <?php if(isset($header)): ?>
                 <header class="bg-white shadow">
                     <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                        {{ $header }}
+                        <?php echo e($header); ?>
+
                     </div>
                 </header>
-            @endisset
+            <?php endif; ?>
 
             <!-- Page Content -->
             <main>
-                {{ $slot }}
+                <?php echo e($slot); ?>
+
             </main>
         </div>
-        @livewireScripts
+        <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::scripts(); ?>
+
     </body>
 </html>
+<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/layouts/app.blade.php ENDPATH**/ ?>
