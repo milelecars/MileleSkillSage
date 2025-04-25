@@ -61,10 +61,10 @@
         <?php if(app()->environment('local')): ?>
             <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js']); ?>
         <?php else: ?>
-            <link rel="stylesheet" href="/build/assets/app-DwpdVHP.css">
+            <link rel="stylesheet" href="/build/assets/app-Bi5-8sU3.css">
             <link rel="preload" src="/build/assets/app-Dh5OhEi1.js" as="script" defer></link>
             <link rel="preload" src="/build/assets/webcam-DRWO0hBV.js" as="script" defer></link>
-            <link rel="preload" src="/build/assets/test-monitoring-D6EdK5FA.js" as="script" defer></link>
+            <link rel="preload" src="/build/assets/test-monitoring-BNQ90RFY.js" as="script" defer></link>
         <?php endif; ?>
 
         <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>

@@ -229,9 +229,9 @@ class TestMonitoring {
             });
         });
     
-        // document.addEventListener('contextmenu', (e) => {
-        //     this.handleViolation(e, 'rightClicks', 'Right clicking is not allowed!');
-        // });
+        document.addEventListener('contextmenu', (e) => {
+            this.handleViolation(e, 'rightClicks', 'Right clicking is not allowed!');
+        });
     
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && 

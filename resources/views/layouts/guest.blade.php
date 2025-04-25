@@ -15,7 +15,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js'])
     </head>
     <body class="font-sans text-gray-900 antialiased">
-        <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.jpg') }}" />
+        <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.webp') }}" />
         <div class="relative min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
             <div>
                 <div  class="w-[80%] md:w-[30%] mx-auto my-2 block object-contain">

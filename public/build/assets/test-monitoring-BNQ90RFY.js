@@ -182,6 +182,9 @@ class TestMonitoring {
         this.handleViolation(e, "copyCutAttempts", `${eventType} is not allowed!`);
       });
     });
+    document.addEventListener("contextmenu", (e) => {
+      this.handleViolation(e, "rightClicks", "Right clicking is not allowed!");
+    });
     document.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && ["c", "v", "x", "a", "p", "f12"].includes(e.key.toLowerCase())) {
         this.handleViolation(e, "keyboardShortcuts", `Keyboard shortcut detected: ${e.key}`);
