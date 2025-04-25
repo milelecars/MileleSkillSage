@@ -37,8 +37,6 @@
                         <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
 
-                    <button id="start-camera-btn" class="hidden sm:hidden text-white bg-blue-500 p-2 rounded-md">Start Camera</button>
-
                 </div>
 
                 {{-- right --}}
