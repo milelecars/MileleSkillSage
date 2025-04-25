@@ -838,6 +838,10 @@ select {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
+.my-4 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
 .my-6 {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
@@ -1000,9 +1004,6 @@ select {
 .h-6 {
   height: 1.5rem;
 }
-.h-7 {
-  height: 1.75rem;
-}
 .h-72 {
   height: 18rem;
 }
@@ -1060,20 +1061,17 @@ select {
 .w-6 {
   width: 1.5rem;
 }
-.w-7 {
-  width: 1.75rem;
-}
 .w-8 {
   width: 2rem;
 }
 .w-\[25\%\] {
   width: 25%;
 }
+.w-\[40\%\] {
+  width: 40%;
+}
 .w-\[70\%\] {
   width: 70%;
-}
-.w-\[80\%\] {
-  width: 80%;
 }
 .w-\[90\%\] {
   width: 90%;
@@ -1210,9 +1208,6 @@ select {
 }
 .justify-between {
   justify-content: space-between;
-}
-.justify-items-center {
-  justify-items: center;
 }
 .gap-1 {
   gap: 0.25rem;
@@ -1453,6 +1448,10 @@ select {
   --tw-bg-opacity: 1;
   background-color: rgb(239 246 255 / var(--tw-bg-opacity));
 }
+.bg-blue-500 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(59 130 246 / var(--tw-bg-opacity));
+}
 .bg-blue-600 {
   --tw-bg-opacity: 1;
   background-color: rgb(37 99 235 / var(--tw-bg-opacity));
@@ -1567,9 +1566,6 @@ select {
 .object-contain {
   -o-object-fit: contain;
      object-fit: contain;
-}
-.p-1 {
-  padding: 0.25rem;
 }
 .p-2 {
   padding: 0.5rem;
@@ -1704,9 +1700,6 @@ select {
 }
 .pt-4 {
   padding-top: 1rem;
-}
-.pt-6 {
-  padding-top: 1.5rem;
 }
 .text-left {
   text-align: left;
@@ -2416,10 +2409,6 @@ select {
     align-items: center;
   }
 
-  .sm\:justify-center {
-    justify-content: center;
-  }
-
   .sm\:justify-between {
     justify-content: space-between;
   }
@@ -2483,10 +2472,6 @@ select {
     padding-bottom: 2rem;
   }
 
-  .sm\:pt-0 {
-    padding-top: 0px;
-  }
-
   .sm\:text-base {
     font-size: 1rem;
     line-height: 1.5rem;
@@ -2519,6 +2504,10 @@ select {
     margin-inline-start: 2.5rem;
   }
 
+  .md\:mt-1 {
+    margin-top: 0.25rem;
+  }
+
   .md\:mt-6 {
     margin-top: 1.5rem;
   }
@@ -2539,6 +2528,10 @@ select {
     height: 1.5rem;
   }
 
+  .md\:h-7 {
+    height: 1.75rem;
+  }
+
   .md\:h-9 {
     height: 2.25rem;
   }
@@ -2549,6 +2542,10 @@ select {
 
   .md\:w-6 {
     width: 1.5rem;
+  }
+
+  .md\:w-7 {
+    width: 1.75rem;
   }
 
   .md\:w-9 {
@@ -2599,6 +2596,10 @@ select {
 
   .md\:border-r {
     border-right-width: 1px;
+  }
+
+  .md\:p-1 {
+    padding: 0.25rem;
   }
 
   .md\:p-8 {
