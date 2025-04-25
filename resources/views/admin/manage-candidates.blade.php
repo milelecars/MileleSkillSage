@@ -52,7 +52,7 @@
                                 
                             </div>
 
-                            <a href="{{ route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? '']) }}" class="w-full justify-center px-3 h-9 bg-green-600 text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-green-700 flex items-center gap-1">
+                            <a href="{{ route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? '']) }}" class="hidden md:flex w-full justify-center px-3 h-9 bg-green-600 text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-green-700 items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
@@ -71,19 +71,19 @@
                     <!-- Stats -->
                     <div class="grid grid-cols-2 text-center items-center md:grid-cols-4 gap-4 mb-6 relative">
                         <div class="bg-blue-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
-                            <h3 class="text-base md:text-lg font-semibold text-blue-700">Total Invited</h3>
-                            <p class="text-lg md:text-2xl font-bold text-blue-900">{{ $totalInvited }}</p>
+                            <h3 class="text-base md:text-lg font-semibold text-blue-700">Active</h3>
+                            <p class="text-lg md:text-2xl font-bold text-blue-900">{{ $activeTests }}</p>
                         </div>
                         <div class="bg-green-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
-                            <h3 class="text-base md:text-lg font-semibold text-green-700">Completed Tests</h3>
-                            <p class="text-lg md:text-2xl font-bold text-green-900">{{ $completedTestsCount }}</p>
+                            <h3 class="text-base md:text-lg font-semibold text-green-700">Invited</h3>
+                            <p class="text-lg md:text-2xl font-bold text-green-900">{{ $totalInvited }}</p>
                         </div>
                         <div class="bg-purple-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
-                            <h3 class="text-base md:text-lg font-semibold text-purple-700">Active Tests</h3>
-                            <p class="text-lg md:text-2xl font-bold text-purple-900">{{ $activeTests }}</p>
+                            <h3 class="text-base md:text-lg font-semibold text-purple-700">Completed</h3>
+                            <p class="text-lg md:text-2xl font-bold text-purple-900">{{ $completedTestsCount }}</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
-                            <h3 class="text-base md:text-lg font-semibold text-gray-700">Total Reports</h3>
+                            <h3 class="text-base md:text-lg font-semibold text-gray-700">Reports</h3>
                             <p class="text-lg md:text-2xl font-bold text-gray-900">{{ $totalReports }}</p>
                         </div>
                     </div>
@@ -105,8 +105,8 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 text-center">
                                 @forelse($candidates as $candidate)
-                                    <tr>
-                                        <td class="px-2 py-4">
+                                    <tr class="relative items-center justify-center">
+                                        <td class="px-2 py-4 h-full">
                                             @if($candidate['has_started'])
                                                 <a href="{{ route('admin.candidate-result', ['test' => $candidate['test_id'], 'candidate' => $candidate['id']]) }}" class="hover:text-blue-600">
                                                     <div class="text">{{ $candidate['name'] }}</div>
@@ -116,9 +116,9 @@
                                                 <div class="text-xs text-gray-500">{{ $candidate['email'] }}</div>
                                             @endif
                                         </td>
-                                        <td class="px-2 py-4 text-xs md:text-sm">{{ $candidate['test_title'] }}</td>
+                                        <td class="px-2 py-4 h-full text-xs md:text-sm">{{ $candidate['test_title'] }}</td>
                                         
-                                        <td class="px-2 py-4 text-xs md:text-sm">
+                                        <td class="px-2 py-4 h-full text-xs md:text-sm">
                                             @if($candidate['status'] === 'accepted')
                                                 <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Accepted</span>
                                             @elseif($candidate['status'] === 'rejected')
@@ -136,13 +136,13 @@
                                             @endif
                                         </td>
                                         
-                                        <td class="py-4 text-xs">
+                                        <td class="py-4 h-full text-xs">
                                             {{ isset($candidate['started_at']) ? \Carbon\Carbon::parse($candidate['started_at'])->format('M d, Y H:i') : '-' }}
                                         </td>
-                                        <td class="py-4 text-xs">
+                                        <td class="py-4 h-full text-xs">
                                             {{ isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('M d, Y H:i') : '-' }}
                                         </td>
-                                        <td class="px-2 py-4 text-xs md:text-sm">
+                                        <td class="px-2 py-4 h-full text-xs md:text-sm">
                                             @if(isset($candidate['score']))
                                                 <span class="font-medium">
                                                 {{$candidate['score']}}{{ $candidate['hasMCQ'] ? '%' : '' }}
@@ -152,7 +152,7 @@
                                             @endif
                                         </td>
                                         
-                                        <td class="px-2 py-4 text-xs md:text-sm">
+                                        <td class="px-2 py-4 h-full text-xs md:text-sm">
                                             @if (isset($candidate['percentile']))
                                                 @if ($candidate['percentile'] >= 99)
                                                     Top 1%
@@ -166,9 +166,9 @@
                                             @endif
                                         </td>
                                         
-                                        <td class="flex py-6 items-center justify-center">
+                                        <td class="py-6 h-full">
                                             @if(isset($candidate['completed_at']))
-                                                <a href="{{ route('reports.candidate-report', ['candidateId' => $candidate['id'], 'testId' => $candidate['test_id']]) }}">
+                                                <a class="flex items-center justify-center" href="{{ route('reports.candidate-report', ['candidateId' => $candidate['id'], 'testId' => $candidate['test_id']]) }}">
                                                     <svg fill="#102141" width="25px" height="25px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#102141" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
                                                 </a>
                                             @else
@@ -176,8 +176,8 @@
                                             @endif
                                         </td>
 
-                                        <td class="py-4">
-                                            <div class="relative" x-data="{ open: false, showDeadlineModal: false }">
+                                        <td class="py-6 h-full">
+                                            <div class="relative flex items-center justify-center" x-data="{ open: false, showDeadlineModal: false }">
                                                 @if($candidate['status'] === 'completed' || ($candidate['status'] === 'suspended' && $candidate['unsuspend_count'] < 1))
                                                     <button @click="open = !open" class="text-gray-600 hover:text-gray-800">
                                                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

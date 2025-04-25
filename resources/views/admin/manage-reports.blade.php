@@ -3,7 +3,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-6">
-                    <h1 class="text-2xl font-bold text-gray-900 mb-6">Manage Reports</h1>
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-900 mb-6">Manage Reports</h1>
 
                     @if(session('success'))
                         <div class="bg-amber-50 border-l-4 border-amber-200 text-amber-800 p-4 mb-4 rounded-lg">
@@ -18,22 +18,22 @@
                     @endif
 
                     <!-- Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-blue-700">Total Tests</h3>
-                            <p class="text-2xl font-bold text-blue-900">{{ $totalTests }}</p>
+                    <div class="grid grid-cols-2 text-center items-center md:grid-cols-4 gap-4 mb-6 relative">
+                        <div class="bg-blue-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-blue-700">Tests</h3>
+                            <p class="text-lg md:text-2xl font-bold text-blue-900">{{ $totalTests }}</p>
                         </div>
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-green-700">Total Reports</h3>
-                            <p class="text-2xl font-bold text-green-900">{{ $totalReports }}</p>
+                        <div class="bg-green-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-green-700">Reports</h3>
+                            <p class="text-lg md:text-2xl font-bold text-green-900">{{ $totalReports }}</p>
                         </div>
-                        <div class="bg-purple-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-purple-700">Total Candidates Participated</h3>
-                            <p class="text-2xl font-bold text-purple-900">{{ $totalCandidatesParticipated }}</p>
+                        <div class="bg-purple-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-purple-700">Participants</h3>
+                            <p class="text-lg md:text-2xl font-bold text-purple-900">{{ $totalCandidatesParticipated }}</p>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-700">Completed Tests</h3>
-                            <p class="text-2xl font-bold text-gray-900">{{ $totalCandidatesParticipated }}</p>
+                        <div class="bg-gray-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-gray-700">Completed Tests</h3>
+                            <p class="text-lg md:text-2xl font-bold text-gray-900">{{ $totalCandidatesParticipated }}</p>
                         </div>
                     </div>
 
@@ -52,9 +52,9 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse($testReports as $report)
                                     <tr class="text-center">
-                                        <td class="px-2 py-4 text-sm">{{ $report->title }}</td>
-                                        <td class="px-2 py-4 text-sm">
-                                            <div class="relative w-full h-6 bg-gray-200 rounded-full overflow-hidden flex">
+                                        <td class="px-2 py-4 text-xs md:text-sm">{{ $report->title }}</td>
+                                        <td class="px-2 py-4 text-xs md:text-sm">
+                                            <div class="relative w-full h-4 md:h-6 bg-gray-200 rounded-full overflow-hidden flex">
                                                 @if($report->total_invited > 0)
                                                     <!-- Completed candidates -->
                                                     <div class="bg-green-200 h-full relative flex items-center justify-center"
@@ -74,18 +74,17 @@
                                                 @endif
                                             </div>
                                         </td>
-                                        <td class="px-2 py-4 text-sm">
+                                        <td class="px-2 py-4 text-xs md:text-sm">
                                             {{ isset($report->invitation_expiry) ? date('Y-m-d', strtotime($report->invitation_expiry)) : 'N/A' }}
                                         </td>
-                                        <td class="px-2 py-4 text-sm">{{ $report->total_reports }}</td>
+                                        <td class="px-2 py-4 text-xs md:text-sm">{{ $report->total_reports }}</td>
                                         <td class="px-2 py-4">
                                             <div class="flex justify-center">
                                                 <a href="{{ route('admin.download-test-reports', $report->id) }}" 
-                                                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    class="inline-flex items-center px-4 py-2 text-xs md:text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                                     </svg>
-                                                    Download All
                                                 </a>
                                             </div>
                                         </td>

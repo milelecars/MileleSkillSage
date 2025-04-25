@@ -91,17 +91,17 @@
                                     >
 
                                     <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
-                                        <div class="w-12 text-sm md:text-base text-center -ml-6">Strongly Disagree</div>
-                                        <div class="w-16 text-sm md:text-base text-center -ml-1">Disagree</div>
-                                        <div class="w-14 text-sm md:text-base text-center -ml-1">Neutral</div>
-                                        <div class="w-12 text-sm md:text-base text-center mr-1">Agree</div>
-                                        <div class="w-12 text-sm md:text-base text-center -mr-6">Strongly Agree</div>
+                                        <div class="w-12 text-[13px] md:text-base text-center -ml-6">Strongly Disagree</div>
+                                        <div class="w-16 text-[13px] md:text-base text-center -ml-1">Disagree</div>
+                                        <div class="w-14 text-[13px] md:text-base text-center -ml-1">Neutral</div>
+                                        <div class="w-12 text-[13px] md:text-base text-center mr-1">Agree</div>
+                                        <div class="w-12 text-[13px] md:text-base text-center -mr-6">Strongly Agree</div>
                                     </div>
                                 </div>
                                 @endif
 
                                 {{-- Submit Button --}}
-                                <div class="mt-6">
+                                <div class="mt-16 md:mt-6">
                                     <button type="submit" 
                                             class="w-full text-sm md:text-base text-white py-3 px-6 rounded-lg 
                                             {{ $currentQuestionIndex === $questions->count() - 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }}">
