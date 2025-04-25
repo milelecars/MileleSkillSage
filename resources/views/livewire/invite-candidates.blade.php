@@ -13,10 +13,10 @@
             <tbody class="bg-white divide-y divide-gray-200 text-center">
                 @foreach($emailList as $index => $record)
                     <tr>
-                        <td class="px-2 py-4 text-sm">{{ $record['firstName'] }}</td>
-                        <td class="px-2 py-4 text-sm">{{ $record['lastName'] }}</td>
-                        <td class="px-2 py-4 text-sm">{{ $record['role'] }}</td>
-                        <td class="px-2 py-4 text-sm">{{ $record['email'] }}</td>
+                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['firstName'] }}</td>
+                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['lastName'] }}</td>
+                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['role'] }}</td>
+                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['email'] }}</td>
                         <td class="px-2 py-4">
                             <button 
                                 wire:click="removeEmail({{ $index }})"
@@ -27,7 +27,6 @@
                     </tr>
                 @endforeach
 
-                <!-- Add New Row -->
                 <tr>
                     <td colspan="5" class="px-2 py-4">
                         <form wire:submit.prevent="addEmail" class="grid grid-cols-5 gap-2 items-center justify-center">

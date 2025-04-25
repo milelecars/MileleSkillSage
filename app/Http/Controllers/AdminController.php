@@ -18,10 +18,18 @@ use Google\Service\Gmail;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use App\Services\TestReportService;
 
 
 class AdminController extends Controller
 {
+    protected $testReportService;
+
+    public function __construct(TestReportService $testReportService)
+    {
+        $this->testReportService = $testReportService;
+    }
+
     private function getCompletedStatuses()
     {
         return ['completed', 'rejected', 'accepted'];
@@ -753,10 +761,14 @@ class AdminController extends Controller
         $hasMCQ = $questions->contains('question_type', 'MCQ');
         $hasLSQ = $questions->contains('question_type', 'LSQ');
         $suspensionReason = $test->pivot->suspension_reason;
+        $realIP = $this->testReportService->getClientIP();
+        $location = $this->testReportService->getLocationFromIP($realIP);
+        Log::info("Location Data", $location);
     
         return view('admin.candidate-result', compact(
             'candidate',
             'test',
+            'location',
             'screenshots',
             'totalQuestions',
             'score',

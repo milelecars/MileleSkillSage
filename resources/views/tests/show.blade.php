@@ -11,15 +11,15 @@
                         </div>
                     @endif
 
-                    <div class="flex flex-row md:justify-between md:items-center gap-4 mb-4">
+                    <div class="flex flex-row justify-between items-center gap-4 mb-4">
                         <div class="flex flex-col justify-between">
-                            <h1 class="text-xl md:text-2xl font-extrabold text-gray-900">{{$test->title}}</h1>
+                            <h1 class="text-lg md:text-2xl font-extrabold text-gray-900">{{$test->title}}</h1>
                             
                         </div>  
                         @if(Auth::guard('web')->check())
                             <div class="flex md:space-x-1 ">
                                 <a href="{{ route('tests.edit', $test->id) }}" class="text-yellow-500 hover:text-yellow-600 p-2 rounded-lg hover:bg-yellow-100 transition duration-150 ease-in-out" title="Edit Test">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="md:w-5 h-5 w-6 md:h-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                     </svg>
                                 </a>
@@ -27,7 +27,7 @@
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-orange-500 hover:text-orange-600 p-2 rounded-lg hover:bg-orange-100 transition duration-150 ease-in-out" title="Archive Test">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="md:w-5 h-5 w-6 md:h-6">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                         </svg>
                                     </button>
@@ -36,7 +36,7 @@
                         @endif
                     </div>
                     @if(Auth::guard('web')->check())
-                        <div class="flex items-center mb-4">
+                        <div class="text-sm md:text-lg flex items-center mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="mr-1" viewBox="0 0 24 24" width="18" height="18">
                                 <path fill="#666666" d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/>
                             </svg>
@@ -44,7 +44,7 @@
                         </div>
                     @endif
                     <div class="mb-10">
-                        <p class="text-base md:text-lg text-gray-700 leading-relaxed text-justify">
+                        <p class="text-sm md:text-lg text-gray-700 leading-relaxed text-justify">
                             {{$test->description}}
                         </p>
 
@@ -119,7 +119,7 @@
 
                     @if(Auth::guard('web')->check() || (Auth::guard('candidate')->check() && $hasMCQ))
                         @if($questions->count() > 0)
-                            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-4 mt-5">Test Preview</h2>
+                            <h2 class="text-lg md:text-2xl font-bold text-gray-800 mb-4 mt-5">Test Preview</h2>
                             <div class=" space-y-8">
                                 @foreach ($questions->take(8) as $index => $question)
                                     <div class="bg-gray-50 p-6 rounded-lg shadow">
@@ -200,15 +200,15 @@
                                 {{-- test preview for admin users --}}
                                 @if(Auth::guard('web')->check())
                                     @if($questions->count() > 10)
-                                        <p class="text-gray-600 italic mt-4 text-sm md:text-base">
-                                            Showing 10 out of {{ $questions->count() }} questions...
+                                        <p class="text-gray-600 italic mt-4 text-xs md:text-base">
+                                            Showing 8 out of {{ $questions->count() }} questions...
                                         </p>
                                     @endif
                                 @endif
 
                             </div>
                         @else
-                            <p class="text-gray-600 italic text-sm md:text-base">No questions available for this test.</p>
+                            <p class="text-gray-600 italic text-xs md:text-base">No questions available for this test.</p>
                         @endif
                     @endif
                         

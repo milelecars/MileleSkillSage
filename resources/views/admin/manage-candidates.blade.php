@@ -4,12 +4,12 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <div class="p-6">
                     
-                    <div class="flex justify-between items-center mb-6">
-                        <h1 class="text-2xl font-bold text-gray-900">Manage Candidates</h1>
+                    <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
+                        <h1 class="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-0">Manage Candidates</h1>
                         
                         <!-- search functionality  -->
-                        <form method="GET" action="{{ route('admin.manage-candidates') }}" class="flex gap-2">
-                            <select name="test_filter" class="w-48 h-9 border text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                        <form method="GET" action="{{ route('admin.manage-candidates') }}" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <select name="test_filter" class="w-full sm:w-48 h-9 border text-xs md:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                                 <option value="">All Tests</option>
                                 @foreach($availableTests as $test)
                                     <option value="{{ $test->id }}" {{ $testFilter == $test->id ? 'selected' : '' }}>
@@ -18,41 +18,46 @@
                                 @endforeach
                             </select>
 
-                            <div class="relative">
-                                <input
-                                    type="text"
-                                    name="search"
-                                    value="{{ $search ?? '' }}"
-                                    placeholder="Search by name or email..."
-                                    class="w-64 h-9 border text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                @if($search)
+                            
+                            <div class="flex justify-between gap-2">
+                                <div class="relative w-full">
+                                    <input
+                                        type="text"
+                                        name="search"
+                                        value="{{ $search ?? '' }}"
+                                        placeholder="Search by name or email..."
+                                        class="w-full sm:w-64 h-9 border text-xs md:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                                    >
+                                    @if($search)
+                                        <a href="{{ route('admin.manage-candidates') }}" 
+                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                        title="Clear search">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                            </svg>
+                                        </a>
+                                    @endif
+                                </div>
+
+                                <button type="submit" class=" items-center px-3 h-9 bg-blue-600 text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-blue-700">
+                                    Search
+                                </button>
+    
+                                @if($search || $testFilter)
                                     <a href="{{ route('admin.manage-candidates') }}" 
-                                    class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                    title="Clear search">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                        </svg>
+                                    class="justify-center items-center px-3 h-9 border border-gray-300 text-gray-700 text-xs md:text-sm font-semibold rounded-lg hover:bg-gray-50 flex">
+                                        Clear
                                     </a>
                                 @endif
+                                
                             </div>
 
-                            <button type="submit" class="px-3 h-9 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700">
-                                Search
-                            </button>
-
-                            @if($search || $testFilter)
-                                <a href="{{ route('admin.manage-candidates') }}" 
-                                class="px-3 h-9 border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50 flex items-center">
-                                    Clear Filters
-                                </a>
-                            @endif
-                            
-                            <a href="{{ route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? '']) }}" class="px-3 h-9 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 flex items-center gap-1">
+                            <a href="{{ route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? '']) }}" class="w-full justify-center px-3 h-9 bg-green-600 text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-green-700 flex items-center gap-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </a>
+
 
                         </form>
                     </div>
@@ -64,22 +69,22 @@
                     @endif -->
 
                     <!-- Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-blue-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-blue-700">Total Invited</h3>
-                            <p class="text-2xl font-bold text-blue-900">{{ $totalInvited }}</p>
+                    <div class="grid grid-cols-2 text-center items-center md:grid-cols-4 gap-4 mb-6 relative">
+                        <div class="bg-blue-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-blue-700">Total Invited</h3>
+                            <p class="text-lg md:text-2xl font-bold text-blue-900">{{ $totalInvited }}</p>
                         </div>
-                        <div class="bg-green-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-green-700">Completed Tests</h3>
-                            <p class="text-2xl font-bold text-green-900">{{ $completedTestsCount }}</p>
+                        <div class="bg-green-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-green-700">Completed Tests</h3>
+                            <p class="text-lg md:text-2xl font-bold text-green-900">{{ $completedTestsCount }}</p>
                         </div>
-                        <div class="bg-purple-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-purple-700">Active Tests</h3>
-                            <p class="text-2xl font-bold text-purple-900">{{ $activeTests }}</p>
+                        <div class="bg-purple-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-purple-700">Active Tests</h3>
+                            <p class="text-lg md:text-2xl font-bold text-purple-900">{{ $activeTests }}</p>
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-700">Total Reports</h3>
-                            <p class="text-2xl font-bold text-gray-900">{{ $totalReports }}</p>
+                        <div class="bg-gray-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
+                            <h3 class="text-base md:text-lg font-semibold text-gray-700">Total Reports</h3>
+                            <p class="text-lg md:text-2xl font-bold text-gray-900">{{ $totalReports }}</p>
                         </div>
                     </div>
 
@@ -111,9 +116,9 @@
                                                 <div class="text-xs text-gray-500">{{ $candidate['email'] }}</div>
                                             @endif
                                         </td>
-                                        <td class="px-2 py-4 text-sm">{{ $candidate['test_title'] }}</td>
+                                        <td class="px-2 py-4 text-xs md:text-sm">{{ $candidate['test_title'] }}</td>
                                         
-                                        <td class="px-2 py-4 text-sm">
+                                        <td class="px-2 py-4 text-xs md:text-sm">
                                             @if($candidate['status'] === 'accepted')
                                                 <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Accepted</span>
                                             @elseif($candidate['status'] === 'rejected')
@@ -137,7 +142,7 @@
                                         <td class="py-4 text-xs">
                                             {{ isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('M d, Y H:i') : '-' }}
                                         </td>
-                                        <td class="px-2 py-4 text-sm">
+                                        <td class="px-2 py-4 text-xs md:text-sm">
                                             @if(isset($candidate['score']))
                                                 <span class="font-medium">
                                                 {{$candidate['score']}}{{ $candidate['hasMCQ'] ? '%' : '' }}
@@ -147,7 +152,7 @@
                                             @endif
                                         </td>
                                         
-                                        <td class="px-2 py-4 text-sm">
+                                        <td class="px-2 py-4 text-xs md:text-sm">
                                             @if (isset($candidate['percentile']))
                                                 @if ($candidate['percentile'] >= 99)
                                                     Top 1%
@@ -188,7 +193,7 @@
                                                             <form action="{{ route('admin.unsuspend-test', [$candidate['id'], $candidate['test_id']]) }}" method="POST" class="block"
                                                                 onsubmit="return confirm('Are you sure you want to unsuspend this test?');">
                                                                 @csrf
-                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-orange-800 hover:bg-gray-100">
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-xs md:text-sm text-orange-800 hover:bg-gray-100">
                                                                     Unsuspend Test
                                                                 </button>
                                                             </form>
@@ -199,7 +204,7 @@
                                                                 onsubmit="return confirm('Are you sure you want to accept this candidate?');">
                                                                 @csrf @method('PUT')
                                                                 <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
-                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-green-700 hover:bg-gray-100">
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-xs md:text-sm text-green-700 hover:bg-gray-100">
                                                                     Accept
                                                                 </button>
                                                             </form>
@@ -208,7 +213,7 @@
                                                                 onsubmit="return confirm('Are you sure you want to reject this candidate?');">
                                                                 @csrf @method('PUT')
                                                                 <input type="hidden" name="test_id" value="{{ $candidate['test_id'] }}">
-                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-gray-100">
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-xs md:text-sm text-orange-600 hover:bg-gray-100">
                                                                     Reject
                                                                 </button>
                                                             </form>
@@ -216,7 +221,7 @@
                                                             <form action="{{ route('candidate.delete', [$candidate['id'], $candidate['test_id']]) }}" method="POST" class="block"
                                                                 onsubmit="return confirm('Are you sure you want to delete this candidate?');">
                                                                 @csrf @method('DELETE')
-                                                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                                <button type="submit" class="w-full text-left px-4 py-2 text-xs md:text-sm text-red-600 hover:bg-gray-100">
                                                                     Delete
                                                                 </button>
                                                             </form>
@@ -224,7 +229,7 @@
 
                                                     </div>
                                                 @elseif($candidate['status'] === 'expired')
-                                                    <button @click="showDeadlineModal = true" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                    <button @click="showDeadlineModal = true" class="text-blue-600 hover:text-blue-800 text-xs md:text-sm">
                                                         Extend Deadline
                                                     </button>
 
@@ -232,7 +237,7 @@
                                                     <div x-show="showDeadlineModal" 
                                                         class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center">
                                                         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                                                            <h3 class="text-lg font-semibold mb-6">Extend Deadline</h3>
+                                                            <h3 class="text-base md:text-lg font-semibold mb-6">Extend Deadline</h3>
 
                                                             <div class="flex gap-2 mb-4">
                                                                 <span class="text-gray-600">Current Deadline:</span>
@@ -252,14 +257,14 @@
                                                                         class="border border-gray-300 rounded-md p-2"
                                                                         min="{{ now()->format('Y-m-d\TH:i') }}"
                                                                         required>
-                                                                    <span id="error-message" class="text-red-600 text-sm hidden">Date and time are required.</span>
+                                                                    <span id="error-message" class="text-red-600 text-xs md:text-sm hidden">Date and time are required.</span>
                                                                 </div>
                                                                 
                                                                 <div class="flex justify-end space-x-3">
-                                                                    <button type="button" @click="showDeadlineModal = false" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                                                                    <button type="button" @click="showDeadlineModal = false" class="px-4 py-2 text-xs md:text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                                                                         Cancel
                                                                     </button>
-                                                                    <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
+                                                                    <button type="submit" class="px-4 py-2 text-xs md:text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                                                                         Update Deadline
                                                                     </button>
                                                                 </div>

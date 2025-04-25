@@ -58,7 +58,7 @@
 
     {{-- Submit Button --}}
     <div class="flex items-center justify-between mt-7">
-        <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-sm md:text-base text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+        <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-sm md:text-base text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
             Log in
         </button>
         

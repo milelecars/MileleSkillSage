@@ -3,7 +3,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             {{-- header --}}
             <div class="p-4 sm:p-6 pb-4 mt-4 sm:mt-5 mb-6 sm:mb-10 border-b-2 border-gray-800">
-                <h1 class="text-xl md:text-3xl font-bold text-gray-900">
+                <h1 class="text-xl md:text-2xl font-bold text-gray-900">
                     Welcome, {{ Auth::guard('candidate')->user()->name}} 👋
                 </h1>
                 <div class="text-xs text-gray-600 mt-2 flex items-center gap-2">
