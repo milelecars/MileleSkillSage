@@ -36,6 +36,9 @@
                         <video id="video" class="w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
                         <div id="detection-status" class="mt-3 text-sm text-gray-600"></div>
                     </div>
+
+                    <button id="start-camera-btn" class="hidden sm:hidden text-white bg-blue-500 p-2 rounded-md">Start Camera</button>
+
                 </div>
 
                 {{-- right --}}
@@ -44,7 +47,7 @@
                     <div id="camera-warning" class="bg-amber-50 rounded-xl p-6 border border-amber-200">
                         <div class="flex items-center gap-4">
                             <div class="flex-shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-7 md:w-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                                 </svg>
                             </div>

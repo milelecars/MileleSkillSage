@@ -1,4 +1,22 @@
 <div>
+    @if (session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 text-xs p-4 my-4 rounded-lg">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if (session('warning'))
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 text-xs p-4 my-4 rounded-lg">
+            {{ session('warning') }}
+        </div>
+    @endif
+
+    @if ($errors->has('submission'))
+        <div class="bg-red-100 border border-red-400 text-red-700 text-xs p-4 my-4 rounded-lg">
+            {{ $errors->first('submission') }}
+        </div>
+    @endif
+
     <div class="overflow-x-auto rounded-lg">
         <table class="min-w-full divide-y divide-gray-200 border border-gray-200">
             <thead class="bg-gray-50">
@@ -101,7 +119,7 @@
 
     @if($emailList)
         <div class="my-6">
-            <button wire:click="submitInvitations" 
+            <button wire:click="submitInvitations text-xs" 
                     wire:loading.attr="disabled"
                     wire:target="submitInvitations"
                     class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -119,22 +137,6 @@
         </div>
     @endif
 
-    @if (session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 p-4 rounded-lg">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if (session('warning'))
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 p-4 rounded-lg">
-            {{ session('warning') }}
-        </div>
-    @endif
-
-    @if ($errors->has('submission'))
-        <div class="bg-red-100 border border-red-400 text-red-700 p-4 rounded-lg">
-            {{ $errors->first('submission') }}
-        </div>
-    @endif
+   
 
 </div>

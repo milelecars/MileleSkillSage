@@ -5,9 +5,9 @@
                 <div class="p-6 bg-white shadow-lg border-b border-gray-200">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4">
-                            <h1 class="text-lg md:text-2xl font-bold text-gray-800">Active Tests</h1>
+                            <h1 class="text-lg md:text-2xl font-bold text-gray-800 w-full">Active Tests</h1>
 
-                            <div class="flex gap-2 w-full justify-between">
+                            <div class="flex gap-2 justify-between items-center w-[40%]">
                                 <!-- Search -->
                                 <form method="GET" action="{{ route('tests.index') }}" class="flex gap-2">
                                     
@@ -34,8 +34,8 @@
                                 
                                 <!-- Dropdown menu -->
                                 <div class="relative" x-data="{ open: false }">
-                                    <button @click="open = !open" class="rounded-lg p-1 bg-blue-600 focus:outline-none" title="More options">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ffffff" class="w-7 h-7">
+                                    <button @click="open = !open" class="rounded-lg p-2 md:p-1 md:mt-1 bg-blue-600 focus:outline-none" title="More options">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ffffff" class="w-5 h-5 md:w-7 md:h-7">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
                                         </svg>
                                     </button>
@@ -77,7 +77,7 @@
                                     <div class="flex justify-between items-center">
                                         <a href="{{ route('tests.show', ['id' => $test->id]) }}" class="flex-grow">
                                             <h3 class="text-md md:text-xl font-semibold text-blue-700">{{ $test->title }}</h3>
-                                            <p class="text-xs md:text-sm text-gray-600 mt-2">{{ Str::limit($test->description, 100) }}</p>
+                                            <p class="text-xs md:text-sm text-gray-600 mt-2 text-justify">{{ Str::limit($test->description, 100) }}</p>
                                         </a>
                                         <div class="flex flex-col pl-2 md:flex-row md:space-x-1">
                                             <a href="{{ route('tests.edit', $test->id) }}" class="text-yellow-500 hover:text-yellow-600 p-2 rounded-lg hover:bg-yellow-100 transition duration-150 ease-in-out" title="Edit Test">
