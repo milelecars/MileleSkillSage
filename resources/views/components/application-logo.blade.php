@@ -1,2 +1,1 @@
-<img src="https://www.milele.com/wp-content/themes/milene/images/MileleLogowhite.png" alt="Brand Logo" />
-
+<img id="logo" alt="Milele Logo" src="{{ asset('images/MileleLogowhite.webp') }}" />

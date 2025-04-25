@@ -34,11 +34,11 @@ class WebcamManager {
         this.screenshotContext = this.screenshotCanvas.getContext('2d');
         this.screenshotInterval = null;
         this.isCapturingScreenshots = false;
-        this.screenshotIntervalTime = 30000; 
+        this.screenshotIntervalTime = 60000; 
         this.screenshotQueue = []; 
         this.maxQueueSize = 10;
         this.screenshotRetryAttempts = 3;
-        this.screenshotRetryDelay = 5000;
+        this.screenshotRetryDelay = 10000;
         this.isProcessingQueue = false;
         this.failedScreenshots = []; 
         this.screenshotStats = {  
@@ -75,10 +75,34 @@ class WebcamManager {
         };
         this.FRAME_THRESHOLD = 50;
         this.COOLDOWN_PERIOD = 30000;
+        
+        // Throttle expensive operations
+        this.detectionThrottleDelay = 150; // ms between detection runs
+        this.lastDetectionTime = 0;
+        
+        // Cache for DOM elements
+        this.elemCache = {};
+        
+        // Precomputed status templates
+        this.statusTemplates = {
+            multiplePeople: count => `<p style='color: orange;'>${count} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`,
+            cameraTurnedOff: count => `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`,
+            onePerson: `<p style='color: green;'>One person detected</p>`,
+            noPerson: `<p style='color: red;'>No one is present!</p>`,
+            bookDetected: `<p style='color: orange;'>Book detected!</p>`,
+            cellPhoneDetected: `<p style='color: orange;'>Cell phone detected!</p>`
+        };
 
         this.initialize();
     }
     
+    // Performance optimization: Cache DOM elements
+    getElement(id) {
+        if (!this.elemCache[id]) {
+            this.elemCache[id] = document.getElementById(id);
+        }
+        return this.elemCache[id];
+    }
 
     // No person detected
     isSpecificPage() {
@@ -90,34 +114,37 @@ class WebcamManager {
             return; // Do nothing if not on the specific page
         }
 
-        // Create an overlay to blur the background
-        const overlay = document.createElement('div');
-        overlay.id = 'no-person-overlay';
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backdropFilter = 'blur(10px)';
-        overlay.style.zIndex = '999';
-        document.body.appendChild(overlay);
-    
-        // Create the pop-up
-        const popup = document.createElement('div');
-        popup.id = 'no-person-popup';
-        popup.style.position = 'fixed';
-        popup.style.top = '50%';
-        popup.style.left = '50%';
-        popup.style.transform = 'translate(-50%, -50%)';
-        popup.style.backgroundColor = 'white';
-        popup.style.color = 'black';
-        popup.style.padding = '20px';
-        popup.style.borderRadius = '10px';
-        popup.style.zIndex = '1000';
-        popup.style.textAlign = 'center';
-        popup.style.boxShadow = '0 2px 2px rgba(0, 0, 0, 0.1)'; 
-        popup.innerText = 'No person detected!';
-        document.body.appendChild(popup);
+        // Create popup only if it doesn't exist yet
+        if (!document.getElementById('no-person-overlay')) {
+            // Create an overlay to blur the background
+            const overlay = document.createElement('div');
+            overlay.id = 'no-person-overlay';
+            overlay.style.position = 'fixed';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backdropFilter = 'blur(10px)';
+            overlay.style.zIndex = '999';
+            document.body.appendChild(overlay);
+        
+            // Create the pop-up
+            const popup = document.createElement('div');
+            popup.id = 'no-person-popup';
+            popup.style.position = 'fixed';
+            popup.style.top = '50%';
+            popup.style.left = '50%';
+            popup.style.transform = 'translate(-50%, -50%)';
+            popup.style.backgroundColor = 'white';
+            popup.style.color = 'black';
+            popup.style.padding = '20px';
+            popup.style.borderRadius = '10px';
+            popup.style.zIndex = '1000';
+            popup.style.textAlign = 'center';
+            popup.style.boxShadow = '0 2px 2px rgba(0, 0, 0, 0.1)'; 
+            popup.innerText = 'No person detected!';
+            document.body.appendChild(popup);
+        }
     }
     
     hideNoPersonPopup() {
@@ -138,6 +165,12 @@ class WebcamManager {
     cleanup() {
         this.stopPeriodicScreenshots();
         this.hideNoPersonPopup(); // Ensure the popup is removed
+        
+        // Abort all pending operations
+        if (this.detectionRAF) {
+            cancelAnimationFrame(this.detectionRAF);
+            this.detectionRAF = null;
+        }
         
         // Try to process any remaining screenshots before cleanup
         if (this.screenshotQueue.length > 0) {
@@ -175,34 +208,56 @@ class WebcamManager {
 
     // Suspension
     updateStatus(personCount, hasBook, hasCellPhone) {
-        let statusMessage = '';
-        const now = Date.now();
+        // Generate status message using cached templates for better performance
+        let statusParts = [];
     
         // Multiple people detected
         if (personCount > 1) {
             this.violationCounts.multiplePeople++;
-            statusMessage += `<p style='color: orange;'>${personCount} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`;
+            statusParts.push(this.statusTemplates.multiplePeople(personCount));
 
             if (this.violationCounts.multiplePeople >= this.violationThreshold) {
                 this.suspendTest('multiplePeople');
             }
+        } else if (personCount === 0) {
+            statusParts.push(this.statusTemplates.noPerson);
+            this.showNoPersonPopup();
+        } else {
+            statusParts.push(this.statusTemplates.onePerson);
+            this.hideNoPersonPopup();
+            // Reset violation count when normal state is detected
+            this.violationCounts.multiplePeople = 0;
         }
 
         // Camera turned off
         if (!this.stream || !this.stream.active) {
             this.violationCounts.cameraTurnedOff++;
-            statusMessage += `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`;
+            statusParts.push(this.statusTemplates.cameraTurnedOff(this.violationCounts.cameraTurnedOff));
 
             if (this.violationCounts.cameraTurnedOff >= this.violationThresholdCameraOff) {
                 this.suspendTest('cameraTurnedOff');
             }
-        }
-
-        // Update status message
-        if (this.detectionStatus) {
-            this.detectionStatus.innerHTML = statusMessage;
+        } else {
+            // Reset count when normal state is detected
+            this.violationCounts.cameraTurnedOff = 0;
         }
         
+        // Book detected
+        if (hasBook) {
+            statusParts.push(this.statusTemplates.bookDetected);
+            this.handleViolation('bookDetected', 'Book detected!');
+        }
+
+        // Cell phone detected
+        if (hasCellPhone) {
+            statusParts.push(this.statusTemplates.cellPhoneDetected);
+            this.handleViolation('cellPhoneDetected', 'Cell phone detected!');
+        }
+
+        // Update status message - only perform DOM operation if we have a status to show
+        if (this.detectionStatus && statusParts.length > 0) {
+            this.detectionStatus.innerHTML = statusParts.join('');
+        }
     }
 
     handleViolation(metricName, message) {
@@ -262,61 +317,6 @@ class WebcamManager {
         }
     }
     
-    // async calculateRemainingTime() {
-    //     try {
-    //         // Fetch the started_at time from the candidate_test table
-    //         const response = await fetch('/get-test-start-time', {
-    //             method: 'POST',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'X-CSRF-TOKEN': this.csrfToken,
-    //             },
-    //             body: JSON.stringify({
-    //                 testId: this.testId,
-    //                 candidateId: this.candidateId,
-    //             }),
-    //         });
-    
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! status: ${response.status}`);
-    //         }
-    
-    //         const data = await response.json();
-    //         const startedAt = new Date(data.started_at); // Parse the start time
-    //         const testDuration = parseInt(sessionStorage.getItem('test_duration'), 10); // Total test duration in seconds
-    
-    //         // Check if the values are valid
-    //         if (isNaN(startedAt.getTime())) {
-    //             console.error('Invalid started_at time:', data.started_at);
-    //             return 0; // Return 0 or handle the error appropriately
-    //         }
-    
-    //         if (isNaN(testDuration)) {
-    //             console.error('Invalid test_duration:', testDuration);
-    //             return 0; // Return 0 or handle the error appropriately
-    //         }
-    
-    //         // Get the current time
-    //         const now = new Date();
-    
-    //         // Calculate the elapsed time since the test started (in seconds)
-    //         const elapsedTime = Math.floor((now - startedAt) / 1000);
-    
-    //         // Calculate the remaining time by deducting the elapsed time from the total test duration
-    //         const remainingTimeInSeconds = Math.max(0, testDuration - elapsedTime);
-    
-    //         // Convert remaining time from seconds to minutes (rounded up)
-    //         const remainingTimeInMinutes = Math.ceil(remainingTimeInSeconds / 60);
-    
-    //         console.log('Remaining time in minutes:', remainingTimeInMinutes);
-    
-    //         return remainingTimeInMinutes; // Return the remaining time in minutes
-    //     } catch (error) {
-    //         console.error('Error calculating remaining time:', error);
-    //         return 0; // Return 0 or handle the error appropriately
-    //     }
-    // }
-    
     async logSuspension(violationType) {
         try {
             console.log('Sending suspension data to backend:', {
@@ -355,7 +355,9 @@ class WebcamManager {
             this.screenshotCanvas = document.createElement('canvas');
             
             // Get 2D context
-            this.screenshotContext = this.screenshotCanvas.getContext('2d');
+            this.screenshotContext = this.screenshotCanvas.getContext('2d', {
+                willReadFrequently: true  // Performance optimization for frequent pixel manipulations
+            });
             
             if (!this.screenshotContext) {
                 throw new Error('Failed to get 2D context from canvas');
@@ -406,97 +408,12 @@ class WebcamManager {
         this.cameraInitialized = true;
     }
 
-    async initialize() {
-        try {
-            const permission = await this.checkServerPermission();
-            // Handle case where permission request fails
-            this.permissionGranted = permission?.granted || false;
-            this.deviceId = permission?.deviceId || null;
-            
-            console.log("Initial permission status from server:", this.permissionGranted);
-            console.log("Current path:", window.location.pathname);
-            
-            if (this.shouldActivateCamera()) {
-                await this.initializeCamera();
-            }
-        } catch (error) {
-            console.error("Initialization error:", error);
-            this.handleCameraError("Failed to initialize camera permissions");
-        }
-    }
-
-    updateStatus(personCount, hasBook, hasCellPhone) {
-        let statusMessage = '';
-        const now = Date.now();
-    
-        
-        // Multiple people detected
-        if (personCount > 1) {
-            statusMessage += `<p style='color: orange;'>${personCount} people detected!</p>`;
-            this.handleViolation('multiplePeople', 'Multiple people detected!');
-            this.hideNoPersonPopup(); // Hide popup if multiple people are detected
-        } else if (personCount === 0) {
-            statusMessage += "<p style='color: red;'>No one is present!</p>";
-            this.showNoPersonPopup(); // Show popup if no person is detected
-        } else {
-            statusMessage += "<p style='color: green;'>One person detected</p>";
-            this.hideNoPersonPopup(); // Hide popup if one person is detected
-        }
-    
-        // Book detected
-        if (hasBook) {
-            statusMessage += "<p style='color: orange;'>Book detected!</p>";
-            this.handleViolation('bookDetected', 'Book detected!');
-        }
-
-        // Cell phone detected
-        if (hasCellPhone) {
-            statusMessage += "<p style='color: orange;'>Cell phone detected!</p>";
-            this.handleViolation('cellPhoneDetected', 'Cell phone detected!');
-        }
-
-        // Update status message
-        if (this.detectionStatus) {
-            this.detectionStatus.innerHTML = statusMessage;
-        }
-
-        // Multiple people detected
-        if (personCount > 1) {
-            this.violationCounts.multiplePeople++;
-            statusMessage += `<p style='color: orange;'>${personCount} people detected! (Count: ${this.violationCounts.multiplePeople})</p>`;
-
-            // Check if violation threshold is exceeded
-            if (this.violationCounts.multiplePeople >= this.violationThreshold) {
-                this.suspendTest('multiplePeople');
-            }
-        } else {
-            // Reset the count if no violation
-            this.violationCounts.multiplePeople = 0;
-        }
-
-        // Camera turned off
-        if (!this.stream || !this.stream.active) {
-            this.violationCounts.cameraTurnedOff++;
-            statusMessage += `<p style='color: red;'>Camera turned off! (Count: ${this.violationCounts.cameraTurnedOff})</p>`;
-
-            // Check if violation threshold is exceeded
-            if (this.violationCounts.cameraTurnedOff >= this.violationThresholdCameraOff) {
-                this.suspendTest('cameraTurnedOff');
-            }
-        } else {
-            // Reset the count if camera is active
-            this.violationCounts.cameraTurnedOff = 0;
-        }
-
-        // Update status message
-        if (this.detectionStatus) {
-            this.detectionStatus.innerHTML = statusMessage;
-        }
-    }
-
     getCsrfToken() {
-        const token = document.querySelector('meta[name="csrf-token"]');
-        return token ? token.getAttribute('content') : '';
+        if (!this._csrfToken) {
+            const token = document.querySelector('meta[name="csrf-token"]');
+            this._csrfToken = token ? token.getAttribute('content') : '';
+        }
+        return this._csrfToken;
     }
 
     async checkServerPermission() {
@@ -645,8 +562,14 @@ class WebcamManager {
         return false;
     }
 
+    handleCameraError(message) {
+        console.error("Camera error:", message);
+        if (this.detectionStatus) {
+            this.detectionStatus.innerHTML = `<p style='color: red;'>Camera error: ${message}</p>`;
+        }
+    }
+
     async initializeDetection() {
-        console.log("4")
         try {
             console.log("Loading COCO-SSD model...");
             this.model = await cocoSsd.load();
@@ -663,6 +586,14 @@ class WebcamManager {
             return;
         }
 
+        // Throttle detections to reduce CPU usage
+        const now = performance.now();
+        if (now - this.lastDetectionTime < this.detectionThrottleDelay) {
+            this.detectionRAF = requestAnimationFrame(() => this.detectObjects());
+            return;
+        }
+        this.lastDetectionTime = now;
+
         try {
             const predictions = await this.model.detect(this.video);
             
@@ -670,27 +601,27 @@ class WebcamManager {
             let hasBook = false;
             let hasCellPhone = false;
 
-            predictions.forEach(prediction => {
-                if (prediction.class === 'person') personCount++;
-                if (prediction.class === 'book') hasBook = true;
-                if (prediction.class === 'cell phone') hasCellPhone = true;
-            });
+            // Optimize loop to avoid creating new function for each prediction
+            const len = predictions.length;
+            for (let i = 0; i < len; i++) {
+                const predClass = predictions[i].class;
+                if (predClass === 'person') personCount++;
+                else if (predClass === 'book') hasBook = true;
+                else if (predClass === 'cell phone') hasCellPhone = true;
+            }
 
             this.updateStatus(personCount, hasBook, hasCellPhone);
 
+            // Use CustomEvent constructor instead of creating and dispatching separately
             document.dispatchEvent(new CustomEvent('webcamStatusUpdate', {
                 detail: { personCount, hasBook, hasCellPhone }
             }));
-
-            // if (personCount !== 1 || hasBook || hasCellPhone) {
-            //     this.sendAlert(personCount, hasBook, hasCellPhone);
-            // }
         } catch (error) {
             console.error("Detection error:", error);
         }
 
         if (this.video.readyState === 4) {
-            requestAnimationFrame(() => this.detectObjects());
+            this.detectionRAF = requestAnimationFrame(() => this.detectObjects());
         }
     }
 
@@ -741,14 +672,19 @@ class WebcamManager {
     
         try {
             console.log('Attempting to capture screenshot...');
-            this.screenshotCanvas.width = this.video.videoWidth;
-            this.screenshotCanvas.height = this.video.videoHeight;
+            
+            // Only resize canvas if necessary to avoid expensive operations
+            if (this.screenshotCanvas.width !== this.video.videoWidth || 
+                this.screenshotCanvas.height !== this.video.videoHeight) {
+                this.screenshotCanvas.width = this.video.videoWidth;
+                this.screenshotCanvas.height = this.video.videoHeight;
+            }
             
             this.screenshotContext.drawImage(this.video, 0, 0);
-            const screenshot = this.screenshotCanvas.toDataURL('image/jpeg', 0.8);
+            const screenshot = this.screenshotCanvas.toDataURL('image/jpeg', 0.7); // Lower quality for better performance
             
-            console.log('Sending screenshot to server...');
-            const response = await fetch('/api/screenshots', {
+            // Send screenshot in non-blocking way
+            fetch('/api/screenshots', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -760,17 +696,13 @@ class WebcamManager {
                     screenshot: screenshot,
                     timestamp: new Date().toISOString()
                 })
-            });
-    
-            const data = await response.json();
-            console.log('Server response:', data);
-    
-            if (!response.ok) {
-                throw new Error(`Server returned ${response.status}: ${data.message || 'Unknown error'}`);
-            }
+            })
+            .then(response => response.json())
+            .then(data => console.log('Server response:', data))
+            .catch(error => console.error('Error sending screenshot:', error));
     
         } catch (error) {
-            console.error('Error capturing/saving screenshot:', error);
+            console.error('Error capturing screenshot:', error);
         }
     }
     
@@ -836,7 +768,6 @@ class WebcamManager {
         this.isProcessingQueue = false;
     }
 
-
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -848,27 +779,12 @@ class WebcamManager {
             failedScreenshots: this.failedScreenshots.length
         };
     }
-
-    cleanup() {
-        this.stopPeriodicScreenshots();
-        
-        // Try to process any remaining screenshots before cleanup
-        if (this.screenshotQueue.length > 0) {
-            console.log(`Attempting to process ${this.screenshotQueue.length} remaining screenshots...`);
-            this.processScreenshotQueue().finally(() => {
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                }
-            });
-        } else if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
-        }
-    }
 }
 
 // Initialize webcam manager when DOM is loaded
 let webcamManager = null;
 
+// Use passive event listeners where appropriate
 document.addEventListener('DOMContentLoaded', function() {
     const videoElement = document.getElementById('video');
     const statusElement = document.getElementById('detection-status');
@@ -879,10 +795,10 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.log("Webcam elements not found on this page, skipping initialization");
     }
-});
+}, { passive: true });
 
 window.addEventListener('beforeunload', function() {
     if (webcamManager) {
         webcamManager.cleanup();
     }
-});
+}, { passive: true });

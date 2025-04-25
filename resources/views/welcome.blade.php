@@ -8,7 +8,7 @@
 </head>
 <body class="antialiased font-sans">
     <div class="min-h-screen bg-gray-100 flex flex-col justify-center items-center">
-        <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.jpg') }}" />
+        <img id="background" class="absolute h-screen w-screen bg-cover bg-center" src="{{ asset('images/bg.webp') }}" />
         <div class="relative min-h-screen flex flex-col items-center justify-center selection:text-white">
             <div class="w-[70%] md:w-[30%] mx-auto my-2 mb-16 block object-contain">
                 <x-application-logo />

@@ -18,7 +18,16 @@ class TestTimer extends Component
     public $timeLeft;
     public $endTime;
     public $testStarted = false;
+    public $minutes;
+    public $seconds;
     private $testController;
+    
+    // Increase the polling interval to reduce AJAX requests
+    #[Polling('10s')]
+    public function poll()
+    {
+        $this->calculateRemainingTime();
+    }
 
     public function mount($testId)
     {
@@ -40,6 +49,8 @@ class TestTimer extends Component
     {
         if ($this->endTime) {
             $this->timeLeft = max(0, now()->diffInSeconds($this->endTime, false));
+            $this->minutes = floor($this->timeLeft / 60);
+            $this->seconds = $this->timeLeft % 60;
             
             if ($this->timeLeft <= 0) {
                 $this->handleTimeUp();
@@ -49,6 +60,7 @@ class TestTimer extends Component
 
     public function handleTimeUp()
     {
+        // Existing timeout handling code
         Log::info('Test timer expired', [
             'test_id' => $this->testId,
             'end_time' => $this->endTime
@@ -112,17 +124,10 @@ class TestTimer extends Component
 
     public function render()
     {
-        $this->calculateRemainingTime();
-        
         return view('livewire.test-timer', [
-            'minutes' => floor($this->timeLeft / 60),
-            'seconds' => $this->timeLeft % 60
+            'minutes' => $this->minutes,
+            'seconds' => $this->seconds,
+            'timeLeft' => $this->timeLeft
         ]);
-    }
-
-    #[Polling('1s')]
-    public function poll()
-    {
-        $this->calculateRemainingTime();
     }
 }

@@ -1,16 +1,17 @@
 <div>
-    @if($testStarted)
+    <!--[if BLOCK]><![endif]--><?php if($testStarted): ?>
         <div class="flex flex-col items-center text-base md:text-xl font-bold">
             <div>
                 Remaining Time:
-                <p class="inline {{ $timeLeft <= 60 ? 'text-red-600 animate-pulse' : '' }}" 
+                <p class="inline <?php echo e($timeLeft <= 60 ? 'text-red-600 animate-pulse' : ''); ?>" 
                    id="time-display" 
-                   data-time-left="{{ $timeLeft }}">
-                    {{ sprintf('%02d:%02d', $minutes, $seconds) }}
+                   data-time-left="<?php echo e($timeLeft); ?>">
+                    <?php echo e(sprintf('%02d:%02d', $minutes, $seconds)); ?>
+
                 </p>
             </div>
             
-            <p class="text-sm text-red-600 mt-1 {{ $timeLeft <= 60 ? '' : 'hidden' }}" id="warning-message">
+            <p class="text-sm text-red-600 mt-1 <?php echo e($timeLeft <= 60 ? '' : 'hidden'); ?>" id="warning-message">
                 Warning: Less than a minute remaining!
             </p>
         </div>
@@ -78,9 +79,9 @@
                 });
             });
         </script>
-    @else
+    <?php else: ?>
         <div class="text-base md:text-xl font-bold">
             Test not started
         </div>
-    @endif
-</div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+</div><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/test-timer.blade.php ENDPATH**/ ?>

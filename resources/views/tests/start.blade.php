@@ -11,7 +11,7 @@
 
         <!-- Fixed Timer Bar -->
         <div class="w-full flex flex-col gap-3 items-center justify-center my-8">
-            <livewire:test-timer :testId="$test->id" />
+            <livewire:test-timer  :testId="$test->id" wire:loading.delay />
         </div>
             
         <!-- Main Content -->
