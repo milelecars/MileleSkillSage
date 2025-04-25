@@ -119,7 +119,7 @@
 
     @if($emailList)
         <div class="my-6">
-            <button class="text-xs" wire:click="submitInvitations" 
+            <button wire:click="submitInvitations" 
                     wire:loading.attr="disabled"
                     wire:target="submitInvitations"
                     class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-lg inline-flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed">
