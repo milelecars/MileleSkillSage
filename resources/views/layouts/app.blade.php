@@ -52,9 +52,10 @@
         </script> -->
 
         <!-- External Scripts -->
-        <link rel="preload" src="/build/assets/tf.min.js" as="script"></link>
-        <link rel="preload" src="/build/assets/coco-ssd.min.js" as="script"></link>
-        <link rel="preload" src="/build/assets/flowbite.min.js" as="script"></link>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+
         <!-- <link src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" as="script" defer></link> -->
 
         <!-- Application Assets -->
