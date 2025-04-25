@@ -1,18 +1,18 @@
 <div>
     @if (session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 text-xs p-4 my-4 rounded-lg">
+        <div class="bg-green-100 border border-green-400 text-green-700 text-xs md:text-base p-4 my-4 rounded-lg">
             {{ session('success') }}
         </div>
     @endif
 
     @if (session('warning'))
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 text-xs p-4 my-4 rounded-lg">
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 text-xs md:text-base p-4 my-4 rounded-lg">
             {{ session('warning') }}
         </div>
     @endif
 
     @if ($errors->has('submission'))
-        <div class="bg-red-100 border border-red-400 text-red-700 text-xs p-4 my-4 rounded-lg">
+        <div class="bg-red-100 border border-red-400 text-red-700 text-xs md:text-base p-4 my-4 rounded-lg">
             {{ $errors->first('submission') }}
         </div>
     @endif
