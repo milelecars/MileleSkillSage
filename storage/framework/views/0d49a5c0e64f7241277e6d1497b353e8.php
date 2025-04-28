@@ -113,14 +113,14 @@
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="started">
-                                            <div class="flex items-center justify-center">
+                                        <th class="py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer w-[10%]" data-sort="started">
+                                            <div class="px-2 flex items-center">
                                                 Started At
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-5 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="completed">
-                                            <div class="flex items-center justify-center">
+                                        <th class="py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer w-[11%]" data-sort="completed">
+                                            <div class="px-2 flex items-center">
                                                 Completed At
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
@@ -361,10 +361,17 @@
     }
     
     th.sorted-asc {
-        background-color: #e0f2fe; /* light blue */
+        background-color: #dbeafe; 
+        color: #1e40af !important; 
     }
     th.sorted-desc {
-        background-color: #fef9c3; /* light yellow */
+        background-color: #dbeafe; 
+        color: #1e40af !important; 
+    }
+    
+    th.sorted-asc .sort-icon,
+    th.sorted-desc .sort-icon {
+        color: #2563eb; 
     }
 </style>
 
@@ -388,6 +395,7 @@
         const table = document.getElementById('candidatesTable');
         const headers = table.querySelectorAll('th[data-sort]');
         let sortDirection = {};
+        let currentSortedHeader = null;
 
         headers.forEach(header => {
             header.addEventListener('click', function () {
@@ -417,7 +425,7 @@
                         
                         if (aValue < bValue) return sortDirection[sortKey] ? 1 : -1;
                         if (aValue > bValue) return sortDirection[sortKey] ? -1 : 1;
-    
+
                         return 0;
                     }
                     else {
@@ -433,8 +441,21 @@
                 tbody.innerHTML = '';
                 rows.forEach(row => tbody.appendChild(row));
 
+                // Reset all headers
                 updateSortIcons();
-                header.querySelector('.sort-icon').innerText = sortDirection[sortKey] ? '↑' : '↓';
+                resetHeaderColors();
+                
+                // Update the current header
+                this.querySelector('.sort-icon').innerText = sortDirection[sortKey] ? '↑' : '↓';
+                
+                // Apply the appropriate class based on sort direction
+                if (sortDirection[sortKey]) {
+                    this.classList.add('sorted-asc');
+                } else {
+                    this.classList.add('sorted-desc');
+                }
+                
+                currentSortedHeader = this;
             });
         });
 
@@ -446,8 +467,12 @@
                 }
             });
         }
+        
+        function resetHeaderColors() {
+            headers.forEach(h => {
+                h.classList.remove('sorted-asc', 'sorted-desc');
+            });
+        }
     });
-
-    
 
 </script><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/admin/manage-candidates.blade.php ENDPATH**/ ?>
