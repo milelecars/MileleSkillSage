@@ -17,7 +17,7 @@
         <!-- Fonts and External CSS -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet">
-        <link src="/build/assets/flowbite.min.css" rel="stylesheet" >
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.css" rel="stylesheet">
 
         <!-- Initialize monitoring data before any scripts -->
         <script>
@@ -52,19 +52,19 @@
         </script> -->
 
         <!-- External Scripts -->
-        <link rel="preload" src="/build/assets/tf.min.js" as="script"></link>
-        <link rel="preload" src="/build/assets/coco-ssd.min.js" as="script"></link>
-        <link rel="preload" src="/build/assets/flowbite.min.js" as="script"></link>
-        <!-- <link src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" as="script" defer></link> -->
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.1/flowbite.min.js"></script>
+        <!-- <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script> -->
 
         <!-- Application Assets -->
         <?php if(app()->environment('local')): ?>
             <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js', 'resources/js/webcam.js', 'resources/js/test-monitoring.js']); ?>
         <?php else: ?>
-            <link rel="stylesheet" href="/build/assets/app-Bi5-8sU3.css">
-            <link rel="preload" src="/build/assets/app-Dh5OhEi1.js" as="script" defer></link>
-            <link rel="preload" src="/build/assets/webcam-DRWO0hBV.js" as="script" defer></link>
-            <link rel="preload" src="/build/assets/test-monitoring-BNQ90RFY.js" as="script" defer></link>
+            <link rel="stylesheet" href="/build/assets/app-rBuInN3O.css">
+            <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
+            <script src="/build/assets/webcam-DRWO0hBV.js" defer></script>
+            <script src="/build/assets/test-monitoring-BNQ90RFY.js" defer></script>
         <?php endif; ?>
 
         <?php echo \Livewire\Mechanisms\FrontendAssets\FrontendAssets::styles(); ?>

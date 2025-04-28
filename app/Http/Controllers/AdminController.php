@@ -511,18 +511,7 @@ class AdminController extends Controller
             });
         }
 
-        $candidates = new \Illuminate\Pagination\LengthAwarePaginator(
-            $allCandidates->forPage(request()->get('page', 1), 10),
-            $allCandidates->count() ?? 0,
-            10,
-            request()->get('page', 1)
-        );
-
-        $candidates->withPath(request()->url());
-        $candidates->appends([
-            'search' => $search,
-            'test_filter' => $testFilter,
-        ]);
+        $candidates = $allCandidates->values();
 
         $stats = [
             'totalInvited' => $totalInvited,
