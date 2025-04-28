@@ -723,32 +723,35 @@ class AdminController extends Controller
             $completedAt = Carbon::parse($test->pivot->completed_at);
             $duration = 0;
         }
-    
-    
-        
 
-        // Build the directory path
-        $directory = "private/screenshots/test{$test->id}/candidate{$candidate->id}";
+        // Define the directory
+        $directory = storage_path("app/private/screenshots/test{$test->id}/candidate{$candidate->id}");
 
-        // Get all files inside the directory
-        $files = Storage::disk('local')->files($directory);
+        // Check if directory exists
+        if (File::exists($directory)) {
+            // Get all files in the directory
+            $files = File::files($directory);
 
-        // Map files into a collection similar to your previous DB result
-        $screenshots = collect($files)->map(function ($path) {
-            return [
-                'id' => null, // No ID since it's from the file system
-                'screenshot_path' => $path,
-                'created_at' => File::lastModified(storage_path('app/' . $path)), // Get file's last modified time
-            ];
-        })->sortBy('created_at')->values();
+            // Create a collection like your DB query output
+            $screenshots = collect($files)->map(function ($file) use ($test, $candidate) {
+                return [
+                    'id' => null, // No DB ID
+                    'screenshot_path' => "screenshots/test{$test->id}/candidate{$candidate->id}/" . $file->getFilename(),
+                    'created_at' => date('Y-m-d H:i:s', $file->getMTime()), // Last modified timestamp
+                ];
+            })->sortBy('created_at')->values(); // Sort by created_at ascending
 
+        } else {
+            $screenshots = collect();
+        }
 
-
-    
+        // Logging the result
         Log::info('Retrieved screenshots', [
-            'count' => $screenshots->count() ?? [],
+            'count' => $screenshots->count(),
             'paths' => $screenshots->pluck('screenshot_path')->toArray()
         ]);
+
+
     
         if ($test->title == "General Mental Ability (GMA)") {
             $questions = $test->questions()
@@ -765,7 +768,8 @@ class AdminController extends Controller
         $hasLSQ = $questions->contains('question_type', 'LSQ');
         $suspensionReason = $test->pivot->suspension_reason;
         $realIP = $this->testReportService->getClientIP();
-        $location = $this->testReportService->getLocationFromIP($realIP);
+        $rawLocation = $this->testReportService->getLocationFromIP($realIP);
+        $location = json_decode($rawLocation);
         Log::info("Location Data", $location);
     
         return view('admin.candidate-result', compact(
