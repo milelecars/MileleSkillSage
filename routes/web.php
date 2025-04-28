@@ -95,6 +95,9 @@ Route::middleware('auth:web')->group(function () {
 
     Route::get('/admin/manage-reports', [AdminController::class, 'manageReports'])->name('admin.manage-reports');
     Route::get('/admin/manage-reports/download/{testId}', [AdminController::class, 'downloadTestReports'])->name('admin.download-test-reports');
+    Route::get('/private-screenshot/{testId}/{candidateId}/{filename}', [ScreenshotController::class, 'show'])
+    ->name('private.screenshot')
+    ->where('filename', '.*');
     
     // Test routes for admin
     Route::get('/tests', [TestController::class, 'index'])->name('tests.index');
