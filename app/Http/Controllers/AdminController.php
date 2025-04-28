@@ -91,7 +91,6 @@ class AdminController extends Controller
     
         return view('admin.invite', compact('emailToTestIds', 'emailToUninvitedTestIds', 'tests'));
     }
-    
 
     public function sendInvitation(Request $request)
     {
@@ -724,28 +723,23 @@ class AdminController extends Controller
             $duration = 0;
         }
 
-        // Define the directory
         $directory = storage_path("app/private/screenshots/test{$test->id}/candidate{$candidate->id}");
 
-        // Check if directory exists
         if (File::exists($directory)) {
-            // Get all files in the directory
             $files = File::files($directory);
 
-            // Create a collection like your DB query output
             $screenshots = collect($files)->map(function ($file) use ($test, $candidate) {
                 return [
-                    'id' => null, // No DB ID
+                    'id' => null,
                     'screenshot_path' => $file->getFilename(),
-                    'created_at' => date('Y-m-d H:i:s', $file->getMTime()), // Last modified timestamp
+                    'created_at' => date('Y-m-d H:i:s', $file->getMTime()), 
                 ];
-            })->sortBy('created_at')->values(); // Sort by created_at ascending
+            })->sortBy('created_at')->values();
 
         } else {
             $screenshots = collect();
         }
 
-        // Logging the result
         Log::info('Retrieved screenshots', [
             'count' => $screenshots->count(),
             'paths' => $screenshots->pluck('screenshot_path')->toArray()
