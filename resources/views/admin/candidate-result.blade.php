@@ -216,8 +216,9 @@
                                                     $screenshotUrl = route('private.screenshot', [
                                                         'testId' => $test->id,
                                                         'candidateId' => $candidate->id,
-                                                        'filename' => $filename
+                                                        'filename' => $screenshot['screenshot_path'],
                                                     ]);
+
                                                 @endphp
 
                                                 <div class="hidden duration-700 ease-in-out" data-carousel-item="{{ $index === 0 ? 'active' : '' }}">

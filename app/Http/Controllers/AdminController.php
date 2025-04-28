@@ -736,7 +736,7 @@ class AdminController extends Controller
             $screenshots = collect($files)->map(function ($file) use ($test, $candidate) {
                 return [
                     'id' => null, // No DB ID
-                    'screenshot_path' => "screenshots/test{$test->id}/candidate{$candidate->id}/" . $file->getFilename(),
+                    'screenshot_path' => $file->getFilename(),
                     'created_at' => date('Y-m-d H:i:s', $file->getMTime()), // Last modified timestamp
                 ];
             })->sortBy('created_at')->values(); // Sort by created_at ascending
