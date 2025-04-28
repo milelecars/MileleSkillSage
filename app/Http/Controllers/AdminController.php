@@ -9,6 +9,7 @@ use App\Models\Answer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
@@ -724,12 +725,25 @@ class AdminController extends Controller
         }
     
     
-        $screenshots = DB::table('candidate_test_screenshots')
-            ->where('candidate_id', $candidate->id)
-            ->where('test_id', $test->id)
-            ->select('id', 'screenshot_path', 'created_at')
-            ->orderBy('created_at', 'asc')
-            ->get();
+        
+
+        // Build the directory path
+        $directory = "private/screenshots/test{$test->id}/candidate{$candidate->id}";
+
+        // Get all files inside the directory
+        $files = Storage::disk('local')->files($directory);
+
+        // Map files into a collection similar to your previous DB result
+        $screenshots = collect($files)->map(function ($path) {
+            return [
+                'id' => null, // No ID since it's from the file system
+                'screenshot_path' => $path,
+                'created_at' => File::lastModified(storage_path('app/' . $path)), // Get file's last modified time
+            ];
+        })->sortBy('created_at')->values();
+
+
+
     
         Log::info('Retrieved screenshots', [
             'count' => $screenshots->count() ?? [],

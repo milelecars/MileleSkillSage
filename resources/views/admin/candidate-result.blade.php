@@ -49,9 +49,9 @@
                                         </svg>
                                     </div>
                                     <div class="text-sm md:text-base">
-                                        <p class="text-gray-600">IP Address</p>
+                                        <p class="text-gray-600">Location</p>
                                         <p class="font-semibold">
-                                            {{ $location ? (is_array($test->pivot->ip_address) ? implode(', ', $test->pivot->ip_address) : $test->pivot->ip_address) : 'N/A' }}
+                                            {{ $location->formatted_address ?? 'N/A'}}
                                         </p>
                                     </div>
                                 </div>
