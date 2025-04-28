@@ -768,8 +768,7 @@ class AdminController extends Controller
         $hasLSQ = $questions->contains('question_type', 'LSQ');
         $suspensionReason = $test->pivot->suspension_reason;
         $realIP = $this->testReportService->getClientIP();
-        $rawLocation = $this->testReportService->getLocationFromIP($realIP);
-        $location = json_decode($rawLocation);
+        $location = $this->testReportService->getLocationFromIP($realIP);
         Log::info("Location Data", $location);
     
         return view('admin.candidate-result', compact(

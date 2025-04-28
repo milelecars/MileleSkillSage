@@ -51,7 +51,7 @@
                                     <div class="text-sm md:text-base">
                                         <p class="text-gray-600">Location</p>
                                         <p class="font-semibold">
-                                            {{ $location->formatted_address ?? 'N/A'}}
+                                            {{ $location['formatted_address'] ?? 'N/A'}}
                                         </p>
                                     </div>
                                 </div>
