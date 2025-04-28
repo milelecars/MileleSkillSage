@@ -18,6 +18,7 @@
     "dependencies": {
         "@tensorflow-models/blazeface": "^0.1.0",
         "@tensorflow-models/coco-ssd": "^2.2.3",
-        "@tensorflow/tfjs": "^4.21.0"
+        "@tensorflow/tfjs": "^4.21.0",
+        "ngrok": "^5.0.0-beta.2"
     }
 }

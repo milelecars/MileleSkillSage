@@ -206,7 +206,7 @@
                                 </div>
                                 
                                 <div class="p-6">
-                                    <div id="gallery" class="relative w-full" data-carousel="slide">
+                                    <div id="gallery" class="relative w-full rounded-lg" data-carousel="slide">
                                         <!-- Carousel wrapper -->
                                         <div class="relative h-72 overflow-hidden rounded-lg">
                                             @forelse($screenshots as $index => $screenshot)
