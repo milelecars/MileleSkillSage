@@ -109,6 +109,8 @@
             </div>
         </div>
     </div>
+    
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const viewGuidelinesBtn = document.getElementById('view-guidelines-btn');
@@ -119,28 +121,6 @@
                 if (viewGuidelinesBtn) {
                     viewGuidelinesBtn.style.display = (personCount === 1 && !hasBook && !hasCellPhone) ? 'inline-flex' : 'none';
                 }
-
-                if (continueTestBtn) {
-                    continueTestBtn.style.display = (personCount === 1 && !hasBook && !hasCellPhone) ? 'inline-flex' : 'none';
-                }
-
-                cameraWarning.style.display = (personCount === 0) ? 'flex' : 'none';
-            }
-
-            document.addEventListener('webcamStatusUpdate', function(e) {
-                updateButtonVisibility(e.detail.personCount, e.detail.hasBook, e.detail.hasCellPhone);
-            });
-        });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const viewGuidelinesBtn = document.getElementById('view-guidelines-btn');
-            const continueTestBtn = document.getElementById('continue-test-btn');
-            const cameraWarning = document.getElementById('camera-warning');
-
-            function updateButtonVisibility(personCount, hasBook, hasCellPhone) {
-                if (viewGuidelinesBtn) {
-                    viewGuidelinesBtn.style.display = (personCount === 1 && !hasBook && !hasCellPhone) ? 'inline-flex' : 'none';
-                }
                 if (continueTestBtn) {
                     continueTestBtn.style.display = (personCount === 1 && !hasBook && !hasCellPhone) ? 'inline-flex' : 'none';
                 }
@@ -151,7 +131,7 @@
                 updateButtonVisibility(e.detail.personCount, e.detail.hasBook, e.detail.hasCellPhone);
             });
 
-            // New Camera Setup Code
+            // Camera Setup
             const video = document.getElementById('video');
             const detectionStatus = document.getElementById('detection-status');
 
@@ -165,6 +145,8 @@
                         video.srcObject = stream;
                         video.play();
                         detectionStatus.innerText = "Camera connected successfully.";
+                        // Save permission flag
+                        localStorage.setItem('camera_permission_granted', 'yes');
                     })
                     .catch(function(error) {
                         console.error("Camera access error:", error);
@@ -175,25 +157,29 @@
                 }
             }
 
-            // Safari/iOS needs manual trigger to start camera
             const isMobileSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const permissionGranted = localStorage.getItem('camera_permission_granted') === 'yes';
 
-            if (isMobileSafari) {
-                const startButton = document.createElement('button');
-                startButton.textContent = "Start Camera";
-                startButton.className = "mt-4 px-4 py-2 bg-blue-600 text-white rounded-md";
-                detectionStatus.parentNode.insertBefore(startButton, detectionStatus);
-
-                startButton.addEventListener('click', function() {
-                    startButton.remove(); // remove the button after starting
-                    startCamera();
-                });
-            } else {
-                // Desktop / Android Chrome — start immediately
+            if (permissionGranted) {
+                // 👏 Already granted -> Start camera without asking again
                 startCamera();
+            } else {
+                if (isMobileSafari) {
+                    const startButton = document.createElement('button');
+                    startButton.textContent = "Start Camera";
+                    startButton.className = "mt-4 px-4 py-2 bg-blue-600 text-white rounded-md";
+                    detectionStatus.parentNode.insertBefore(startButton, detectionStatus);
+
+                    startButton.addEventListener('click', function() {
+                        startButton.remove(); // Remove the button after start
+                        startCamera();
+                    });
+                } else {
+                    // Desktop Chrome/Firefox — try to auto start camera
+                    startCamera();
+                }
             }
         });
+        </script>
 
-
-    </script>
 </x-app-layout>
