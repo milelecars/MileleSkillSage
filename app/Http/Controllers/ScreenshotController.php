@@ -2,22 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\File;
 
 class ScreenshotController extends Controller
 {
     public function show($testId, $candidateId, $filename)
     {
-        $path = "private/screenshots/test{$testId}/candidate{$candidateId}/{$filename}";
+        $path = storage_path("app/private/screenshots/test{$testId}/candidate{$candidateId}/{$filename}");
 
-        if (!Storage::disk('local')->exists($path)) {
-            abort(404);
+        if (!File::exists($path)) {
+            abort(404, 'Screenshot not found.');
         }
 
-        $file = Storage::disk('local')->get($path);
-        $mime = Storage::disk('local')->mimeType($path);
+        $mimeType = File::mimeType($path);
 
-        return Response::make($file, 200)->header("Content-Type", $mime);
+        return response()->file($path, [
+            'Content-Type' => $mimeType,
+            'Cache-Control' => 'public, max-age=604800',
+            'Content-Disposition' => 'inline; filename="' . basename($path) . '"',
+        ]);
     }
 }
