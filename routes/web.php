@@ -45,8 +45,8 @@ Route::post('/api/screenshots', [TestController::class, 'saveScreenshot'])->name
 // Guest routes
 Route::middleware('guest')->group(function () {
     // Admin registration and login routes
-    Route::get('admin/register', [RegisteredAdminController::class, 'create'])->name('register');
-    Route::post('admin/register', [RegisteredAdminController::class, 'store']);
+    // Route::get('admin/register', [RegisteredAdminController::class, 'create'])->name('register');
+    // Route::post('admin/register', [RegisteredAdminController::class, 'store']);
     Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 

@@ -18,14 +18,14 @@
             <p id="emailError" class="text-red-500 text-xs hidden">Please enter a valid @milele.com email address.</p>
         </div>
 
-        <div class="flex items-center justify-between mt-7">
+        <!-- <div class="flex items-center justify-between mt-7">
             <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-sm md:text-base text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
                 Register
             </button>
             <a href="{{ route('login') }}" class="inline-block align-baseline font-bold  text-sm md:text-base text-theme hover:text-blue-600">
                 Already registered?
             </a>
-        </div>
+        </div> -->
     </form>
 </x-guest-layout>
 

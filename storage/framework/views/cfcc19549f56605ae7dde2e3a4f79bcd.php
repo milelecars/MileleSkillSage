@@ -1,15 +1,16 @@
 
-<form method="POST" action="{{ route('login') }}" class="w-full max-w-sm mx-auto my-2">
-    @csrf
+<form method="POST" action="<?php echo e(route('login')); ?>" class="w-full max-w-sm mx-auto my-2">
+    <?php echo csrf_field(); ?>
 
 
-    @if (session('success'))
+    <!--[if BLOCK]><![endif]--><?php if(session('success')): ?>
         <div class="alert alert-success mb-4 text-green-500">
-            {{ session('success') }}
-        </div>
-    @endif
+            <?php echo e(session('success')); ?>
 
-    {{-- Email Input --}}
+        </div>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+
+    
     <div class="mb-4">
         <label for="email" class="block text-gray-700 text-sm font-bold mb-2">Email</label>
         <input 
@@ -23,7 +24,7 @@
         >
     </div>
 
-    {{-- OTP Input --}}
+    
     <div class="mb-1">
         <label for="otp" class="block text-gray-700 text-sm font-bold mb-2">OTP</label>
         <div class="flex">
@@ -41,22 +42,22 @@
                 type="button" 
                 wire:click="generateOtp" 
                 class="text-white border border-neutral-500 bg-theme font-bold px-3 rounded-r-lg focus:outline-none focus:shadow-outline text-xs flex items-center">
-                <span>{{ $otpGenerated ? 'Resend' : 'Generate' }}</span>
+                <span><?php echo e($otpGenerated ? 'Resend' : 'Generate'); ?></span>
             </button>
         </div>
     </div>
 
-    {{-- Success and Error Messages --}}
-    @if ($errorMessage)
-        <p class="text-red-500 text-xs">{{ $errorMessage }}</p>
-    @endif
-    @if ($successMessage)
-        <p class="text-green-500 text-xs">{{ $successMessage }}</p>
-    @endif
+    
+    <!--[if BLOCK]><![endif]--><?php if($errorMessage): ?>
+        <p class="text-red-500 text-xs"><?php echo e($errorMessage); ?></p>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+    <!--[if BLOCK]><![endif]--><?php if($successMessage): ?>
+        <p class="text-green-500 text-xs"><?php echo e($successMessage); ?></p>
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
 
 
-    {{-- Submit Button --}}
+    
     <div class="flex items-center justify-center mt-9">
         <button type="submit" class="bg-blue-700 hover:bg-blue-600 text-sm md:text-base text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline">
             Log in
@@ -66,4 +67,4 @@
             Need an account?
         </a> -->
     </div>
-</from>
+</from><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/login-field.blade.php ENDPATH**/ ?>
