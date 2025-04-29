@@ -74,7 +74,7 @@
                                                 <svg class="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                                 </svg>
-                                                {{ $tests->find($testId)->title }}
+                                                {{ $tests->find($testId) ? $tests->find($testId)->title : '' }}
                                             </div>
                                         @empty
                                             <p class="text-gray-500 italic">No previous invitations</p>
@@ -114,7 +114,7 @@
                                                     for="test_{{ $testId }}" 
                                                     class="text-sm md:text-base ml-3 block text-gray-700 cursor-pointer flex-1"
                                                 >
-                                                    {{ $tests->find($testId)->title }}
+                                                    {{ $tests->find($testId) ? $tests->find($testId)->title : '' }}
                                                 </label>
                                             </div>
                                         @empty

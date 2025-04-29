@@ -306,8 +306,7 @@ class AdminController extends Controller
         $activeTestCandidates = Candidate::with(['tests' => function ($query) use ($testFilter) {
             $query->select('tests.id', 'title', 'description', 'duration')
                 ->when($testFilter, fn($q) => $q->where('tests.id', $testFilter))
-                ->withPivot('role', 'started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status', 'is_suspended', 'unsuspend_count')
-;
+                ->withPivot('role', 'started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status', 'is_suspended', 'unsuspend_count');
         }])
         ->whereHas('tests', function($query) use ($testFilter) {
             if ($testFilter) {
