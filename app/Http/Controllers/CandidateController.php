@@ -47,6 +47,11 @@ class CandidateController extends Controller
 
             // Fetch all tests (valid and expired)
             $allTests = $allInvitations->flatMap(function ($invitation) use ($candidate) {
+                if (!$invitation->test) {
+                    \Log::warning('Invitation without valid test found', ['invitation_id' => $invitation->id]);
+                    return []; // Skip this invitation
+                }
+                
                 $invites = collect($invitation->invited_emails['invites']);
                 $candidateInvites = $invites->where('email', $candidate->email);
 
@@ -95,7 +100,7 @@ class CandidateController extends Controller
                     
                    
                     $testData = [
-                        'title' => $invitation->test->title ?? 'Unknown Test',
+                        'title' => $invitation->test->title,
                         'test_id' => $invitation->test->id,
                         'status' => $status,
                         'started_at' => $candidateTest ? $candidateTest->started_at : null,
