@@ -45,8 +45,8 @@ class InvitationController extends Controller
         ]);
     }
 
-   public function validateEmail(Request $request, $token)
-   {
+    public function validateEmail(Request $request, $token)
+    {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -62,7 +62,8 @@ class InvitationController extends Controller
         if (!$candidateInvite) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
         }
-
+            
+        $role = $candidateInvite['role'];
         $candidate = Candidate::firstOrCreate(
             ['email' => $validatedData['email']],
             ['name' => $validatedData['name']]
@@ -72,7 +73,12 @@ class InvitationController extends Controller
 
         if (!$existingAttempt) {
             $candidate->tests()->attach($invitation->test_id, [
-                'status' => 'not started'  
+                'status' => 'not started',
+                'role' =>   $role
+            ]);
+        }else{
+            $candidate->tests()->updateExistingPivot($invitation->test_id, [
+                'role' => $role,
             ]);
         }
         
@@ -85,7 +91,7 @@ class InvitationController extends Controller
         Auth::guard('candidate')->login($candidate);
         
         return redirect()->route('candidate.dashboard');
-   }
+    }
 
    private function setCandidateSession($candidate, $testId)
    {

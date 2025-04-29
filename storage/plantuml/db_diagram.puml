@@ -28,6 +28,7 @@ entity "Candidate Test" {
   * candidate_id : int
   * test_id : int
   --
+  * role : string
   * started_at : datetime
   * completed_at : datetime
   * score : int
@@ -36,6 +37,7 @@ entity "Candidate Test" {
   * wrong_answers : int 
   * report_path : string
   * ip_address : text
+  * status : enum
   * status : enum
   * remaining_time : int (nullable) // Remaining time in seconds
   * suspended_at : datetime (nullable) // Timestamp of suspension

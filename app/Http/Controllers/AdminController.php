@@ -306,7 +306,8 @@ class AdminController extends Controller
         $activeTestCandidates = Candidate::with(['tests' => function ($query) use ($testFilter) {
             $query->select('tests.id', 'title', 'description', 'duration')
                 ->when($testFilter, fn($q) => $q->where('tests.id', $testFilter))
-                ->withPivot('started_at', 'completed_at', 'score', 'red_flags',  'correct_answers', 'wrong_answers' , 'ip_address', 'status',  'is_suspended', 'unsuspend_count');
+                ->withPivot('role', 'started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status', 'is_suspended', 'unsuspend_count')
+;
         }])
         ->whereHas('tests', function($query) use ($testFilter) {
             if ($testFilter) {
@@ -317,9 +318,12 @@ class AdminController extends Controller
         ->when($search, function($query) use ($search) {
             return $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%");
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhereHas('tests', function($q2) use ($search) {
+                      $q2->where('candidate_test.role', 'like', "%{$search}%");
+                  });
             });
-        })
+        })        
         ->get()
         ->flatMap(function ($candidate) {
             return $candidate->tests->map(function ($test) use ($candidate) {
@@ -403,6 +407,7 @@ class AdminController extends Controller
                     'id' => $candidate->id,
                     'name' => $candidate->name,
                     'email' => $candidate->email,
+                    'role' => $test->pivot->role ?? '-',
                     'test_title' => $test->title,
                     'test_id' => $test->id,
                     'status' => $status,

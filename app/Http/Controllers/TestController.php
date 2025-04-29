@@ -509,7 +509,7 @@ class TestController extends Controller
 
         if (!$existingAttempt) {
             $candidate->tests()->attach($id, [
-                'status' => 'not started'  
+                'status' => 'not started'
             ]);
         }
     
