@@ -13,15 +13,26 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Google\Client;
 use Google\Service\Gmail;
+use Maatwebsite\Excel\HeadingRowImport;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Livewire\WithFileUploads;
 
 class InviteCandidates extends Component
 {
+    use WithFileUploads;
+
+
     public string $newEmail = '';
     public string $firstName = '';
     public string $lastName = '';
     public string $role = '';
     public array $emailList = [];
     public $testId;
+    public $excelFile = null;
+
     
     protected $validationAttributes = [
         'newEmail' => 'email',
@@ -198,10 +209,68 @@ class InviteCandidates extends Component
             $this->addError('submission', "Failed to process invitations");
         }
     }
+
+    public function importExcel()
+    {
+        $this->validate([
+            'excelFile' => 'required|file|mimes:xlsx,xls,csv',
+        ]);
+
+        try {
+            $import = new TempImport();
+            Excel::import($import, $this->excelFile);
+
+            $rows = $import->rows;
+
+            foreach ($rows as $row) {
+                if (
+                    isset($row['firstname'], $row['lastname'], $row['role'], $row['email']) &&
+                    filter_var($row['email'], FILTER_VALIDATE_EMAIL)
+                ) {
+                    $emailExists = collect($this->emailList)->contains('email', strtolower($row['email']));
+                    if (!$emailExists) {
+                        $this->emailList[] = [
+                            'firstName' => $row['firstname'],
+                            'lastName' => $row['lastname'],
+                            'role' => $row['role'],
+                            'email' => strtolower($row['email']),
+                        ];
+                    }
+                }
+            }
+
+            session(["test_{$this->testId}_emails" => $this->emailList]);
+            $this->reset('excelFile');
+            session()->flash('success', 'Excel imported successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Import error: ' . $e->getMessage());
+            session()->flash('warning', 'Failed to import Excel file.');
+        }
+
+        session(["test_{$this->testId}_emails" => $this->emailList]);
+
+        $this->emailList = [...$this->emailList]; // force reactivity (optional safety)
+        $this->reset('excelFile');
+        $this->dispatch('$refresh'); // trigger UI refresh
+        session()->flash('success', 'Excel imported successfully.');
+
+    }
+
     
 
     public function render()
     {
         return view('livewire.invite-candidates');
+    }
+}
+
+
+class TempImport implements ToCollection, WithHeadingRow
+{
+    public $rows;
+
+    public function collection(Collection $collection)
+    {
+        $this->rows = $collection;
     }
 }
