@@ -95,7 +95,7 @@ class CandidateController extends Controller
                     
                    
                     $testData = [
-                        'title' => $invitation->test->title,
+                        'title' => $invitation->test->title ?? 'Unknown Test',
                         'test_id' => $invitation->test->id,
                         'status' => $status,
                         'started_at' => $candidateTest ? $candidateTest->started_at : null,
