@@ -545,14 +545,18 @@ class AdminController extends Controller
             'activeTests' => $candidates->filter(function ($c) {
                     $status = strtolower(trim($c['status']));
                     return in_array($status, ['not started', 'in progress', 'invited']);
-                })->count(),
+            })->count(),
 
         
             'completedTestsCount' => $candidates->filter(function ($c) {
                 return in_array(strtolower(trim($c['status'])), ['completed', 'accepted', 'rejected']);
             })->count(),
         
-            'totalTests' => $availableTests->count(),
+           'totalTests' => \App\Models\Test::whereIn('id', $candidates->pluck('test_id')->unique())
+                ->whereNull('deleted_at')
+                ->count(),
+
+
         ];        
 
         return view('admin.manage-candidates', array_merge(
