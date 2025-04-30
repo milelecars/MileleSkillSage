@@ -447,7 +447,21 @@
                     else {
                         aValue = aValue.toString().toLowerCase();
                         bValue = bValue.toString().toLowerCase();
+
+                        const aIsEmpty = aValue === '-' || aValue.trim() === '';
+                        const bIsEmpty = bValue === '-' || bValue.trim() === '';
+
+                        if (aIsEmpty && !bIsEmpty) return 1;  // push a down
+                        if (!aIsEmpty && bIsEmpty) return -1; // push b down
+                        if (aIsEmpty && bIsEmpty) return 0;   // both empty → equal
+
+                        // Normal alphabetical comparison
+                        if (aValue < bValue) return sortDirection[sortKey] ? -1 : 1;
+                        if (aValue > bValue) return sortDirection[sortKey] ? 1 : -1;
+                        return 0;
                     }
+
+
 
                     if (aValue < bValue) return sortDirection[sortKey] ? -1 : 1;
                     if (aValue > bValue) return sortDirection[sortKey] ? 1 : -1;
