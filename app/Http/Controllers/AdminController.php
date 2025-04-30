@@ -541,7 +541,6 @@ class AdminController extends Controller
 
         $stats = [
             'totalInvited' => $allCandidates->count(),
-
         
             'active' => $candidates->filter(function ($c) {
                 $status = strtolower(trim($c['status']));
@@ -564,9 +563,7 @@ class AdminController extends Controller
         
             'activeTests' => $candidates->pluck('test_id')->unique()->count(),
         
-            'totalReports' => $candidates->filter(function ($c) {
-                return !empty($c['score']) || !empty($c['report_path'] ?? null);
-            })->count(),
+            'totalTests' => $availableTests->count(),
         ];        
 
         return view('admin.manage-candidates', array_merge(

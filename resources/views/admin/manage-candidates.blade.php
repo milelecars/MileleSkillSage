@@ -81,8 +81,8 @@
                             <p class="text-lg md:text-2xl font-bold text-purple-900">{{ $completedTestsCount }}</p>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg gap-2 h-full flex flex-col justify-between">
-                            <h3 class="text-base md:text-lg font-semibold text-gray-700">Reports</h3>
-                            <p class="text-lg md:text-2xl font-bold text-gray-900">{{ $totalReports }}</p>
+                            <h3 class="text-base md:text-lg font-semibold text-gray-700">Tests</h3>
+                            <p class="text-lg md:text-2xl font-bold text-gray-900">{{ $totalTests }}</p>
                         </div>
                     </div>
 
