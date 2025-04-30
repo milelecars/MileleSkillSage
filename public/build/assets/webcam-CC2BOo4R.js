@@ -7,6 +7,12 @@ class WebcamManager {
     this.stream = null;
     this.permissionGranted = false;
     this.deviceId = null;
+    if (localStorage.getItem("camera_permission_granted") === "yes") {
+      sessionStorage.setItem("camera_permission_granted", "yes");
+    }
+    if (localStorage.getItem("camera_device_id")) {
+      sessionStorage.setItem("camera_device_id", localStorage.getItem("camera_device_id"));
+    }
     this.testId = ((_a = document.getElementById("test-id")) == null ? void 0 : _a.value) ?? null;
     this.candidateId = ((_b = document.getElementById("candidate-id")) == null ? void 0 : _b.value) ?? null;
     this.csrfToken = (_c = document.querySelector('meta[name="csrf-token"]')) == null ? void 0 : _c.getAttribute("content");
@@ -152,6 +158,8 @@ class WebcamManager {
     } else if (this.stream) {
       this.stream.getTracks().forEach((track) => track.stop());
     }
+    sessionStorage.removeItem("camera_permission_granted");
+    sessionStorage.removeItem("camera_device_id");
   }
   async initialize() {
     try {
@@ -330,8 +338,9 @@ class WebcamManager {
   async checkServerPermission() {
     try {
       console.log("Checking server permission...");
-      const granted = sessionStorage.getItem("camera_permission_granted") === "yes";
-      const deviceId = sessionStorage.getItem("camera_device_id");
+      const granted = sessionStorage.getItem("camera_permission_granted") === "yes" || localStorage.getItem("camera_permission_granted") === "yes";
+      const deviceId = sessionStorage.getItem("camera_device_id") || localStorage.getItem("camera_device_id");
+      ;
       if (granted && deviceId) {
         return { granted: true, deviceId, streamActive: true };
       }
@@ -429,6 +438,8 @@ class WebcamManager {
     if (videoTrack) {
       const settings = videoTrack.getSettings();
       await this.updateServerPermission(true, settings.deviceId, true);
+      localStorage.setItem("camera_permission_granted", "yes");
+      localStorage.setItem("camera_device_id", settings.deviceId);
       sessionStorage.setItem("camera_permission_granted", "yes");
       sessionStorage.setItem("camera_device_id", settings.deviceId);
     }
