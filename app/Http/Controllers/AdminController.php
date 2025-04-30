@@ -300,32 +300,51 @@ class AdminController extends Controller
     public function manageCandidates(Request $request)
     {
 
-        $search = $request->input('search');
+        $name = $request->input('name');
+        $email = $request->input('email');
+        $role = $request->input('role');
         $testFilter = $request->input('test_filter');
 
+        Log::debug('Filters Received', [
+            'name' => $name,
+            'email' => $email,
+            'role' => $role,
+            'testFilter' => $testFilter,
+        ]);
+        
         $activeTestCandidates = Candidate::with(['tests' => function ($query) use ($testFilter) {
             $query->select('tests.id', 'title', 'description', 'duration')
                 ->when($testFilter, fn($q) => $q->where('tests.id', $testFilter))
                 ->withPivot('role', 'started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status', 'is_suspended', 'unsuspend_count');
         }])
-        ->whereHas('tests', function($query) use ($testFilter) {
-            if ($testFilter) {
-                $query->where('tests.id', $testFilter);
-            }
+        ->when($testFilter, function ($query, $testFilter) {
+            $query->whereHas('tests', fn($q) => $q->where('tests.id', $testFilter));
+        })
+        ->when($role, function ($query) use ($role) {
+            $query->whereHas('tests', function ($q) use ($role) {
+                $q->whereRaw('LOWER(candidate_test.role) = ?', [strtolower($role)]);
+            });
+        })
+        ->when($name, function ($query) use ($name) {
+            $query->where('name', 'like', "%$name%");
+        })
+        ->when($email, function ($query) use ($email) {
+            $query->where('email', 'like', "%$email%");
         })
         ->select('id', 'name', 'email', 'created_at', 'updated_at')
-        ->when($search, function($query) use ($search) {
-            return $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('tests', function($q2) use ($search) {
-                      $q2->where('candidate_test.role', 'like', "%{$search}%");
-                  });
-            });
-        })        
         ->get()
-        ->flatMap(function ($candidate) {
-            return $candidate->tests->map(function ($test) use ($candidate) {
+        ->flatMap(function ($candidate) use ($role) {
+            Log::debug('Filtering tests for candidate', [
+                'candidate_id' => $candidate->id,
+                'candidate_email' => $candidate->email,
+                'all_roles' => $candidate->tests->pluck('pivot.role'),
+                'role_filter' => $role,
+            ]);
+        
+            return $candidate->tests->filter(function ($test) use ($role) {
+                if (!$role) return true;
+                return strtolower($test->pivot->role ?? '') === strtolower($role);
+            })->map(function ($test) use ($candidate) {
                 $status = $test->pivot->status;
                 // If status is "not_started" and we have a record in candidate_test,
                 // this means they've logged in
@@ -427,6 +446,7 @@ class AdminController extends Controller
                     'has_logged_in' => $hasLoggedIn,
                     'sort_order' => self::STATUS_SORT_ORDER[$status] ?? 99
                 ];
+                
             });
         });
 
@@ -446,21 +466,26 @@ class AdminController extends Controller
         ->whereJsonLength('invited_emails->invites', '>', 0)
         ->with('test:id,title')
         ->get()
-        ->flatMap(function ($invitation) use ($search, $takenTests) {
+        ->flatMap(function ($invitation) use ($name, $email, $role, $takenTests) {
             $invites = is_string($invitation->invited_emails) 
                 ? json_decode($invitation->invited_emails, true)['invites'] ?? []
                 : ($invitation->invited_emails['invites'] ?? []);
             
-            return collect($invites)->map(function ($invite) use ($invitation, $search, $takenTests) {
-                $email = $invite['email'];
+            return collect($invites)->map(function ($invite) use ($invitation, $name, $email, $role, $takenTests) {
+                $inviteEmail = strtolower($invite['email']);
+                $inviteRole = strtolower($invite['role'] ?? '-');
                 $deadline = Carbon::parse($invite['deadline']);
                 $isExpired = now()->greaterThan($deadline);
-                
-                if ((!$search || str_contains(strtolower($email), strtolower($search))) 
-                    && (!isset($takenTests[$email]) || !in_array($invitation->test_id, $takenTests[$email]))) {
+            
+                $matchesName = $name ? str_contains($inviteEmail, strtolower($name)) : true;
+                $matchesEmail = $email ? str_contains($inviteEmail, strtolower($email)) : true;
+                $matchesRole = $role ? strtolower($inviteRole) === strtolower($role) : true;
+            
+                if ($matchesName && $matchesEmail && $matchesRole) {
                     return [
-                        'email' => $email,
-                        'test_title' => $invitation->test->title,
+                        'email' => $invite['email'],
+                        'test_title' => $invitation->test->title ?? '-',
+                        'role' => $invite['role'] ?? '-',
                         'test_id' => $invitation->test_id,
                         'status' => $isExpired ? 'expired' : 'invited',
                         'has_started' => false,
@@ -471,8 +496,10 @@ class AdminController extends Controller
                         'is_invitation' => true
                     ];
                 }
+            
                 return null;
             })->filter();
+                
         });
 
         $availableTests = Test::select('id', 'title')->get();
@@ -500,38 +527,50 @@ class AdminController extends Controller
             ->toArray();
 
         $allCandidates = $activeTestCandidates->concat($invitedEmails);
-        if ($testFilter) {
-            $allCandidates = $allCandidates->sortByDesc(function ($item) {
-                return $item['percentile'] ?? 0;
-            });
-        } else {
-            $allCandidates = $allCandidates->sortBy(function ($item) {
-                return [
-                    $item['sort_order'],
-                    !($item['has_logged_in'] ?? false),
-                    !isset($item['name']),
-                    $item['email']
-                ];
-            });
-        }
 
+        $allCandidates = $testFilter
+            ? $allCandidates->sortByDesc(fn($item) => $item['percentile'] ?? 0)
+            : $allCandidates->sortBy(fn($item) => [
+                $item['sort_order'],
+                !($item['has_logged_in'] ?? false),
+                !isset($item['name']),
+                $item['email']
+            ]);
+        
         $candidates = $allCandidates->values();
 
         $stats = [
-            'totalInvited' => $totalInvited,
-            'completedTestsCount' => array_sum($completedByTest),
-            'completedByTest' => $completedByTest,
-            'activeTests' => Test::count() ?? 0,
-            'totalReports' => DB::table('candidate_test')
-                ->when($testFilter, function($query) use ($testFilter) {
-                    return $query->where('test_id', $testFilter);
-                })
-                ->whereNotNull('report_path')
-                ->count() ?? 0,
-        ];
+            'totalInvited' => $allCandidates->count(),
+
+        
+            'active' => $candidates->filter(function ($c) {
+                $status = strtolower(trim($c['status']));
+                Log::debug('Checking Active Status', [
+                    'email' => $c['email'],
+                    'original_status' => $c['status'],
+                    'normalized' => $status,
+                    'is_active' => in_array($status, ['not started', 'in progress'])
+                ]);
+                return in_array($status, ['not started', 'in progress']);
+            })->count(),
+        
+            'completedTestsCount' => $candidates->filter(function ($c) {
+                return in_array(strtolower(trim($c['status'])), ['completed', 'accepted', 'rejected']);
+            })->count(),
+        
+            'completedByTest' => $candidates->filter(function ($c) {
+                return in_array(strtolower(trim($c['status'])), ['completed', 'accepted', 'rejected']);
+            })->groupBy('test_id')->map(fn($group) => $group->count())->toArray(),
+        
+            'activeTests' => $candidates->pluck('test_id')->unique()->count(),
+        
+            'totalReports' => $candidates->filter(function ($c) {
+                return !empty($c['score']) || !empty($c['report_path'] ?? null);
+            })->count(),
+        ];        
 
         return view('admin.manage-candidates', array_merge(
-            compact('candidates', 'search', 'availableTests', 'testFilter'), 
+            compact('candidates', 'name', 'email', 'role', 'availableTests', 'testFilter'), 
             $stats
         ));
     }
