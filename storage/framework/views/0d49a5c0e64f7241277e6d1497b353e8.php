@@ -10,64 +10,69 @@
 <?php $component->withAttributes([]); ?>
     <div class="py-12 text-theme">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="bg-white shadow-lg rounded-lg ">
                 <div class="p-6">
                     
                     <div class="flex flex-col md:flex-row justify-between md:items-center mb-6">
                         <h1 class="text-xl md:text-2xl font-bold text-gray-900 mb-6 md:mb-0">Manage Candidates</h1>
                         
                         <!-- search functionality  -->
-                        <form method="GET" action="<?php echo e(route('admin.manage-candidates')); ?>" class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                            <select name="test_filter" class="w-full sm:w-48 h-9 border text-xs md:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                                <option value="">All Tests</option>
-                                <?php $__currentLoopData = $availableTests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($test->id); ?>" <?php echo e($testFilter == $test->id ? 'selected' : ''); ?>>
-                                        <?php echo e($test->title); ?>
-
-                                    </option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
-
-                            
-                            <div class="flex justify-between gap-2">
-                                <div class="relative w-full">
-                                    <input
-                                        type="text"
-                                        name="search"
-                                        value="<?php echo e($search ?? ''); ?>"
-                                        placeholder="Search by name/email/role..."
-                                        class="w-full sm:w-64 h-9 border text-xs md:text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                                    >
-                                    <?php if($search): ?>
-                                        <a href="<?php echo e(route('admin.manage-candidates')); ?>" 
-                                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                                        title="Clear search">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                            </svg>
-                                        </a>
-                                    <?php endif; ?>
-                                </div>
-
-                                <button type="submit" class=" items-center px-3 h-9 bg-blue-600 text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-blue-700">
-                                    Search
-                                </button>
-    
-                                <?php if($search || $testFilter): ?>
-                                    <a href="<?php echo e(route('admin.manage-candidates')); ?>" 
-                                    class="justify-center items-center px-3 h-9 border border-gray-300 text-gray-700 text-xs md:text-sm font-semibold rounded-lg hover:bg-gray-50 flex">
-                                        Clear
-                                    </a>
-                                <?php endif; ?>
-                                
-                            </div>
-
-                            <a href="<?php echo e(route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? ''])); ?>" class="hidden md:flex w-full justify-center px-3 h-9 bg-green-600 text-white text-xs md:text-sm font-semibold rounded-lg hover:bg-green-700 items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <div x-data="{ open: false }" class="relative">
+                            <button @click="open = !open" class="flex items-center justify-center rounded-lg p-2 md:p-1 md:mt-1 bg-blue-600 focus:outline-none" title="More options">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ffffff" class="w-5 h-5 md:w-7 md:h-7">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
                                 </svg>
-                            </a>
-                        </form>
+                            </button>
+
+                            <!-- Dropdown filter menu -->
+                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-50">
+                                <form method="GET" action="<?php echo e(route('admin.manage-candidates')); ?>" class="space-y-3">
+                                    <div>
+                                        <label for="test_filter" class="block text-xs font-medium text-gray-700">Test</label>
+                                        <select name="test_filter" id="test_filter" class="w-full border-gray-300 rounded-md mt-1">
+                                            <option value="" class="placeholder:text-sm">All Tests</option>
+                                            <?php $__currentLoopData = $availableTests; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($test->id); ?>" <?php echo e($testFilter == $test->id ? 'selected' : ''); ?>><?php echo e($test->title); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </select>
+                                    </div>
+
+                                    <!-- Name Filter -->
+                                    <div>
+                                        <label for="name" class="block text-xs font-medium text-gray-700">Name</label>
+                                        <input type="text" name="name" id="name" value="<?php echo e(request('name')); ?>" placeholder="Search by name" class="placeholder:text-sm w-full border-gray-300 rounded-md mt-1">
+                                    </div>
+
+                                    <!-- Email Filter -->
+                                    <div>
+                                        <label for="email" class="block text-xs font-medium text-gray-700">Email</label>
+                                        <input type="text" name="email" id="email" value="<?php echo e(request('email')); ?>" placeholder="Search by email" class="placeholder:text-sm w-full border-gray-300 rounded-md mt-1">
+                                    </div>
+
+                                    <!-- Role Filter -->
+                                    <div>
+                                        <label for="role" class="block text-xs font-medium text-gray-700">Role</label>
+                                        <input type="text" name="role" id="role" value="<?php echo e(request('role')); ?>" placeholder="Search by role" class="placeholder:text-sm w-full border-gray-300 rounded-md mt-1">
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="flex justify-between items-center pt-5">
+                                        <a href="<?php echo e(route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? ''])); ?>" class="inline-flex items-center bg-green-600 text-white text-sm px-3 py-2 rounded-md hover:bg-green-700">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            Export
+                                        </a>
+
+                                        <button type="submit" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm">Search</button>
+
+                                        <a href="<?php echo e(route('admin.manage-candidates')); ?>" class="bg-gray-600 text-white px-3 py-2 rounded-md text-sm">Clear</a>
+
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Stats -->
@@ -90,7 +95,7 @@
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto rounded-lg">
+                    <div class="overflow-x-auto rounded-lg ">
                         <div class="max-h-[70vh] overflow-y-auto border border-gray-200">
                             <table class="min-w-full divide-y divide-gray-200 " id="candidatesTable">
                                 <thead class="bg-gray-100 sticky top-0 z-10">
@@ -252,7 +257,7 @@
                                                                 <form action="<?php echo e(route('admin.unsuspend-test', [$candidate['id'], $candidate['test_id']])); ?>" method="POST" class="block"
                                                                     onsubmit="return confirm('Are you sure you want to unsuspend this test?');">
                                                                     <?php echo csrf_field(); ?>
-                                                                    <button type="submit" class="w-full text-left px-4 py-2 text-xs md:text-sm text-orange-800 hover:bg-gray-100">
+                                                                    <button type="submit" class="w-full text-left px-4 py-2 text-xs md:text-sm text-orange-600 hover:bg-gray-100">
                                                                         Unsuspend Test
                                                                     </button>
                                                                 </form>
