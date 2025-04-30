@@ -174,31 +174,40 @@ class WebcamManager {
 
     cleanup() {
         this.stopPeriodicScreenshots();
-        this.hideNoPersonPopup(); 
-        
-        // Abort all pending operations
+        this.hideNoPersonPopup();
+    
+        // Abort any pending detection loop
         if (this.detectionRAF) {
             cancelAnimationFrame(this.detectionRAF);
             this.detectionRAF = null;
         }
-        
-        // Try to process any remaining screenshots before cleanup
-        if (this.screenshotQueue.length > 0) {
-            console.log(`Attempting to process ${this.screenshotQueue.length} remaining screenshots...`);
-            this.processScreenshotQueue().finally(() => {
-                if (this.stream) {
-                    this.stream.getTracks().forEach(track => track.stop());
-                }
-            });
-        } else if (this.stream) {
-            this.stream.getTracks().forEach(track => track.stop());
+    
+        // If the stream should be preserved (e.g., navigating between steps), skip stopping tracks
+        if (window.__PRESERVE_STREAM__) {
+            console.log("Preserving stream – skipping track stop and permission clear.");
+            return;
         }
-
-        sessionStorage.removeItem('camera_permission_granted');
-        sessionStorage.removeItem('camera_device_id');
-        // optionally clear localStorage too
-
+    
+        // Stop and clean up stream only if not preserving it
+        const stopStream = () => {
+            if (this.stream) {
+                this.stream.getTracks().forEach(track => track.stop());
+            }
+            sessionStorage.removeItem('camera_permission_granted');
+            sessionStorage.removeItem('camera_device_id');
+            // localStorage.removeItem('camera_permission_granted'); // optional
+            // localStorage.removeItem('camera_device_id');           // optional
+            window.__ACTIVE_STREAM__ = null;
+        };
+    
+        if (this.screenshotQueue.length > 0) {
+            console.log(`Processing ${this.screenshotQueue.length} queued screenshots before cleanup...`);
+            this.processScreenshotQueue().finally(stopStream);
+        } else {
+            stopStream();
+        }
     }
+    
 
     async initialize() {
         try {
@@ -409,8 +418,16 @@ class WebcamManager {
                 this.screenshotCanvas.height = this.video.videoHeight;
             }
         });
-    
-        await this.requestCameraAccess();
+
+        if (window.__ACTIVE_STREAM__ && window.__ACTIVE_STREAM__.active) {
+            this.stream = window.__ACTIVE_STREAM__;
+            this.video.srcObject = this.stream;
+            this.video.play();
+            this.initializeDetection();
+        } else {
+            await this.requestCameraAccess();
+        }
+        
     
         // Only start screenshots if canvas was initialized successfully
         if (this.screenshotCanvas && this.screenshotContext) {
@@ -548,6 +565,8 @@ class WebcamManager {
     }
 
     async setupVideoStream() {
+        window.__ACTIVE_STREAM__ = this.stream;
+
         const videoTrack = this.stream.getVideoTracks()[0];
         if (videoTrack) {
             const settings = videoTrack.getSettings();
@@ -833,8 +852,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }, { passive: true });
 
-window.addEventListener('beforeunload', function() {
-    if (webcamManager) {
+window.addEventListener('beforeunload', function () {
+    if (webcamManager && !window.__PRESERVE_STREAM__) {
         webcamManager.cleanup();
     }
 }, { passive: true });

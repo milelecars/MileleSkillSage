@@ -93,7 +93,7 @@
                                 {{-- Test not started --}}
                                 <div class="flex w-full justify-between gap-4 items-center bg-gray-100 border-l-4 border-blue-600 rounded-lg p-4 pr-0 mb-4">
                                     <p class="text-gray-700">Please review the guidelines before starting the test.</p>
-                                    <a href="{{ route('tests.show', ['id' => $test->id]) }}"
+                                    <a href="{{ route('tests.show', ['id' => $test->id]) }}"    onclick="window.__PRESERVE_STREAM__ = true;" 
                                     class="text-sm md:text-base md:inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         View Guidelines
                                     </a>

@@ -108,7 +108,7 @@
                                     </label>
                                 </div>
                                 <div class="flex justify-end text-sm md:text-base mt-3">
-                                    <button type="submit" class="inline-flex items-center px-3 py-2 md:px-6 md:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    <button onclick="window.__PRESERVE_STREAM__ = true;" type="submit" class="inline-flex items-center px-3 py-2 md:px-6 md:py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                                         Start Test
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 md:w-5 md:h-5 ml-2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -221,3 +221,4 @@
         </div>
     </div>
 </x-app-layout>
+

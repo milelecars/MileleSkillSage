@@ -102,7 +102,7 @@
 
                                 {{-- Submit Button --}}
                                 <div class="mt-16 md:mt-6">
-                                    <button type="submit" 
+                                    <button onclick="window.__PRESERVE_STREAM__ = true;"  type="submit" 
                                             class="w-full text-sm md:text-base text-white py-3 px-6 rounded-lg 
                                             {{ $currentQuestionIndex === $questions->count() - 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }}">
                                         {{ $currentQuestionIndex === $questions->count() - 1 ? 'Submit Test' : 'Next Question' }}
