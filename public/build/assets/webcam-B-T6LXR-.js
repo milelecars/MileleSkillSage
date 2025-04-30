@@ -330,6 +330,11 @@ class WebcamManager {
   async checkServerPermission() {
     try {
       console.log("Checking server permission...");
+      const granted = sessionStorage.getItem("camera_permission_granted") === "yes";
+      const deviceId = sessionStorage.getItem("camera_device_id");
+      if (granted && deviceId) {
+        return { granted: true, deviceId, streamActive: true };
+      }
       const response = await fetch("/camera-permission", {
         method: "GET",
         headers: {
@@ -391,7 +396,7 @@ class WebcamManager {
   }
   async requestCameraAccess() {
     try {
-      if (this.permissionGranted && this.deviceId) {
+      if (this.permissionGranted && this.deviceId && !this.isSafari) {
         try {
           this.stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -424,6 +429,8 @@ class WebcamManager {
     if (videoTrack) {
       const settings = videoTrack.getSettings();
       await this.updateServerPermission(true, settings.deviceId, true);
+      sessionStorage.setItem("camera_permission_granted", "yes");
+      sessionStorage.setItem("camera_device_id", settings.deviceId);
     }
     this.video.srcObject = this.stream;
     return new Promise((resolve) => {

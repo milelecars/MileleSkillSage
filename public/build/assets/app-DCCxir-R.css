@@ -892,6 +892,9 @@ select {
 .mb-4 {
   margin-bottom: 1rem;
 }
+.mb-5 {
+  margin-bottom: 1.25rem;
+}
 .mb-6 {
   margin-bottom: 1.5rem;
 }
@@ -1075,6 +1078,9 @@ select {
 }
 .w-6 {
   width: 1.5rem;
+}
+.w-72 {
+  width: 18rem;
 }
 .w-8 {
   width: 2rem;
@@ -1524,6 +1530,10 @@ select {
   --tw-bg-opacity: 1;
   background-color: rgb(22 163 74 / var(--tw-bg-opacity));
 }
+.bg-indigo-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(79 70 229 / var(--tw-bg-opacity));
+}
 .bg-orange-100 {
   --tw-bg-opacity: 1;
   background-color: rgb(255 237 213 / var(--tw-bg-opacity));
@@ -1586,6 +1596,9 @@ select {
 .object-contain {
   -o-object-fit: contain;
      object-fit: contain;
+}
+.p-1 {
+  padding: 0.25rem;
 }
 .p-2 {
   padding: 0.5rem;
@@ -1716,6 +1729,9 @@ select {
 }
 .pt-4 {
   padding-top: 1rem;
+}
+.pt-5 {
+  padding-top: 1.25rem;
 }
 .text-left {
   text-align: left;
@@ -2077,6 +2093,14 @@ select {
   font-size: 0.875rem;
   line-height: 1.25rem;
 }
+.placeholder\:text-xs::-moz-placeholder {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.placeholder\:text-xs::placeholder {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
 .hover\:rounded-lg:hover {
   border-radius: 0.5rem;
 }
@@ -2131,6 +2155,10 @@ select {
 .hover\:bg-green-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(21 128 61 / var(--tw-bg-opacity));
+}
+.hover\:bg-indigo-500:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(99 102 241 / var(--tw-bg-opacity));
 }
 .hover\:bg-orange-100:hover {
   --tw-bg-opacity: 1;
@@ -2360,16 +2388,8 @@ select {
     display: none;
   }
 
-  .sm\:w-48 {
-    width: 12rem;
-  }
-
   .sm\:w-64 {
     width: 16rem;
-  }
-
-  .sm\:w-auto {
-    width: auto;
   }
 
   .sm\:w-full {
@@ -2512,6 +2532,10 @@ select {
     margin-bottom: 5rem;
   }
 
+  .md\:mb-6 {
+    margin-bottom: 1.5rem;
+  }
+
   .md\:ml-0 {
     margin-left: 0px;
   }
@@ -2526,10 +2550,6 @@ select {
 
   .md\:mt-6 {
     margin-top: 1.5rem;
-  }
-
-  .md\:flex {
-    display: flex;
   }
 
   .md\:inline-flex {
@@ -2670,6 +2690,16 @@ select {
   .md\:text-xl {
     font-size: 1.25rem;
     line-height: 1.75rem;
+  }
+
+  .md\:placeholder\:text-sm::-moz-placeholder {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .md\:placeholder\:text-sm::placeholder {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 }
 @media (min-width: 1024px) {
