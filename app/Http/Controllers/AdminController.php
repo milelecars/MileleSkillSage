@@ -542,26 +542,15 @@ class AdminController extends Controller
         $stats = [
             'totalInvited' => $allCandidates->count(),
         
-            'active' => $candidates->filter(function ($c) {
-                $status = strtolower(trim($c['status']));
-                Log::debug('Checking Active Status', [
-                    'email' => $c['email'],
-                    'original_status' => $c['status'],
-                    'normalized' => $status,
-                    'is_active' => in_array($status, ['not started', 'in progress'])
-                ]);
-                return in_array($status, ['not started', 'in progress']);
-            })->count(),
+            'activeTests' => $candidates->filter(function ($c) {
+                    $status = strtolower(trim($c['status']));
+                    return in_array($status, ['not started', 'in progress', 'invited']);
+                })->count(),
+
         
             'completedTestsCount' => $candidates->filter(function ($c) {
                 return in_array(strtolower(trim($c['status'])), ['completed', 'accepted', 'rejected']);
             })->count(),
-        
-            'completedByTest' => $candidates->filter(function ($c) {
-                return in_array(strtolower(trim($c['status'])), ['completed', 'accepted', 'rejected']);
-            })->groupBy('test_id')->map(fn($group) => $group->count())->toArray(),
-        
-            'activeTests' => $candidates->pluck('test_id')->unique()->count(),
         
             'totalTests' => $availableTests->count(),
         ];        
