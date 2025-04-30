@@ -136,32 +136,36 @@
             const detectionStatus = document.getElementById('detection-status');
 
             function startCamera() {
-                if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-                    navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: "user" },
-                        audio: false
-                    })
-                    .then(function(stream) {
-                        video.srcObject = stream;
-                        video.play();
-                        detectionStatus.innerText = "Camera connected successfully.";
-                        // Save permission flag
-                        localStorage.setItem('camera_permission_granted', 'yes');
-                    })
-                    .catch(function(error) {
-                        console.error("Camera access error:", error);
-                        detectionStatus.innerText = "Camera access was denied or not available. Please check your browser permissions.";
-                    });
-                } else {
-                    detectionStatus.innerText = "Camera is not supported on this browser.";
-                }
+                const deviceId = localStorage.getItem('camera_device_id');
+                const constraints = {
+                    video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" },
+                    audio: false
+                };
+
+                navigator.mediaDevices.getUserMedia(constraints)
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                    detectionStatus.innerText = "Camera connected successfully.";
+
+                    const track = stream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    localStorage.setItem('camera_permission_granted', 'yes');
+                    localStorage.setItem('camera_device_id', settings.deviceId);
+                })
+                .catch(function(error) {
+                    console.error("Camera access error:", error);
+                    detectionStatus.innerText = "Camera access was denied or not available.";
+                });
             }
 
-            const isMobileSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const permissionGranted = localStorage.getItem('camera_permission_granted') === 'yes';
 
-            if (permissionGranted) {
-                // 👏 Already granted -> Start camera without asking again
+            const isMobileSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const granted = localStorage.getItem('camera_permission_granted') === 'yes';
+            const deviceId = localStorage.getItem('camera_device_id');
+
+
+            if (granted && deviceId) {
                 startCamera();
             } else {
                 if (isMobileSafari) {

@@ -155,8 +155,12 @@
                         video.srcObject = stream;
                         video.play();
                         detectionStatus.innerText = "Camera connected successfully.";
-                        // Save permission flag
+
+                        const track = stream.getVideoTracks()[0];
+                        const settings = track.getSettings();
+
                         localStorage.setItem('camera_permission_granted', 'yes');
+                        localStorage.setItem('camera_device_id', settings.deviceId);
                     })
                     .catch(function(error) {
                         console.error("Camera access error:", error);
@@ -168,10 +172,11 @@
             }
 
             const isMobileSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-            const permissionGranted = localStorage.getItem('camera_permission_granted') === 'yes';
+            const granted = localStorage.getItem('camera_permission_granted') === 'yes';
+            const deviceId = localStorage.getItem('camera_device_id');
 
-            if (permissionGranted) {
-                // 👏 Already granted -> Start camera without asking again
+
+            if (granted && deviceId) {
                 startCamera();
             } else {
                 if (isMobileSafari) {

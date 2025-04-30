@@ -1,4 +1,6 @@
 class WebcamManager {
+
+    
     constructor() {
         this.video = null;
         this.detectionStatus = null;
@@ -6,7 +8,15 @@ class WebcamManager {
         this.stream = null;
         this.permissionGranted = false;
         this.deviceId = null;
-
+        
+        if (localStorage.getItem('camera_permission_granted') === 'yes') {
+            sessionStorage.setItem('camera_permission_granted', 'yes');
+        }
+    
+        if (localStorage.getItem('camera_device_id')) {
+            sessionStorage.setItem('camera_device_id', localStorage.getItem('camera_device_id'));
+        }
+    
         // Check if we're on a test page with camera enabled
         this.testId = document.getElementById('test-id')?.value ?? null;
         this.candidateId = document.getElementById('candidate-id')?.value ?? null;
@@ -164,7 +174,7 @@ class WebcamManager {
 
     cleanup() {
         this.stopPeriodicScreenshots();
-        this.hideNoPersonPopup(); // Ensure the popup is removed
+        this.hideNoPersonPopup(); 
         
         // Abort all pending operations
         if (this.detectionRAF) {
@@ -183,6 +193,11 @@ class WebcamManager {
         } else if (this.stream) {
             this.stream.getTracks().forEach(track => track.stop());
         }
+
+        sessionStorage.removeItem('camera_permission_granted');
+        sessionStorage.removeItem('camera_device_id');
+        // optionally clear localStorage too
+
     }
 
     async initialize() {
@@ -420,8 +435,14 @@ class WebcamManager {
         try {
             console.log('Checking server permission...');
 
-            const granted = sessionStorage.getItem('camera_permission_granted') === 'yes';
-            const deviceId = sessionStorage.getItem('camera_device_id');
+            const granted =
+                sessionStorage.getItem('camera_permission_granted') === 'yes' ||
+                localStorage.getItem('camera_permission_granted') === 'yes';
+
+            const deviceId =
+                sessionStorage.getItem('camera_device_id') ||
+                localStorage.getItem('camera_device_id');
+            ;
         
             if (granted && deviceId) {
                 return { granted: true, deviceId: deviceId, streamActive: true };
@@ -532,8 +553,12 @@ class WebcamManager {
             const settings = videoTrack.getSettings();
             await this.updateServerPermission(true, settings.deviceId, true);
 
+            localStorage.setItem('camera_permission_granted', 'yes');
+            localStorage.setItem('camera_device_id', settings.deviceId);
+
             sessionStorage.setItem('camera_permission_granted', 'yes');
             sessionStorage.setItem('camera_device_id', settings.deviceId);
+
         }
 
         this.video.srcObject = this.stream;
