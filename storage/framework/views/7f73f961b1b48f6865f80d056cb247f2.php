@@ -146,30 +146,29 @@
             const detectionStatus = document.getElementById('detection-status');
 
             function startCamera() {
-                if (navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
-                    navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: "user" },
-                        audio: false
-                    })
-                    .then(function(stream) {
-                        video.srcObject = stream;
-                        video.play();
-                        detectionStatus.innerText = "Camera connected successfully.";
+                const deviceId = localStorage.getItem('camera_device_id');
+                const constraints = {
+                    video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: "user" },
+                    audio: false
+                };
 
-                        const track = stream.getVideoTracks()[0];
-                        const settings = track.getSettings();
+                navigator.mediaDevices.getUserMedia(constraints)
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                    detectionStatus.innerText = "Camera connected successfully.";
 
-                        localStorage.setItem('camera_permission_granted', 'yes');
-                        localStorage.setItem('camera_device_id', settings.deviceId);
-                    })
-                    .catch(function(error) {
-                        console.error("Camera access error:", error);
-                        detectionStatus.innerText = "Camera access was denied or not available. Please check your browser permissions.";
-                    });
-                } else {
-                    detectionStatus.innerText = "Camera is not supported on this browser.";
-                }
+                    const track = stream.getVideoTracks()[0];
+                    const settings = track.getSettings();
+                    localStorage.setItem('camera_permission_granted', 'yes');
+                    localStorage.setItem('camera_device_id', settings.deviceId);
+                })
+                .catch(function(error) {
+                    console.error("Camera access error:", error);
+                    detectionStatus.innerText = "Camera access was denied or not available.";
+                });
             }
+
 
             const isMobileSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             const granted = localStorage.getItem('camera_permission_granted') === 'yes';
@@ -195,7 +194,190 @@
                 }
             }
         });
-        </script>
+
+        // Mobile-optimized camera permission handler
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we're on a mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
+            // Only run this script on mobile devices
+            if (!isMobile) return;
+            
+            console.log("Mobile device detected, initializing optimized camera handler");
+            
+            // Get required elements
+            const video = document.getElementById('video');
+            const detectionStatus = document.getElementById('detection-status');
+            
+            if (!video || !detectionStatus) {
+                console.log("Required video elements not found");
+                return;
+            }
+            
+            // Create persistent permission tracking
+            let permissionRequested = false;
+            let streamActive = false;
+            
+            // Override the original WebcamManager's requestCameraAccess method if it exists
+            if (window.webcamManager && window.webcamManager.requestCameraAccess) {
+                const originalMethod = window.webcamManager.requestCameraAccess;
+                window.webcamManager.requestCameraAccess = function() {
+                    console.log("Intercepting original requestCameraAccess call");
+                    return mobileRequestCamera.call(this);
+                };
+            }
+            
+            // Add a button to manually trigger camera permission
+            function addCameraButton() {
+                // Remove any existing camera buttons first
+                const existingButtons = document.querySelectorAll('.mobile-camera-btn');
+                existingButtons.forEach(btn => btn.remove());
+                
+                const cameraBtn = document.createElement('button');
+                cameraBtn.textContent = "Allow Camera Access";
+                cameraBtn.className = "mobile-camera-btn px-4 py-3 bg-blue-600 text-white rounded-md w-full mb-4";
+                cameraBtn.style.cssText = "background-color: #2563eb; color: white; padding: 12px 16px; border-radius: 8px; font-weight: bold; margin: 10px 0; width: 100%; border: none;";
+                
+                // Insert before the video element or status display
+                const container = video.parentElement || detectionStatus.parentElement;
+                if (container) {
+                    container.insertBefore(cameraBtn, container.firstChild);
+                } else {
+                    // Fallback - add to body
+                    document.body.insertBefore(cameraBtn, document.body.firstChild);
+                }
+                
+                cameraBtn.addEventListener('click', function() {
+                    mobileRequestCamera();
+                    // Don't remove the button immediately in case permission fails
+                });
+            }
+            
+            // Mobile-optimized camera request function
+            async function mobileRequestCamera() {
+                console.log("Mobile camera request initiated");
+                
+                try {
+                    // Always request fresh permissions on mobile - don't use stored deviceId
+                    const constraints = {
+                        video: { facingMode: "user" },
+                        audio: false
+                    };
+                    
+                    // Explicitly request permission
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    
+                    // Successfully got a stream
+                    permissionRequested = true;
+                    streamActive = true;
+                    
+                    // Store permission status
+                    localStorage.setItem('camera_permission_granted', 'yes');
+                    sessionStorage.setItem('camera_permission_granted', 'yes');
+                    
+                    // Get track info to store deviceId
+                    const videoTrack = stream.getVideoTracks()[0];
+                    if (videoTrack) {
+                        const settings = videoTrack.getSettings();
+                        const deviceId = settings.deviceId;
+                        
+                        if (deviceId) {
+                            localStorage.setItem('camera_device_id', deviceId);
+                            sessionStorage.setItem('camera_device_id', deviceId);
+                            console.log("Saved camera device ID:", deviceId);
+                        }
+                    }
+                    
+                    // Attach stream to video element
+                    video.srcObject = stream;
+                    
+                    // Remove the manual button if it exists
+                    const manualBtn = document.querySelector('.mobile-camera-btn');
+                    if (manualBtn) manualBtn.remove();
+                    
+                    // Handle loaded metadata and play
+                    return new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            video.play()
+                            .then(() => {
+                                detectionStatus.innerHTML = "<p style='color: green;'>Camera connected successfully</p>";
+                                console.log("Camera successfully connected and playing");
+                                
+                                // If we're part of WebcamManager, continue with detection
+                                if (window.webcamManager && window.webcamManager.initializeDetection) {
+                                    window.webcamManager.initializeDetection();
+                                }
+                                
+                                resolve(stream);
+                            })
+                            .catch(err => {
+                                console.error("Error playing video:", err);
+                                detectionStatus.innerHTML = "<p style='color: orange;'>Camera connected but couldn't autoplay. Please check your device settings.</p>";
+                                resolve(stream);
+                            });
+                        };
+                        
+                        // Handle potential timeout
+                        setTimeout(() => {
+                            if (video.readyState < 2) { // HAVE_CURRENT_DATA
+                                console.warn("Video metadata loading timeout - forcing play attempt");
+                                video.play().catch(e => console.error("Timeout play error:", e));
+                                resolve(stream);
+                            }
+                        }, 3000);
+                    });
+                    
+                } catch (error) {
+                    console.error("Mobile camera request error:", error);
+                    permissionRequested = true;
+                    streamActive = false;
+                    
+                    // User denied permission - clear any old permissions
+                    if (error.name === "NotAllowedError") {
+                        localStorage.removeItem('camera_permission_granted');
+                        sessionStorage.removeItem('camera_permission_granted');
+                        detectionStatus.innerHTML = "<p style='color: red;'>Camera access was denied. Please click 'Allow' when prompted and refresh the page.</p>";
+                    } else {
+                        detectionStatus.innerHTML = "<p style='color: red;'>Camera error: " + error.message + "</p>";
+                    }
+                    
+                    // Always show the manual button after error
+                    addCameraButton();
+                    
+                    throw error;
+                }
+            }
+            
+            // Check if permission was previously granted
+            const previouslyGranted = 
+                localStorage.getItem('camera_permission_granted') === 'yes' ||
+                sessionStorage.getItem('camera_permission_granted') === 'yes';
+            
+            // For iOS, always show the button first since permissions are more restrictive
+            if (isIOS || !previouslyGranted) {
+                console.log("Adding manual camera button for iOS or first-time user");
+                addCameraButton();
+            } else {
+                // Try auto-starting for non-iOS devices with previous permission
+                mobileRequestCamera().catch(err => {
+                    console.error("Auto-start failed:", err);
+                    addCameraButton();
+                });
+            }
+            
+            // Monitor camera status and reconnect if needed
+            setInterval(() => {
+                if (permissionRequested && !streamActive && video) {
+                    const stream = video.srcObject;
+                    if (!stream || !stream.active) {
+                        console.log("Stream inactive, attempting to reconnect camera");
+                        mobileRequestCamera().catch(e => console.error("Reconnect failed:", e));
+                    }
+                }
+            }, 5000);
+        });
+    </script>
 
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
