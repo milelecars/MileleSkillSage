@@ -209,6 +209,16 @@ class WebcamManager {
             console.log("Stream active:", permission.streamActive);
             this.permissionGranted = permission?.granted || false;
             this.deviceId = permission?.deviceId || null;
+
+            // ⬇️ ADD THIS HERE
+            const previousStreamData = sessionStorage.getItem('__CAMERA_PERMISSION__');
+            if (!window.__ACTIVE_STREAM__ && previousStreamData) {
+                const parsed = JSON.parse(previousStreamData);
+                if (parsed.granted && parsed.deviceId) {
+                    this.deviceId = parsed.deviceId;
+                    console.log("Recovered deviceId from session:", this.deviceId);
+                }
+            }
             
             console.log("Initial permission status from server:", this.permissionGranted);
             console.log("Current path:", window.location.pathname);
@@ -578,32 +588,33 @@ class WebcamManager {
         this.video.srcObject = this.stream;
         window.__ACTIVE_STREAM__ = this.stream;
 
-
         const videoTrack = this.stream.getVideoTracks()[0];
         if (videoTrack) {
             const settings = videoTrack.getSettings();
-            await this.updateServerPermission(true, settings.deviceId, true)
-
+            await this.updateServerPermission(true, settings.deviceId, true);
+            this.deviceId = settings.deviceId;
         }
 
-        this.video.srcObject = this.stream;
-        
+        // ⬇️ ADD THIS
+        sessionStorage.setItem('__CAMERA_PERMISSION__', JSON.stringify({
+            deviceId: this.deviceId,
+            granted: true,
+            streamActive: this.stream?.active ?? false
+        }));
+
         return new Promise((resolve) => {
             this.video.onloadedmetadata = () => {
-                console.log("Video metadata loaded");
                 this.video.onloadeddata = () => {
                     this.video.play();
                     this.initializeDetection();
                 };
                 this.detectionStatus.innerHTML = "<p style='color: green;'>Webcam started successfully</p>";
-                
                 const cameraWarning = document.getElementById('camera-warning');
-                if (cameraWarning) {
-                    cameraWarning.style.display = 'none';
-                }
+                if (cameraWarning) cameraWarning.style.display = 'none';
                 resolve();
             };
         });
+
     }
     
     async preserveStream() {
