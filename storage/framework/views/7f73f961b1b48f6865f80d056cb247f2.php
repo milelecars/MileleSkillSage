@@ -40,6 +40,9 @@
                             We use camera images to ensure fairness for everyone.<br/>
                             Make sure that you are in front of your camera.
                         </p>
+                        <input type="hidden" id="test-id" value="<?php echo e($test->id); ?>">
+                        <input type="hidden" id="candidate-id" value="<?php echo e(Auth::guard('candidate')->user()->id); ?>">
+
                     </div>
                     
                     <div class="rounded-lg overflow-hidden bg-gray-50 p-4">
@@ -160,8 +163,6 @@
 
                     const track = stream.getVideoTracks()[0];
                     const settings = track.getSettings();
-                    localStorage.setItem('camera_permission_granted', 'yes');
-                    localStorage.setItem('camera_device_id', settings.deviceId);
                 })
                 .catch(function(error) {
                     console.error("Camera access error:", error);
@@ -175,24 +176,6 @@
             const deviceId = localStorage.getItem('camera_device_id');
 
 
-            if (granted && deviceId) {
-                startCamera();
-            } else {
-                if (isMobileSafari) {
-                    const startButton = document.createElement('button');
-                    startButton.textContent = "Start Camera";
-                    startButton.className = "mt-4 px-4 py-2 bg-blue-600 text-white rounded-md";
-                    detectionStatus.parentNode.insertBefore(startButton, detectionStatus);
-
-                    startButton.addEventListener('click', function() {
-                        startButton.remove(); // Remove the button after start
-                        startCamera();
-                    });
-                } else {
-                    // Desktop Chrome/Firefox — try to auto start camera
-                    startCamera();
-                }
-            }
         });
 
         // Mobile-optimized camera permission handler
@@ -272,9 +255,6 @@
                     permissionRequested = true;
                     streamActive = true;
                     
-                    // Store permission status
-                    localStorage.setItem('camera_permission_granted', 'yes');
-                    sessionStorage.setItem('camera_permission_granted', 'yes');
                     
                     // Get track info to store deviceId
                     const videoTrack = stream.getVideoTracks()[0];
@@ -282,11 +262,6 @@
                         const settings = videoTrack.getSettings();
                         const deviceId = settings.deviceId;
                         
-                        if (deviceId) {
-                            localStorage.setItem('camera_device_id', deviceId);
-                            sessionStorage.setItem('camera_device_id', deviceId);
-                            console.log("Saved camera device ID:", deviceId);
-                        }
                     }
                     
                     // Attach stream to video element
@@ -377,6 +352,14 @@
                 }
             }, 5000);
         });
+
+
+        console.log("Device ID (sessionStorage):", sessionStorage.getItem('camera_device_id'));
+        console.log("Device ID (Laravel):", this.deviceId);
+        console.log("Permission granted:", this.permissionGranted);
+        console.log("Stream active:", this.stream?.active);
+        console.log("window.__ACTIVE_STREAM__ present:", !!window.__ACTIVE_STREAM__);
+
     </script>
 
  <?php echo $__env->renderComponent(); ?>
