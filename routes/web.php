@@ -119,7 +119,7 @@ Route::middleware('auth:candidate')->group(function () {
     Route::get('/tests/{id}/setup', [TestController::class, 'setup'])->name('tests.setup');
     Route::match(['get', 'post'], '/tests/{id}/start', [TestController::class, 'startTest'])->name('tests.start');
     Route::post('/tests/{id}/next', [TestController::class, 'nextQuestion'])->name('tests.next');
-    Route::post('/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
+    Route::match(['get', 'post'], '/tests/{id}/submit', [TestController::class, 'submitTest'])->name('tests.submit');
     Route::get('/tests/{id}/result', [TestController::class, 'showResult'])->name('tests.result');
     Route::post('/candidate-flags', [FlagController::class, 'store'])->name('candidate-flags.store'); 
     Route::get('/tests/{testId}/suspended', [TestController::class, 'showSuspended'])->name('tests.suspended');
