@@ -8,14 +8,6 @@ class WebcamManager {
         this.stream = null;
         this.permissionGranted = false;
         this.deviceId = null;
-        
-        if (localStorage.getItem('camera_permission_granted') === 'yes') {
-            sessionStorage.setItem('camera_permission_granted', 'yes');
-        }
-    
-        if (localStorage.getItem('camera_device_id')) {
-            sessionStorage.setItem('camera_device_id', localStorage.getItem('camera_device_id'));
-        }
     
         // Check if we're on a test page with camera enabled
         this.testId = document.getElementById('test-id')?.value ?? null;

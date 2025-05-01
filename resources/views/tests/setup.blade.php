@@ -367,6 +367,14 @@
                 }
             }, 5000);
         });
+
+
+        console.log("Device ID (sessionStorage):", sessionStorage.getItem('camera_device_id'));
+        console.log("Device ID (Laravel):", this.deviceId);
+        console.log("Permission granted:", this.permissionGranted);
+        console.log("Stream active:", this.stream?.active);
+        console.log("window.__ACTIVE_STREAM__ present:", !!window.__ACTIVE_STREAM__);
+
     </script>
 
 </x-app-layout>

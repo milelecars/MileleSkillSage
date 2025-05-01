@@ -9,16 +9,21 @@ class CameraController extends Controller
 {
     public function updatePermission(Request $request)
     {
+        $testId = $request->input('testId');
+        $candidateId = $request->input('candidateId');
+
+        $sessionKey = "camera_permission_{$candidateId}_{$testId}";
+
         Log::info('Update Permission Request:', [
             'input' => $request->all(),
             'session_before' => $request->session()->all()
         ]);
 
-        $request->session()->put('camera_permission', [
+        $request->session()->put($sessionKey, [
             'granted' => $request->input('granted', false),
             'deviceId' => $request->input('deviceId'),
             'streamActive' => $request->input('streamActive', false)
-        ]);
+        ]);        
 
         Log::info('Session After Update:', [
             'session' => $request->session()->all(),
@@ -27,8 +32,8 @@ class CameraController extends Controller
 
         return response()->json([
             'success' => true,
-            'permission' => $request->session()->get('camera_permission')
-        ]);
+            'permission' => $request->session()->get($sessionKey)
+        ]);        
     }
 
     public function checkPermission(Request $request)
