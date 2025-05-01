@@ -347,7 +347,8 @@ class WebcamManager {
     var _a, _b, _c;
     try {
       console.log("Checking server permission...");
-      const response = await fetch("/camera-permission", {
+      const url = `/camera-permission?testId=${this.testId}&candidateId=${this.candidateId}`;
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Accept": "application/json",
@@ -414,6 +415,7 @@ class WebcamManager {
     );
   }
   async requestCameraAccess() {
+    window.__ACTIVE_STREAM__ = this.stream;
     try {
       if (this.deviceId && !this.isSafari) {
         try {

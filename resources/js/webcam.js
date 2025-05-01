@@ -443,7 +443,8 @@ class WebcamManager {
         try {
             console.log('Checking server permission...');
     
-            const response = await fetch('/camera-permission', {
+            const url = `/camera-permission?testId=${this.testId}&candidateId=${this.candidateId}`;
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
@@ -452,6 +453,7 @@ class WebcamManager {
                 },
                 credentials: 'same-origin'
             });
+
     
             const data = await response.json();
             console.log('Permission data (Laravel):', data.permission);
@@ -523,6 +525,8 @@ class WebcamManager {
     }
 
     async requestCameraAccess() {
+        window.__ACTIVE_STREAM__ = this.stream;
+        
         try {
             if (this.deviceId && !this.isSafari) {
                 try {
