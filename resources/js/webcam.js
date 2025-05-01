@@ -415,7 +415,7 @@ class WebcamManager {
             this.video.srcObject = this.stream;
             this.video.play();
             this.initializeDetection();
-        } else {
+        }else {
             await this.requestCameraAccess();
         }
         
@@ -525,8 +525,15 @@ class WebcamManager {
     }
 
     async requestCameraAccess() {
-        window.__ACTIVE_STREAM__ = this.stream;
-        
+        if (window.__ACTIVE_STREAM__ && window.__ACTIVE_STREAM__.active) {
+            console.log("Reusing active stream from global object");
+            this.stream = window.__ACTIVE_STREAM__;
+            this.video.srcObject = this.stream;
+            await this.video.play();
+            this.initializeDetection();
+            return;
+        }
+    
         try {
             if (this.deviceId && !this.isSafari) {
                 try {
@@ -543,7 +550,7 @@ class WebcamManager {
             } else {
                 this.stream = await this.getNewVideoStream();
             }
-
+    
             await this.setupVideoStream();
         } catch (error) {
             console.error("Camera access error:", error);
@@ -551,7 +558,7 @@ class WebcamManager {
             this.handleCameraError(error.message || "Failed to access camera");
         }
     }
-
+    
     async getNewVideoStream() {
         return await navigator.mediaDevices.getUserMedia({ 
             video: true, 
@@ -560,7 +567,9 @@ class WebcamManager {
     }
 
     async setupVideoStream() {
+        this.video.srcObject = this.stream;
         window.__ACTIVE_STREAM__ = this.stream;
+
 
         const videoTrack = this.stream.getVideoTracks()[0];
         if (videoTrack) {
@@ -596,6 +605,7 @@ class WebcamManager {
                     const newTrack = videoTrack.clone();
                     const newStream = new MediaStream([newTrack]);
                     this.stream = newStream;
+                    window.__ACTIVE_STREAM__ = this.stream;
                     return true;
                 } catch (error) {
                     console.error("Failed to preserve stream:", error);

@@ -63,7 +63,7 @@
         @else
             <link rel="stylesheet" href="/build/assets/app-jzzLtP_g.css">
             <script src="/build/assets/app-Dh5OhEi1.js" defer></script>
-            <script src="/build/assets/webcam-DUJrs007.js" defer></script>
+            <script src="/build/assets/webcam-C7uRPoYt.js" defer></script>
             <script src="/build/assets/test-monitoring-BNQ90RFY.js" defer></script>
         @endif
 
