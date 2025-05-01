@@ -166,24 +166,6 @@
             const deviceId = localStorage.getItem('camera_device_id');
 
 
-            if (granted && deviceId) {
-                startCamera();
-            } else {
-                if (isMobileSafari) {
-                    const startButton = document.createElement('button');
-                    startButton.textContent = "Start Camera";
-                    startButton.className = "mt-4 px-4 py-2 bg-blue-600 text-white rounded-md";
-                    detectionStatus.parentNode.insertBefore(startButton, detectionStatus);
-
-                    startButton.addEventListener('click', function() {
-                        startButton.remove(); // Remove the button after start
-                        startCamera();
-                    });
-                } else {
-                    // Desktop Chrome/Firefox — try to auto start camera
-                    startCamera();
-                }
-            }
         });
 
         // Mobile-optimized camera permission handler

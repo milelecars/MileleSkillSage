@@ -498,6 +498,16 @@ class WebcamManager {
     
             const data = await response.json();
             console.log('Update result:', data);
+
+            
+            if (data.success && data.permission) {
+                sessionStorage.setItem('camera_permission_granted', data.permission.granted ? 'yes' : 'no');
+                sessionStorage.setItem('camera_device_id', data.permission.deviceId || '');
+                localStorage.setItem('camera_permission_granted', data.permission.granted ? 'yes' : 'no');
+                localStorage.setItem('camera_device_id', data.permission.deviceId || '');
+
+            }
+
             return data.success;
         } catch (error) {
             console.error('Error updating server permission:', error);
@@ -827,7 +837,8 @@ document.addEventListener('DOMContentLoaded', function() {
 }, { passive: true });
 
 window.addEventListener('beforeunload', function () {
-    if (webcamManager && !window.__PRESERVE_STREAM__) {
-        webcamManager.cleanup();
+    if (window.webcamManager && !window.__PRESERVE_STREAM__) {
+        window.webcamManager.cleanup();
     }
+    
 }, { passive: true });
