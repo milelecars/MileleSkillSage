@@ -43,8 +43,17 @@ class CameraController extends Controller
             'camera_permission' => $request->session()->get('camera_permission')
         ]);
 
+        $testId = $request->query('testId');
+        $candidateId = $request->query('candidateId');
+    
+        if (!$testId || !$candidateId) {
+            return response()->json(['error' => 'Missing testId or candidateId'], 400);
+        }
+    
+        $sessionKey = "camera_permission_{$candidateId}_{$testId}";
+    
         return response()->json([
-            'permission' => $request->session()->get('camera_permission', [
+            'permission' => $request->session()->get($sessionKey, [
                 'granted' => false,
                 'deviceId' => null,
                 'streamActive' => false

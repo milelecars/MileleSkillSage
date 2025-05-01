@@ -38,8 +38,8 @@ Route::get('/check', function() {
     dd(Auth::check(), Auth::guard('web')->check(), Auth::guard('candidate')->check());
 });
 Route::post('/flag', [FlagController::class, 'store'])->name('flag.store');
-Route::post('/camera-permission', [CameraController::class, 'updatePermission'])->name('camera.update');
-Route::get('/camera-permission', [CameraController::class, 'checkPermission'])->name('camera.check');
+Route::post('/camera-permission', [CameraController::class, 'updatePermission']);
+Route::get('/camera-permission', [CameraController::class, 'checkPermission']);
 Route::post('/api/screenshots', [TestController::class, 'saveScreenshot'])->name('screenshots.save');
 
 // Guest routes

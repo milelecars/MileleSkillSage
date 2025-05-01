@@ -150,8 +150,6 @@
 
                     const track = stream.getVideoTracks()[0];
                     const settings = track.getSettings();
-                    localStorage.setItem('camera_permission_granted', 'yes');
-                    localStorage.setItem('camera_device_id', settings.deviceId);
                 })
                 .catch(function(error) {
                     console.error("Camera access error:", error);
@@ -262,9 +260,6 @@
                     permissionRequested = true;
                     streamActive = true;
                     
-                    // Store permission status
-                    localStorage.setItem('camera_permission_granted', 'yes');
-                    sessionStorage.setItem('camera_permission_granted', 'yes');
                     
                     // Get track info to store deviceId
                     const videoTrack = stream.getVideoTracks()[0];
@@ -272,11 +267,6 @@
                         const settings = videoTrack.getSettings();
                         const deviceId = settings.deviceId;
                         
-                        if (deviceId) {
-                            localStorage.setItem('camera_device_id', deviceId);
-                            sessionStorage.setItem('camera_device_id', deviceId);
-                            console.log("Saved camera device ID:", deviceId);
-                        }
                     }
                     
                     // Attach stream to video element

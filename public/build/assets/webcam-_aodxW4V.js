@@ -7,12 +7,6 @@ class WebcamManager {
     this.stream = null;
     this.permissionGranted = false;
     this.deviceId = null;
-    if (localStorage.getItem("camera_permission_granted") === "yes") {
-      sessionStorage.setItem("camera_permission_granted", "yes");
-    }
-    if (localStorage.getItem("camera_device_id")) {
-      sessionStorage.setItem("camera_device_id", localStorage.getItem("camera_device_id"));
-    }
     this.testId = ((_a = document.getElementById("test-id")) == null ? void 0 : _a.value) ?? null;
     this.candidateId = ((_b = document.getElementById("candidate-id")) == null ? void 0 : _b.value) ?? null;
     this.csrfToken = (_c = document.querySelector('meta[name="csrf-token"]')) == null ? void 0 : _c.getAttribute("content");
@@ -148,23 +142,30 @@ class WebcamManager {
       cancelAnimationFrame(this.detectionRAF);
       this.detectionRAF = null;
     }
-    if (this.screenshotQueue.length > 0) {
-      console.log(`Attempting to process ${this.screenshotQueue.length} remaining screenshots...`);
-      this.processScreenshotQueue().finally(() => {
-        if (this.stream) {
-          this.stream.getTracks().forEach((track) => track.stop());
-        }
-      });
-    } else if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop());
+    if (window.__PRESERVE_STREAM__) {
+      console.log("Preserving stream – skipping track stop and permission clear.");
+      return;
     }
-    sessionStorage.removeItem("camera_permission_granted");
-    sessionStorage.removeItem("camera_device_id");
+    const stopStream = () => {
+      if (this.stream) {
+        this.stream.getTracks().forEach((track) => track.stop());
+      }
+      window.__ACTIVE_STREAM__ = null;
+    };
+    if (this.screenshotQueue.length > 0) {
+      console.log(`Processing ${this.screenshotQueue.length} queued screenshots before cleanup...`);
+      this.processScreenshotQueue().finally(stopStream);
+    } else {
+      stopStream();
+    }
   }
   async initialize() {
     try {
       this.hideNoPersonPopup();
       const permission = await this.checkServerPermission();
+      console.log("Device ID (Laravel):", permission.deviceId);
+      console.log("Permission granted:", permission.granted);
+      console.log("Stream active:", permission.streamActive);
       this.permissionGranted = (permission == null ? void 0 : permission.granted) || false;
       this.deviceId = (permission == null ? void 0 : permission.deviceId) || null;
       console.log("Initial permission status from server:", this.permissionGranted);
@@ -320,7 +321,14 @@ class WebcamManager {
         this.screenshotCanvas.height = this.video.videoHeight;
       }
     });
-    await this.requestCameraAccess();
+    if (window.__ACTIVE_STREAM__ && window.__ACTIVE_STREAM__.active) {
+      this.stream = window.__ACTIVE_STREAM__;
+      this.video.srcObject = this.stream;
+      this.video.play();
+      this.initializeDetection();
+    } else {
+      await this.requestCameraAccess();
+    }
     if (this.screenshotCanvas && this.screenshotContext) {
       this.startPeriodicScreenshots(this.screenshotIntervalTime);
     } else {
@@ -338,12 +346,6 @@ class WebcamManager {
   async checkServerPermission() {
     try {
       console.log("Checking server permission...");
-      const granted = sessionStorage.getItem("camera_permission_granted") === "yes" || localStorage.getItem("camera_permission_granted") === "yes";
-      const deviceId = sessionStorage.getItem("camera_device_id") || localStorage.getItem("camera_device_id");
-      ;
-      if (granted && deviceId) {
-        return { granted: true, deviceId, streamActive: true };
-      }
       const response = await fetch("/camera-permission", {
         method: "GET",
         headers: {
@@ -352,14 +354,9 @@ class WebcamManager {
           "X-Requested-With": "XMLHttpRequest"
         },
         credentials: "same-origin"
-        // Important for cookies/session
       });
-      console.log("Server response:", response);
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
-      }
       const data = await response.json();
-      console.log("Permission data:", data);
+      console.log("Permission data (Laravel):", data.permission);
       return data.permission || { granted: false, deviceId: null, streamActive: false };
     } catch (error) {
       console.error("Error checking server permission:", error);
@@ -382,7 +379,9 @@ class WebcamManager {
         body: JSON.stringify({
           granted,
           deviceId,
-          streamActive
+          streamActive,
+          testId: this.testId,
+          candidateId: this.candidateId
         })
       });
       console.log("Update response:", response);
@@ -405,7 +404,7 @@ class WebcamManager {
   }
   async requestCameraAccess() {
     try {
-      if (this.permissionGranted && this.deviceId && !this.isSafari) {
+      if (this.deviceId && !this.isSafari) {
         try {
           this.stream = await navigator.mediaDevices.getUserMedia({
             video: {
@@ -434,14 +433,11 @@ class WebcamManager {
     });
   }
   async setupVideoStream() {
+    window.__ACTIVE_STREAM__ = this.stream;
     const videoTrack = this.stream.getVideoTracks()[0];
     if (videoTrack) {
       const settings = videoTrack.getSettings();
       await this.updateServerPermission(true, settings.deviceId, true);
-      localStorage.setItem("camera_permission_granted", "yes");
-      localStorage.setItem("camera_device_id", settings.deviceId);
-      sessionStorage.setItem("camera_permission_granted", "yes");
-      sessionStorage.setItem("camera_device_id", settings.deviceId);
     }
     this.video.srcObject = this.stream;
     return new Promise((resolve) => {
@@ -658,7 +654,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 }, { passive: true });
 window.addEventListener("beforeunload", function() {
-  if (webcamManager) {
+  if (webcamManager && !window.__PRESERVE_STREAM__) {
     webcamManager.cleanup();
   }
 }, { passive: true });

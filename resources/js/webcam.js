@@ -185,10 +185,6 @@ class WebcamManager {
             if (this.stream) {
                 this.stream.getTracks().forEach(track => track.stop());
             }
-            sessionStorage.removeItem('camera_permission_granted');
-            sessionStorage.removeItem('camera_device_id');
-            // localStorage.removeItem('camera_permission_granted'); // optional
-            // localStorage.removeItem('camera_device_id');           // optional
             window.__ACTIVE_STREAM__ = null;
         };
     
@@ -207,6 +203,9 @@ class WebcamManager {
             this.hideNoPersonPopup();
     
             const permission = await this.checkServerPermission();
+            console.log("Device ID (Laravel):", permission.deviceId);
+            console.log("Permission granted:", permission.granted);
+            console.log("Stream active:", permission.streamActive);
             this.permissionGranted = permission?.granted || false;
             this.deviceId = permission?.deviceId || null;
             
@@ -443,20 +442,7 @@ class WebcamManager {
     async checkServerPermission() {
         try {
             console.log('Checking server permission...');
-
-            const granted =
-                sessionStorage.getItem('camera_permission_granted') === 'yes' ||
-                localStorage.getItem('camera_permission_granted') === 'yes';
-
-            const deviceId =
-                sessionStorage.getItem('camera_device_id') ||
-                localStorage.getItem('camera_device_id');
-            ;
-        
-            if (granted && deviceId) {
-                return { granted: true, deviceId: deviceId, streamActive: true };
-            }
-            
+    
             const response = await fetch('/camera-permission', {
                 method: 'GET',
                 headers: {
@@ -464,23 +450,18 @@ class WebcamManager {
                     'X-CSRF-TOKEN': this.getCsrfToken(),
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                credentials: 'same-origin' // Important for cookies/session
+                credentials: 'same-origin'
             });
-            
-            console.log('Server response:', response);
-            
-            if (!response.ok) {
-                throw new Error(`Server returned ${response.status}`);
-            }
-            
+    
             const data = await response.json();
-            console.log('Permission data:', data);
+            console.log('Permission data (Laravel):', data.permission);
             return data.permission || { granted: false, deviceId: null, streamActive: false };
         } catch (error) {
             console.error('Error checking server permission:', error);
             return { granted: false, deviceId: null, streamActive: false };
         }
     }
+    
     
     async updateServerPermission(granted, deviceId = null, streamActive = false) {
         try {
@@ -497,8 +478,11 @@ class WebcamManager {
                 body: JSON.stringify({
                     granted,
                     deviceId,
-                    streamActive
+                    streamActive,
+                    testId: this.testId,
+                    candidateId: this.candidateId
                 })
+                
             });
     
             console.log('Update response:', response);
@@ -525,7 +509,7 @@ class WebcamManager {
 
     async requestCameraAccess() {
         try {
-            if (this.permissionGranted && this.deviceId && !this.isSafari) {
+            if (this.deviceId && !this.isSafari) {
                 try {
                     this.stream = await navigator.mediaDevices.getUserMedia({
                         video: {
@@ -562,13 +546,7 @@ class WebcamManager {
         const videoTrack = this.stream.getVideoTracks()[0];
         if (videoTrack) {
             const settings = videoTrack.getSettings();
-            await this.updateServerPermission(true, settings.deviceId, true);
-
-            localStorage.setItem('camera_permission_granted', 'yes');
-            localStorage.setItem('camera_device_id', settings.deviceId);
-
-            sessionStorage.setItem('camera_permission_granted', 'yes');
-            sessionStorage.setItem('camera_device_id', settings.deviceId);
+            await this.updateServerPermission(true, settings.deviceId, true)
 
         }
 
