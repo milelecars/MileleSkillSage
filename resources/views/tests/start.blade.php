@@ -15,113 +15,9 @@
         </div>
             
         <!-- Main Content -->
-        <div class="py-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden w-full">
-                    <div class="flex flex-col md:flex-row">
-                        <!-- Question Section -->
-                        <div class="w-full md:w-[60%] p-4 sm:p-6 border-b md:border-b-0 md:border-r">
-                            <div class="mb-4 text-xs md:text-sm text-gray-600">
-                                Question {{ $currentQuestionIndex + 1 }} of {{ $questions->count() }}
-                            </div>
-                            <h2 class="text-base md:text-xl font-medium mb-6">
-                                {{ $questions[$currentQuestionIndex]->question_text }}
-                            </h2>
+        <livewire:test-player :test="$test" :candidate="$candidate" :questions="$questions" :currentIndex="$currentQuestionIndex" />
 
-                            {{-- Show media for MCQ only --}}
-                            @if($questions[$currentQuestionIndex]->question_type === 'MCQ')
-                                @if($questions[$currentQuestionIndex]->media && $questions[$currentQuestionIndex]->media instanceof \Illuminate\Database\Eloquent\Collection)
-                                    @foreach($questions[$currentQuestionIndex]->media as $media)
-                                        @if($media->image_url)
-                                            <img src="{{ $media->image_url }}" 
-                                                alt="{{ $media->description ?? 'Question Image' }}" 
-                                                class="mb-6 max-w-full rounded-lg border border-black">
-                                        @endif
-                                    @endforeach
-                                @elseif($questions[$currentQuestionIndex]->media && isset($questions[$currentQuestionIndex]->media->image_url))
-                                    <img src="{{ $questions[$currentQuestionIndex]->media->image_url }}" 
-                                        alt="{{ $questions[$currentQuestionIndex]->media->description ?? 'Question Image' }}" 
-                                        class="mb-6 max-w-full rounded-lg border border-black">
-                                @endif
-                            @endif
-                        </div>
-
-                        <!-- Answer Section -->
-                        <div class="w-full md:w-[40%] p-6 bg-gray-50">
-                            <form id="questionForm" method="POST" 
-                                  action="{{ $currentQuestionIndex === $questions->count() - 1 
-                                    ? route('tests.submit', ['id' => $test->id]) 
-                                    : route('tests.next', ['id' => $test->id]) }}">
-                                @csrf
-                                <input type="hidden" name="current_index" value="{{ $currentQuestionIndex }}">
-
-                                {{-- MCQ Choices --}}
-                                @if($questions[$currentQuestionIndex]->question_type === 'MCQ')
-                                    <div class="space-y-4">
-                                        @foreach($questions[$currentQuestionIndex]->choices as $choice)
-                                            <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
-                                                <input type="radio" 
-                                                    name="answer" 
-                                                    value="{{ $choice->id }}" 
-                                                    class="mt-1 form-radio text-blue-600" 
-                                                    {{ session()->get("test_session.answers.$currentQuestionIndex") === $choice->id ? 'checked' : '' }}
-                                                    required>
-                                                <span class="ml-3">
-                                                    <span class="font-medium text-sm md:text-base">{{ chr(65 + $loop->index) }}.</span>
-                                                    {{ $choice->choice_text }}
-                                                </span>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                {{-- LSQ Scale (1-5) --}}
-                                @if($questions[$currentQuestionIndex]->question_type === 'LSQ')
-                                <div class="space-y-4 flex flex-col items-center justify-center ">
-                                    <input 
-                                        type="range" 
-                                        name="lsq_answers[{{ $questions[$currentQuestionIndex]->id }}]" 
-                                        min="1" 
-                                        max="5" 
-                                        step="1" 
-                                        value="{{ old('lsq_answers.' . $questions[$currentQuestionIndex]->id, 3) }}" 
-                                        class="w-[90%] cursor-pointer"
-                                        oninput="this.nextElementSibling.value = this.value"
-                                        required
-                                    >
-
-                                    <div class="flex justify-between text-sm text-theme font-bold mt-1 px-6 w-full">
-                                        <div class="w-12 text-[13px] md:text-base text-center -ml-6">Strongly Disagree</div>
-                                        <div class="w-16 text-[13px] md:text-base text-center -ml-1">Disagree</div>
-                                        <div class="w-14 text-[13px] md:text-base text-center -ml-1">Neutral</div>
-                                        <div class="w-12 text-[13px] md:text-base text-center mr-1">Agree</div>
-                                        <div class="w-12 text-[13px] md:text-base text-center -mr-6">Strongly Agree</div>
-                                    </div>
-                                </div>
-                                @endif
-
-                                {{-- Submit Button --}}
-                                <div class="mt-16 md:mt-6">
-                                    <button onclick="window.__PRESERVE_STREAM__ = true;"  type="submit" 
-                                            class="w-full text-sm md:text-base text-white py-3 px-6 rounded-lg 
-                                            {{ $currentQuestionIndex === $questions->count() - 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }}">
-                                        {{ $currentQuestionIndex === $questions->count() - 1 ? 'Submit Test' : 'Next Question' }}
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="h-1.5 bg-blue-100 w-[25%] mt-5">
-                    <div class="h-full bg-blue-600 rounded-full" style="width: {{ ($currentQuestionIndex + 1) / count($questions) * 100 }}%"></div>
-                </div>
-
-                <!-- Violation Log -->
-                <div id="violation-log" class="fixed bottom-4 right-4 p-2 bg-black text-white text-xs rounded-lg opacity-50"></div>
-            </div>
-        </div>
+       
     </div>
 
     @push('scripts')
@@ -133,6 +29,12 @@
         document.getElementById('questionForm').addEventListener('submit', function(e) {
             const submitButton = this.querySelector('button[type="submit"]');
             submitButton.disabled = true;
+        });
+
+        document.addEventListener('livewire:load', function () {
+            Livewire.on('preserveStream', () => {
+                window.__PRESERVE_STREAM__ = true;
+            });
         });
     </script>
     @endpush

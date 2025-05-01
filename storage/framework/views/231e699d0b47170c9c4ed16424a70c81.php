@@ -17,6 +17,10 @@
                         <div class="hidden rounded-lg overflow-hidden bg-gray-50 p-4 ">
                             <video id="video" class=" w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
                             <div id="detection-status" class=" mt-3 text-sm text-gray-600"></div>
+
+                            <input type="hidden" id="test-id" value="<?php echo e($test->id); ?>">
+                            <input type="hidden" id="candidate-id" value="<?php echo e(Auth::guard('candidate')->user()->id); ?>">
+
                         </div>
                     <?php endif; ?>
 
@@ -245,5 +249,14 @@
 <?php $component = $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54; ?>
 <?php unset($__componentOriginal9ac128a9029c0e4701924bd2d73d7f54); ?>
 <?php endif; ?>
+
+<script>
+    console.log("Device ID (sessionStorage):", sessionStorage.getItem('camera_device_id'));
+    console.log("Device ID (Laravel):", this.deviceId);
+    console.log("Permission granted:", this.permissionGranted);
+    console.log("Stream active:", this.stream?.active);
+    console.log("window.__ACTIVE_STREAM__ present:", !!window.__ACTIVE_STREAM__);
+
+</script>
 
 <?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/tests/show.blade.php ENDPATH**/ ?>
