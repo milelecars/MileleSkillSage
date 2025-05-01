@@ -30,6 +30,9 @@
                             We use camera images to ensure fairness for everyone.<br/>
                             Make sure that you are in front of your camera.
                         </p>
+                        <input type="hidden" id="test-id" value="{{ $test->id }}">
+                        <input type="hidden" id="candidate-id" value="{{ Auth::guard('candidate')->user()->id }}">
+
                     </div>
                     
                     <div class="rounded-lg overflow-hidden bg-gray-50 p-4">

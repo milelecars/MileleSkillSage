@@ -8,6 +8,10 @@
                         <div class="hidden rounded-lg overflow-hidden bg-gray-50 p-4 ">
                             <video id="video" class=" w-full h-auto rounded-lg shadow-inner border-2 border-gray-200" autoplay playsinline></video>
                             <div id="detection-status" class=" mt-3 text-sm text-gray-600"></div>
+
+                            <input type="hidden" id="test-id" value="{{ $test->id }}">
+                            <input type="hidden" id="candidate-id" value="{{ Auth::guard('candidate')->user()->id }}">
+
                         </div>
                     @endif
 

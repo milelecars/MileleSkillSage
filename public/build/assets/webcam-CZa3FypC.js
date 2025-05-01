@@ -647,13 +647,13 @@ class WebcamManager {
     };
   }
 }
-let webcamManager = null;
+window.webcamManager = null;
 document.addEventListener("DOMContentLoaded", function() {
   const videoElement = document.getElementById("video");
   const statusElement = document.getElementById("detection-status");
-  if (videoElement && statusElement) {
-    console.log("Required webcam elements found, initializing WebcamManager");
-    webcamManager = new WebcamManager();
+  if (videoElement && statusElement && !window.webcamManager) {
+    console.log("Initializing WebcamManager...");
+    window.webcamManager = new WebcamManager();
   } else {
     console.log("Webcam elements not found on this page, skipping initialization");
   }
