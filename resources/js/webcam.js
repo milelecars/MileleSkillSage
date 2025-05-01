@@ -200,7 +200,6 @@ class WebcamManager {
 
     async initialize() {
         try {
-            // Hide the pop-up during initialization
             this.hideNoPersonPopup();
     
             const permission = await this.checkServerPermission();
@@ -209,28 +208,43 @@ class WebcamManager {
             console.log("Stream active:", permission.streamActive);
             this.permissionGranted = permission?.granted || false;
             this.deviceId = permission?.deviceId || null;
-
-            // ⬇️ ADD THIS HERE
+    
+            // ⬇️ Attempt recovery from sessionStorage if needed
             const previousStreamData = sessionStorage.getItem('__CAMERA_PERMISSION__');
             if (!window.__ACTIVE_STREAM__ && previousStreamData) {
                 const parsed = JSON.parse(previousStreamData);
                 if (parsed.granted && parsed.deviceId) {
                     this.deviceId = parsed.deviceId;
                     console.log("Recovered deviceId from session:", this.deviceId);
+    
+                    try {
+                        const recoveredStream = await navigator.mediaDevices.getUserMedia({
+                            video: { deviceId: { exact: this.deviceId } },
+                            audio: false
+                        });
+                        window.__ACTIVE_STREAM__ = recoveredStream;
+                        this.stream = recoveredStream;
+                        console.log("✅ Recovered and set __ACTIVE_STREAM__");
+                    } catch (e) {
+                        console.warn("⚠️ Could not restore stream from saved deviceId:", e);
+                    }
                 }
             }
-            
+    
+            console.log("window.__ACTIVE_STREAM__ present:", !!window.__ACTIVE_STREAM__);
             console.log("Initial permission status from server:", this.permissionGranted);
             console.log("Current path:", window.location.pathname);
-            
+    
             if (this.shouldActivateCamera()) {
                 await this.initializeCamera();
             }
+    
         } catch (error) {
             console.error("Initialization error:", error);
             this.handleCameraError("Failed to initialize camera permissions");
         }
     }
+    
 
     // Suspension
     updateStatus(personCount, hasBook, hasCellPhone) {
