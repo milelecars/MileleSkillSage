@@ -40,9 +40,19 @@ class TestPlayer extends Component
     public function submitAndNext()
     {
         $session = session('test_session');
-
+    
+        // ✅ Prevent accessing an invalid index
+        if (!isset($this->questions[$this->currentIndex])) {
+            logger()->error('Invalid currentIndex in Livewire', [
+                'index' => $this->currentIndex,
+                'total' => count($this->questions)
+            ]);
+            return;
+        }
+    
         $question = $this->questions[$this->currentIndex];
-
+    
+        // ✅ Save MCQ Answer
         if ($question->question_type === 'MCQ' && $this->selectedAnswer) {
             $answerText = $question->choices->firstWhere('id', $this->selectedAnswer)->choice_text ?? null;
             Answer::updateOrCreate([
@@ -54,7 +64,8 @@ class TestPlayer extends Component
             ]);
             $session['answers'][$this->currentIndex] = $this->selectedAnswer;
         }
-
+    
+        // ✅ Save LSQ Answer
         if ($question->question_type === 'LSQ') {
             Answer::updateOrCreate([
                 'candidate_id' => $this->candidate->id,
@@ -65,17 +76,23 @@ class TestPlayer extends Component
             ]);
             $session['answers'][$this->currentIndex] = $this->lsqValue;
         }
-
+    
+        // ✅ Move index forward AFTER saving
         $this->currentIndex++;
+    
+        // ✅ Redirect to GET /submit if we've reached the end
         if ($this->currentIndex >= count($this->questions)) {
-            return redirect()->route('tests.submit', ['id' => $this->test->id, 'current_index' => $this->currentIndex]);
+            return redirect()->route('tests.submit', ['id' => $this->test->id]);
         }
-
+    
+        // ✅ Update session state
         $session['current_question'] = $this->currentIndex;
         session(['test_session' => $session]);
-
+    
+        // ✅ Reset form state
         $this->reset(['selectedAnswer', 'lsqValue']);
     }
+    
 
     public function render()
     {

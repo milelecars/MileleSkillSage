@@ -1016,7 +1016,7 @@ class TestController extends Controller
             'timestamp' => now()
         ]);
 
-        try { 
+        try {
             $candidate = Auth::guard('candidate')->user();
             $testSession = session('test_session');
 
@@ -1042,23 +1042,16 @@ class TestController extends Controller
                 }
             ])->findOrFail($id);
 
-            // Filter questions based on test type
-            if ($test->title == "General Mental Ability (GMA)") {
-                $questions = $test->questions()
-                    ->with(['choices', 'media'])
-                    ->skip(8)
-                    ->take(PHP_INT_MAX)
-                    ->get();
-            } else {
-                $questions = $test->questions;
-            }
-            
+            // Filter + sort questions
+            $questions = $test->title === "General Mental Ability (GMA)"
+                ? $test->questions()->with(['choices', 'media'])->skip(8)->get()
+                : $test->questions;
+
             $allQuestionIds = $testSession['question_order'];
-    
-            $questions = $questions->sortBy(function($question) use ($allQuestionIds) {
-                return array_search($question->id, $allQuestionIds);
+            $questions = $questions->sortBy(function ($q) use ($allQuestionIds) {
+                return array_search($q->id, $allQuestionIds);
             })->values();
-            
+
             Log::info('Total Questions After Filtering:', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
@@ -1069,103 +1062,43 @@ class TestController extends Controller
             $testAttempt = $candidate->tests()->wherePivot('test_id', $id)->first();
             if (!$testAttempt) {
                 Log::error('Test attempt not found', ['test_id' => $id, 'candidate_id' => $candidate->id]);
-                return redirect()->route('tests.start', ['id' => $id])->with('error', 'Test attempt not found.');
+                return redirect()->route('tests.start', ['id' => $id])
+                    ->with('error', 'Test attempt not found.');
             }
 
-            // Retrieve answers from request
-            $currentIndex = $request->input('current_index');
-            $choiceId = intval($request->input('answer', null)); 
-            $lsqAnswers = $request->input('lsq_answers', []);
-
-            $currentQuestion = $questions[$currentIndex];
-
-            $validationRules = [
-                'current_index' => 'required|numeric|max:' . ($questions->count() - 1)
-            ];
-
-            
-            if ($currentQuestion->question_type === 'MCQ') {
-                $validationRules['answer'] = 'required|exists:question_choices,id';
-            } elseif ($currentQuestion->question_type === 'LSQ') {
-                $validationRules['lsq_answers'] = 'required|array';
-                $validationRules["lsq_answers.{$currentQuestion->id}"] = 'integer|min:1|max:5';
-            }
-            
-            $request->validate($validationRules);
-
-            // Handle MCQ Submission
-            if ($currentQuestion->question_type === 'MCQ' && $choiceId) {
-                $answerText = QuestionChoice::findOrFail($choiceId)->choice_text;
-
-                Answer::create([
-                    'candidate_id' => $candidate->id,
-                    'test_id' => $test->id,
-                    'question_id' => $currentQuestion->id, 
-                    'answer_text' => $answerText,
-                ]);
-            }
-
-            // Handle LSQ Submission
-            if ($currentQuestion->question_type === 'LSQ' && isset($lsqAnswers[$currentQuestion->id])) {
-                foreach ($lsqAnswers as $questionId => $answerValue) {
-                    Answer::updateOrCreate(
-                        [
-                            'candidate_id' => $candidate->id,
-                            'test_id' => $test->id,
-                            'question_id' => $questionId,
-                        ],
-                        [
-                            'answer_text' => intval($answerValue),  
-                        ]
-                    );
-                }
-            }
-
-            // Retrieve all submitted answers
+            // Load all saved answers
             $answers = Answer::where('candidate_id', $candidate->id)
                 ->where('test_id', $test->id)
                 ->whereIn('question_id', $questions->pluck('id'))
                 ->get();
 
-            // Process MCQ Results
+            // Score MCQs
             $correct_answers = 0;
             $wrong_answers = 0;
             $unanswered = 0;
 
             foreach ($questions as $question) {
-                if ($question->question_type === 'MCQ') {
-                    $correctChoice = $question->choices->firstWhere('is_correct', true);
-                    $userAnswer = $answers->firstWhere('question_id', $question->id);
+                if ($question->question_type !== 'MCQ') break;
 
-                    if ($correctChoice) {
-                        if ($userAnswer) {
-                            if ($userAnswer->answer_text == $correctChoice->choice_text) {
-                                $correct_answers++;
-                            } else {
-                                $wrong_answers++;
-                            }
-                        } else {
-                            $unanswered++;
-                        }
+                $correctChoice = $question->choices->firstWhere('is_correct', true);
+                $userAnswer = $answers->firstWhere('question_id', $question->id);
+
+                if ($correctChoice) {
+                    if (!$userAnswer) {
+                        $unanswered++;
+                    } elseif ($userAnswer->answer_text == $correctChoice->choice_text) {
+                        $correct_answers++;
+                    } else {
+                        $wrong_answers++;
                     }
-                }else{
-                    break;
                 }
             }
 
-            if($test->title == "General Mental Ability (GMA)"){
-                $totalQuestions = DB::table('questions')
-                    ->where('test_id', $test->id)
-                    ->count() - 8;
-            }else{
-                
-                $totalQuestions = DB::table('questions')
-                    ->where('test_id', $test->id)
-                    ->count();
-            }
-    
+            $totalQuestions = $test->title === "General Mental Ability (GMA)"
+                ? DB::table('questions')->where('test_id', $test->id)->count() - 8
+                : DB::table('questions')->where('test_id', $test->id)->count();
+
             $mcq_final_score = $this->calculateMCQScore($correct_answers, $wrong_answers, $totalQuestions);
-    
 
             Log::info('MCQ Results', [
                 'correct_answers' => $correct_answers,
@@ -1173,15 +1106,13 @@ class TestController extends Controller
                 'unanswered' => $unanswered
             ]);
 
-            /// Process LSQ Results
+            // Score LSQs
             $total_score = 0;
             $total_questions = 0;
             $red_flags = [];
 
             foreach ($questions as $question) {
-                if ($question->question_type !== 'LSQ') {
-                    continue;
-                }
+                if ($question->question_type !== 'LSQ') continue;
 
                 $userAnswer = $answers->firstWhere('question_id', $question->id);
 
@@ -1189,7 +1120,7 @@ class TestController extends Controller
                     $score = intval($userAnswer->answer_text);
 
                     if ($question->reverse == 1) {
-                        $score = 6 - $score; 
+                        $score = 6 - $score;
                     }
 
                     if ($question->red_flag == 1) {
@@ -1207,52 +1138,53 @@ class TestController extends Controller
             Log::info('LSQ Score Calculated', [
                 'total_score' => $total_score,
                 'total_questions' => $total_questions,
-                'final_score' =>$total_score
+                'final_score' => $total_score
             ]);
 
+            // Finalize test attempt
             $realIP = $this->testReportService->getClientIP();
             $location = $this->testReportService->getLocationFromIP($realIP);
             Log::info("Location Data", $location);
 
             $started_at = Carbon::parse($testAttempt->pivot->started_at);
+            $completed_at = now()->gt($started_at->copy()->addMinutes($test->duration))
+                ? $started_at->copy()->addMinutes($test->duration)
+                : now();
 
             $candidate->tests()->updateExistingPivot($id, [
-                'completed_at' => now() > $started_at->copy()->addMinutes($test->duration)
-                ? $started_at->copy()->addMinutes($test->duration)
-                : now(),
+                'completed_at' => $completed_at,
                 'ip_address' => $realIP,
                 'status' => 'completed'
             ]);
 
-            if ($currentQuestion->question_type === 'MCQ') {
+            // Save MCQ score if any MCQs exist
+            if ($questions->contains(fn($q) => $q->question_type === 'MCQ')) {
                 $candidate->tests()->updateExistingPivot($id, [
                     'correct_answers' => $correct_answers,
                     'wrong_answers' => $wrong_answers,
                     'score' => $mcq_final_score,
-
                 ]);
             }
-            if ($currentQuestion->question_type === 'LSQ') {
+
+            // Save LSQ score if any LSQs exist
+            if ($questions->contains(fn($q) => $q->question_type === 'LSQ')) {
                 $candidate->tests()->updateExistingPivot($id, [
-                    'score' =>$total_score,
+                    'score' => $total_score,
                     'red_flags' => $red_flags
                 ]);
             }
 
-
             Log::info('Test completed successfully', [
                 'test_id' => $id,
                 'candidate_id' => $candidate->id,
-                'red_flags'=> $red_flags,
+                'red_flags' => $red_flags,
                 'correct_answers' => $correct_answers,
                 'wrong_answers' => $wrong_answers,
-                'lsq_score' =>$total_score,
+                'lsq_score' => $total_score,
                 'ip_address' => $realIP,
             ]);
-            
-            $this->testReportService->generatePDF($candidate->id, $id);
-            // $this->generateLSQReport($candidate->id, $id, $red_flags);
 
+            $this->testReportService->generatePDF($candidate->id, $id);
             session()->forget('test_session');
 
             $message = $request->boolean('expired')
@@ -1278,8 +1210,7 @@ class TestController extends Controller
             throw $e;
         }
     }
-  
-  
+
     public function handleTimeout($test)
     {
         Log::info('Handling expired test', ['test_id' => $test->id]);
