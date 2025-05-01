@@ -21,8 +21,8 @@ class WebcamManager {
       test_id: this.testId,
       candidate_id: this.candidateId,
       elements: {
-        testIdElement: !!document.getElementById("test-id"),
-        candidateIdElement: !!document.getElementById("candidate-id")
+        testIdElement: document.getElementById("test-id"),
+        candidateIdElement: document.getElementById("candidate-id")
       }
     });
     this.screenshotCanvas = document.createElement("canvas");
@@ -325,7 +325,10 @@ class WebcamManager {
       this.stream = window.__ACTIVE_STREAM__;
       this.video.srcObject = this.stream;
       this.video.play();
-      this.initializeDetection();
+      this.video.onloadeddata = () => {
+        this.video.play();
+        this.initializeDetection();
+      };
     } else {
       await this.requestCameraAccess();
     }
@@ -419,8 +422,10 @@ class WebcamManager {
       console.log("Reusing active stream from global object");
       this.stream = window.__ACTIVE_STREAM__;
       this.video.srcObject = this.stream;
-      await this.video.play();
-      this.initializeDetection();
+      this.video.onloadeddata = () => {
+        this.video.play();
+        this.initializeDetection();
+      };
       return;
     }
     try {
@@ -440,6 +445,7 @@ class WebcamManager {
         this.stream = await this.getNewVideoStream();
       }
       await this.setupVideoStream();
+      window.__ACTIVE_STREAM__ = this.stream;
     } catch (error) {
       console.error("Camera access error:", error);
       await this.updateServerPermission(false, null, false);
@@ -464,8 +470,10 @@ class WebcamManager {
     return new Promise((resolve) => {
       this.video.onloadedmetadata = () => {
         console.log("Video metadata loaded");
-        this.video.play();
-        this.initializeDetection();
+        this.video.onloadeddata = () => {
+          this.video.play();
+          this.initializeDetection();
+        };
         this.detectionStatus.innerHTML = "<p style='color: green;'>Webcam started successfully</p>";
         const cameraWarning = document.getElementById("camera-warning");
         if (cameraWarning) {
@@ -504,7 +512,15 @@ class WebcamManager {
       console.log("Loading COCO-SSD model...");
       this.model = await cocoSsd.load();
       console.log("COCO-SSD model loaded successfully");
-      this.detectObjects();
+      if (!this.video || this.video.readyState < 2) {
+        console.warn("Video not ready for detection");
+        if (this.video.readyState >= 2) {
+          this.detectObjects();
+        } else {
+          this.video.addEventListener("loadeddata", () => this.detectObjects(), { once: true });
+        }
+        return;
+      }
     } catch (error) {
       console.error("Model initialization error:", error);
       this.detectionStatus.innerHTML += "<p style='color: red;'>Object detection unavailable</p>";
@@ -676,7 +692,7 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 }, { passive: true });
 window.addEventListener("beforeunload", function() {
-  if (window.webcamManager && !window.__PRESERVE_STREAM__) {
-    window.webcamManager.cleanup();
+  if (webcamManager && !window.__PRESERVE_STREAM__) {
+    webcamManager.cleanup();
   }
-}, { passive: true });
+});
