@@ -23,17 +23,14 @@
             Start the Test
             </a>
         </p>
-
-        <div style="background-color: #ffeeee; border: 1px solid #ff0000; padding: 10px; margin: 10px 0; text-align: center; border-radius: 5px;">
-            ⚠️This test can ONLY be accessed from a desktop or laptop computer.
-        </div>
         
         <p>Important Information:</p>
         <ul>
-            <li>Make sure to use this email address to sign in</li>
-            <li>The test is timed, so please ensure you have a quiet, uninterrupted period to complete it.</li>
+            <li>Make sure to use this email address to sign in.</li>
+            <li>For smoother experience, take the test from a desktop/laptop.</li>
             <li>Make sure you have a stable internet connection before starting.</li>
             <li>Read all instructions carefully before beginning each section.</li>
+            <li>The test is timed, so please ensure you have a quiet, uninterrupted period to complete it.</li>
             <li>The test link will remain active for 48 hours, so please ensure you complete it within this period.</li>
         </ul>
         
