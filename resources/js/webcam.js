@@ -455,6 +455,10 @@ class WebcamManager {
     
             const data = await response.json();
             console.log('Permission data (Laravel):', data.permission);
+            console.log("Device ID (Laravel):", data.permission?.deviceId);
+            console.log("Permission granted:", data.permission?.granted);
+            console.log("Stream active:", data.permission?.streamActive);
+
             return data.permission || { granted: false, deviceId: null, streamActive: false };
         } catch (error) {
             console.error('Error checking server permission:', error);
@@ -466,6 +470,7 @@ class WebcamManager {
     async updateServerPermission(granted, deviceId = null, streamActive = false) {
         try {
             console.log('Updating server permission...', { granted, deviceId, streamActive });
+            console.log('testId:', this.testId, 'candidateId:', this.candidateId);
             const response = await fetch('/camera-permission', {
                 method: 'POST',
                 headers: {

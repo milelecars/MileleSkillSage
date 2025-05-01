@@ -344,6 +344,7 @@ class WebcamManager {
     return this._csrfToken;
   }
   async checkServerPermission() {
+    var _a, _b, _c;
     try {
       console.log("Checking server permission...");
       const response = await fetch("/camera-permission", {
@@ -357,6 +358,9 @@ class WebcamManager {
       });
       const data = await response.json();
       console.log("Permission data (Laravel):", data.permission);
+      console.log("Device ID (Laravel):", (_a = data.permission) == null ? void 0 : _a.deviceId);
+      console.log("Permission granted:", (_b = data.permission) == null ? void 0 : _b.granted);
+      console.log("Stream active:", (_c = data.permission) == null ? void 0 : _c.streamActive);
       return data.permission || { granted: false, deviceId: null, streamActive: false };
     } catch (error) {
       console.error("Error checking server permission:", error);
@@ -366,6 +370,7 @@ class WebcamManager {
   async updateServerPermission(granted, deviceId = null, streamActive = false) {
     try {
       console.log("Updating server permission...", { granted, deviceId, streamActive });
+      console.log("testId:", this.testId, "candidateId:", this.candidateId);
       const response = await fetch("/camera-permission", {
         method: "POST",
         headers: {
