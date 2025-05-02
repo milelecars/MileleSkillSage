@@ -555,12 +555,7 @@ class AdminController extends Controller
             ->pluck('completed_count', 'test_id')
             ->toArray();
 
-        Log::info('activeTestCandidates', [$activeTestCandidates]);
-        Log::info('takenTestsFlat', [$takenTestsFlat]);
-        Log::info('invitedEmails', [$invitedEmails]);
-
         $allCandidates = $activeTestCandidates->concat($invitedEmails);
-        Log::info('before', [$allCandidates]);
 
         $allCandidates = $testFilter
             ? $allCandidates->sortByDesc(fn($item) => $item['percentile'] ?? 0)
@@ -570,10 +565,8 @@ class AdminController extends Controller
                 !isset($item['name']),
                 $item['email']
             ]);
-        Log::info('after filters', [$allCandidates]);
         
         $candidates = $allCandidates->values();
-        Log::info('candidates', [$candidates]);
         
         
         $stats = [
