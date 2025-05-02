@@ -38,13 +38,9 @@
 
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
-                        console.log("⏰ Timer hit 0 — trying to emit Livewire event");
 
                         if (typeof Livewire !== 'undefined') {
                             window.Livewire.dispatch('timeExpired');
-                            console.log("📡 Livewire.emit('timeExpired') called");
-                        } else {
-                            console.error("❌ Livewire not initialized!");
                         }
                     }
                 }
