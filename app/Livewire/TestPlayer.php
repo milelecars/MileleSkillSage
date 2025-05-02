@@ -85,13 +85,48 @@ class TestPlayer extends Component
             return redirect()->route('tests.submit', ['id' => $this->test->id]);
         }
     
-        // ✅ Update session state
         $session['current_question'] = $this->currentIndex;
         session(['test_session' => $session]);
     
-        // ✅ Reset form state
         $this->reset(['selectedAnswer', 'lsqValue']);
     }
+
+    protected $listeners = ['timeExpired' => 'handleTimeExpiry'];
+
+    public function handleTimeExpiry()
+    {
+        logger()->info('[Livewire] Timer expired, handleTimeExpiry triggered', [
+            'candidate_id' => $this->candidate->id ?? null,
+            'test_id' => $this->test->id ?? null,
+            'currentIndex' => $this->currentIndex
+        ]);
+    
+        try {
+            $session = session('test_session');
+    
+            if (!$session || $session['test_id'] != $this->test->id) {
+                logger()->warning('[Livewire] Invalid session on timeout', ['session' => $session]);
+                return redirect()->route('tests.start', ['id' => $this->test->id])
+                    ->with('error', 'Session invalid or expired.');
+            }
+    
+            logger()->info('[Livewire] Redirecting to submit route', [
+                'expired' => true,
+                'route' => route('tests.submit', ['id' => $this->test->id, 'expired' => 1])
+            ]);
+    
+            return redirect()->route('tests.submit', ['id' => $this->test->id, 'expired' => 1]);
+    
+        } catch (\Throwable $e) {
+            logger()->error('[Livewire] Exception in handleTimeExpiry', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->route('tests.start', ['id' => $this->test->id])
+                ->with('error', 'Failed to auto-submit due to error.');
+        }
+    }
+    
     
 
     public function render()

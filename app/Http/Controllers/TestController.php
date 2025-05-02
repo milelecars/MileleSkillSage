@@ -209,7 +209,6 @@ class TestController extends Controller
             return redirect()->back()->with('error', 'Error creating test: ' . $e->getMessage());
         }
     }
-    
 
     public function edit($id)
     {
@@ -1064,6 +1063,11 @@ class TestController extends Controller
                 Log::error('Test attempt not found', ['test_id' => $id, 'candidate_id' => $candidate->id]);
                 return redirect()->route('tests.start', ['id' => $id])
                     ->with('error', 'Test attempt not found.');
+            }
+
+            if ($testAttempt->pivot->status === 'completed') {
+                return redirect()->route('tests.result', ['id' => $id])
+                    ->with('info', 'Test was already submitted.');
             }
 
             // Load all saved answers
