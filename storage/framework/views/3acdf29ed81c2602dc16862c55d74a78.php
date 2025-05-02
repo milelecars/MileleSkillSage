@@ -148,7 +148,7 @@
                             <?php if($hasLSQ && !empty($categoryScores)): ?>
                                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-8">
                                     <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                                        <h3 class="text-base md:text-lg font-semibold text-gray-900">LSQ Category Scores</h3>
+                                        <h3 class="text-base md:text-lg font-semibold text-gray-900">Average Category Scores</h3>
                                     </div>
                                     <div class="p-6 space-y-4">
                                         <?php $__currentLoopData = $categoryScores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -181,11 +181,11 @@
                                             <span class="text-sm md:text-base font-semibold">
                                                 Score: <?php echo e($hasMCQ 
                                                         ? ($test->pivot->correct_answers ?? '0' ) . ' / ' . ($totalQuestions ?? '')
-                                                        : ($score ?? 'N/A')); ?>
+                                                        : ($originalScore ?? 'N/A')); ?>
 
                                             </span>
                                             <span class="font-medium text-xs md:text-sm">
-                                                <?php echo e($hasMCQ ? $score . '%' : ''); ?>
+                                                <?php echo e($hasMCQ ? $originalScore . '%' : ''); ?>
 
                                             </span>
 
@@ -194,7 +194,7 @@
                                             <div class="w-full px-4">
                                                 <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                                                     <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
-                                                        style="width: <?php echo e($score); ?>%"></div>
+                                                        style="width: <?php echo e($originalScore); ?>%"></div>
                                                 </div>
                                             </div>
                                         <?php endif; ?>

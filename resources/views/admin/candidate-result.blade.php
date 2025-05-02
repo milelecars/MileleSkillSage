@@ -170,11 +170,11 @@
                                                 Score: {{ 
                                                     $hasMCQ 
                                                         ? ($test->pivot->correct_answers ?? '0' ) . ' / ' . ($totalQuestions ?? '')
-                                                        : ($score ?? 'N/A') 
+                                                        : ($originalScore ?? 'N/A') 
                                                 }}
                                             </span>
                                             <span class="font-medium text-xs md:text-sm">
-                                                {{ $hasMCQ ? $score . '%' : '' }}
+                                                {{ $hasMCQ ? $originalScore . '%' : '' }}
                                             </span>
 
                                         </div>
@@ -182,7 +182,7 @@
                                             <div class="w-full px-4">
                                                 <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
                                                     <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
-                                                        style="width: {{ $score }}%"></div>
+                                                        style="width: {{ $originalScore }}%"></div>
                                                 </div>
                                             </div>
                                         @endif

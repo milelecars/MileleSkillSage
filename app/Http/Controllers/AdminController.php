@@ -813,7 +813,7 @@ class AdminController extends Controller
         }
         
         $totalQuestions = $questions->count() ?? 0;
-        $score = $test->pivot->score;
+        $originalScore = $test->pivot->score;
         $hasMCQ = $questions->contains('question_type', 'MCQ');
         $hasLSQ = $questions->contains('question_type', 'LSQ');
         $suspensionReason = $test->pivot->suspension_reason;
@@ -859,6 +859,7 @@ class AdminController extends Controller
             'screenshots',
             'totalQuestions',
             'score',
+            'originalScore',
             'duration',
             'hasMCQ',
             'hasLSQ',
