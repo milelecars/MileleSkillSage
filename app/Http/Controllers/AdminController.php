@@ -520,13 +520,6 @@ class AdminController extends Controller
                     && $invite['test_id'] == $taken['test_id'];
             });
         
-            if ($exists) {
-                Log::debug('Invitation skipped due to existing candidate_test record', [
-                    'email' => $invite['email'],
-                    'test_id' => $invite['test_id']
-                ]);
-            }
-        
             return !$exists;
         });
         
