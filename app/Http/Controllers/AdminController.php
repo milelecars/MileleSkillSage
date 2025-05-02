@@ -460,27 +460,28 @@ class AdminController extends Controller
             })
             ->toArray();
 
-        $invitedEmails = Invitation::when($testFilter, function($query) use ($testFilter) {
+        $invitedEmailsRaw = Invitation::when($testFilter, function($query) use ($testFilter) {
             return $query->where('test_id', $testFilter);
         })
         ->whereJsonLength('invited_emails->invites', '>', 0)
         ->with('test:id,title')
-        ->get()
-        ->flatMap(function ($invitation) use ($name, $email, $role, $takenTests) {
+        ->get();
+        
+        $invitedEmails = $invitedEmailsRaw->flatMap(function ($invitation) use ($name, $email, $role) {
             $invites = is_string($invitation->invited_emails) 
                 ? json_decode($invitation->invited_emails, true)['invites'] ?? []
                 : ($invitation->invited_emails['invites'] ?? []);
-            
-            return collect($invites)->map(function ($invite) use ($invitation, $name, $email, $role, $takenTests) {
+        
+            return collect($invites)->map(function ($invite) use ($invitation, $name, $email, $role) {
                 $inviteEmail = strtolower($invite['email']);
                 $inviteRole = strtolower($invite['role'] ?? '-');
                 $deadline = Carbon::parse($invite['deadline']);
                 $isExpired = now()->greaterThan($deadline);
-            
+        
                 $matchesName = $name ? str_contains($inviteEmail, strtolower($name)) : true;
                 $matchesEmail = $email ? str_contains($inviteEmail, strtolower($email)) : true;
                 $matchesRole = $role ? strtolower($inviteRole) === strtolower($role) : true;
-            
+        
                 if ($matchesName && $matchesEmail && $matchesRole) {
                     return [
                         'email' => $invite['email'],
@@ -496,11 +497,39 @@ class AdminController extends Controller
                         'is_invitation' => true
                     ];
                 }
-            
+        
                 return null;
             })->filter();
-                
         });
+        
+        $takenTestsFlat = DB::table('candidate_test')
+            ->select('candidate_id', 'test_id', 'candidates.email')
+            ->join('candidates', 'candidates.id', '=', 'candidate_test.candidate_id')
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'email' => strtolower($record->email),
+                    'test_id' => $record->test_id
+                ];
+            })
+            ->values();
+        
+        $invitedEmails = $invitedEmails->filter(function ($invite) use ($takenTestsFlat) {
+            $exists = $takenTestsFlat->contains(function ($taken) use ($invite) {
+                return strtolower($invite['email']) === $taken['email']
+                    && $invite['test_id'] == $taken['test_id'];
+            });
+        
+            if ($exists) {
+                Log::debug('Invitation skipped due to existing candidate_test record', [
+                    'email' => $invite['email'],
+                    'test_id' => $invite['test_id']
+                ]);
+            }
+        
+            return !$exists;
+        });
+        
 
         $availableTests = Test::select('id', 'title')->get();
 
@@ -526,7 +555,12 @@ class AdminController extends Controller
             ->pluck('completed_count', 'test_id')
             ->toArray();
 
+        Log::info('activeTestCandidates', [$activeTestCandidates]);
+        Log::info('takenTestsFlat', [$takenTestsFlat]);
+        Log::info('invitedEmails', [$invitedEmails]);
+
         $allCandidates = $activeTestCandidates->concat($invitedEmails);
+        Log::info('before', [$allCandidates]);
 
         $allCandidates = $testFilter
             ? $allCandidates->sortByDesc(fn($item) => $item['percentile'] ?? 0)
@@ -536,9 +570,12 @@ class AdminController extends Controller
                 !isset($item['name']),
                 $item['email']
             ]);
+        Log::info('after filters', [$allCandidates]);
         
         $candidates = $allCandidates->values();
-
+        Log::info('candidates', [$candidates]);
+        
+        
         $stats = [
             'totalInvited' => $allCandidates->count(),
         
