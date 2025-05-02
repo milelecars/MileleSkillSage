@@ -1605,8 +1605,6 @@ class TestController extends Controller
             ->where('test_id', $request->testId)
             ->first();
 
-        Log::info('here is', [$candidateTest->unsuspend_count]);
-
         return response()->json([
             'unsuspend_count' => $candidateTest ? $candidateTest->unsuspend_count : 0,
         ]);

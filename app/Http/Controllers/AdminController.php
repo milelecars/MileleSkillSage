@@ -819,8 +819,39 @@ class AdminController extends Controller
         $suspensionReason = $test->pivot->suspension_reason;
         $realIP = $this->testReportService->getClientIP();
         $location = $this->testReportService->getLocationFromIP($realIP);
-        Log::info("Location Data", $location);
-    
+        
+        $categoryScores = [];
+
+        if ($hasLSQ) {
+            $lsqAnswers = \App\Models\Answer::with('question')
+                ->where('candidate_id', $candidate->id)
+                ->where('test_id', $test->id)
+                ->whereHas('question', function ($query) {
+                    $query->where('question_type', 'LSQ');
+                })
+                ->get();
+
+            foreach ($lsqAnswers as $answer) {
+                $question = $answer->question;
+
+                if (!$question || !$question->category) {
+                    continue;
+                }
+
+                $category = $question->category;
+                $rawScore = (int) $answer->answer_text;
+                $score = $question->reverse ? (6 - $rawScore) : $rawScore;
+
+                $categoryScores[$category]['total'] = ($categoryScores[$category]['total'] ?? 0) + $score;
+                $categoryScores[$category]['count'] = ($categoryScores[$category]['count'] ?? 0) + 1;
+            }
+
+            foreach ($categoryScores as $cat => $data) {
+                $categoryScores[$cat]['average'] = round($data['total'] / $data['count'], 2);
+            }
+        }
+
+            
         return view('admin.candidate-result', compact(
             'candidate',
             'test',
@@ -831,7 +862,8 @@ class AdminController extends Controller
             'duration',
             'hasMCQ',
             'hasLSQ',
-            'suspensionReason'
+            'suspensionReason',
+            'categoryScores'
         ));
     }
     
