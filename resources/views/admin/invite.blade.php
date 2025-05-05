@@ -95,6 +95,16 @@
                                     required
                                 >
                             </div>
+                            
+                            {{-- Department Dropdown --}}
+                            <div class="mb-6">
+                                <label for="department" class="text-base md:text-lg font-semibold text-gray-800">Select or Create Department</label>
+                                <select 
+                                    id="department" 
+                                    name="department" 
+                                    class="department-select placeholder:text-sm text-sm md:text-base w-full border border-gray-300 rounded-md shadow-sm p-2.5 mt-2">
+                                </select>
+                            </div>
 
                             {{-- Available Tests Section --}}
                             <div class="mb-8">
@@ -142,3 +152,39 @@
         </div>
     </div>
 </x-app-layout>
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        $('.department-select').select2({
+            placeholder: "Select or create a department",
+            tags: true, // Allow new entries
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route('departments.search') }}',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.map(item => ({
+                            id: item.name, // send name to server
+                            text: item.name
+                        }))
+                    };
+                },
+                cache: true
+            },
+            createTag: function (params) {
+                var term = $.trim(params.term);
+                return {
+                    id: term,
+                    text: term,
+                    newTag: true // add additional flag
+                };
+            }
+        });
+    });
+</script>

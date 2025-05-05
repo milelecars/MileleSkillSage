@@ -1,19 +1,22 @@
 <div>
-    @if (session('success'))
+    <!--[if BLOCK]><![endif]--><?php if(session('success')): ?>
         <div class="bg-green-100 border border-green-400 text-green-700 text-xs md:text-base p-4 my-4 rounded-lg">
-            {{ session('success') }}
+            <?php echo e(session('success')); ?>
+
         </div>
-    @endif
-    @if (session('warning'))
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+    <!--[if BLOCK]><![endif]--><?php if(session('warning')): ?>
         <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 text-xs md:text-base p-4 my-4 rounded-lg">
-            {{ session('warning') }}
+            <?php echo e(session('warning')); ?>
+
         </div>
-    @endif
-    @if ($errors->has('submission'))
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+    <!--[if BLOCK]><![endif]--><?php if($errors->has('submission')): ?>
         <div class="bg-red-100 border border-red-400 text-red-700 text-xs md:text-base p-4 my-4 rounded-lg">
-            {{ $errors->first('submission') }}
+            <?php echo e($errors->first('submission')); ?>
+
         </div>
-    @endif
+    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
     <div class="rounded-lg">
     
         <table class="min-w-full divide-y divide-gray-200 border border-gray-200">
@@ -28,22 +31,22 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 text-center">
-                @foreach($emailList as $index => $record)
+                <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $emailList; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $record): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <tr>
-                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['firstName'] }}</td>
-                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['lastName'] }}</td>
-                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['role'] }}</td>
-                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['department'] }}</td>
-                        <td class="px-2 py-4 text-xs md:text-sm">{{ $record['email'] }}</td>
+                        <td class="px-2 py-4 text-xs md:text-sm"><?php echo e($record['firstName']); ?></td>
+                        <td class="px-2 py-4 text-xs md:text-sm"><?php echo e($record['lastName']); ?></td>
+                        <td class="px-2 py-4 text-xs md:text-sm"><?php echo e($record['role']); ?></td>
+                        <td class="px-2 py-4 text-xs md:text-sm"><?php echo e($record['department']); ?></td>
+                        <td class="px-2 py-4 text-xs md:text-sm"><?php echo e($record['email']); ?></td>
                         <td class="px-2 py-4">
                             <button 
-                                wire:click="removeEmail({{ $index }})"
+                                wire:click="removeEmail(<?php echo e($index); ?>)"
                                 class="bg-red-600 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-red-700">
                                 -
                             </button>
                         </td>
                     </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                 <tr>
                     <td colspan="6" class="px-2 py-4">
                         <form wire:submit.prevent="addEmail" class="grid grid-cols-6 gap-2 items-center justify-center">
@@ -53,9 +56,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="firstName"
                                 >
-                                @error('firstName') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['firstName'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -64,9 +74,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="lastName"
                                 >
-                                @error('lastName') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['lastName'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -75,9 +92,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="role"
                                 >
-                                @error('role') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['role'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -88,13 +112,14 @@
                                             data-dropdown-placement="top" 
                                             class="text-gray-500 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-sm px-5 py-2 text-center inline-flex items-center"
                                     >
-                                        {{ $selectedDepartment ?: 'Select Department' }}
+                                        <?php echo e($selectedDepartment ?: 'Select Department'); ?>
 
-                                        @if (!$selectedDepartment)
+
+                                        <!--[if BLOCK]><![endif]--><?php if(!$selectedDepartment): ?>
                                             <svg class="w-2.5 h-2.5 ms-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                                 <path stroke="#7b7789" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
                                             </svg>
-                                        @endif
+                                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                                     </button>
 
                                     <!-- Dropdown menu with increased z-index -->
@@ -106,23 +131,38 @@
                                                     class="text-blue-600 text-sm hover:underline">
                                                 + Add new department
                                             </button>
-                                            @error('newDepartmentName') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                            <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['newDepartmentName'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <span class="text-red-500 text-xs"><?php echo e($message); ?></span> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                         </div>
 
                                         <ul class="h-48 py-2 overflow-y-auto text-gray-700 aria-labelledby="dropdownDepartmentButton">
-                                            @foreach ($departments as $dept)
+                                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $departments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $dept): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <li>
-                                                    <a href="#" wire:click.prevent="setDepartment('{{ $dept->name }}')" class="flex items-center px-4 py-2 hover:bg-gray-100">
-                                                        {{ $dept->name }}
+                                                    <a href="#" wire:click.prevent="setDepartment('<?php echo e($dept->name); ?>')" class="flex items-center px-4 py-2 hover:bg-gray-100">
+                                                        <?php echo e($dept->name); ?>
+
                                                     </a>
                                                 </li>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                                         </ul>
                                     </div>
                                 </div>
-                                @error('department') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['department'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             
                             <div class="flex flex-col">
@@ -131,9 +171,16 @@
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="newEmail"
                                 >
-                                @error('newEmail') 
-                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
-                                @enderror
+                                <!--[if BLOCK]><![endif]--><?php $__errorArgs = ['newEmail'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> 
+                                    <span class="text-red-500 text-xs mt-1"><?php echo e($message); ?></span>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                             </div>
                             <div class="p-2">
                                 <button type="submit" 
@@ -166,7 +213,7 @@
             <button 
                 wire:click="importExcel" 
                 wire:loading.attr="disabled" 
-                wire:target="excelFile"  {{-- disable while uploading --}}
+                wire:target="excelFile"  
                 class="bg-blue-700 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg ml-2"
             >
                 Import Excel
@@ -177,7 +224,7 @@
             </div>
         </div>
             
-        @if($emailList)
+        <!--[if BLOCK]><![endif]--><?php if($emailList): ?>
             <div class="">
                 <button wire:click="submitInvitations" 
                         wire:loading.attr="disabled"
@@ -195,6 +242,6 @@
                     </span>
                 </button>
             </div>
-        @endif
+        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
     </div>
-</div>
+</div><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/invite-candidates.blade.php ENDPATH**/ ?>

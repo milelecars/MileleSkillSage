@@ -6,6 +6,7 @@ use App\Models\Test;
 use Livewire\Component;
 use App\Mail\InvitationEmail;
 use App\Models\Invitation;
+use App\Models\Department;
 use App\Http\Controllers\OAuthController;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -32,12 +33,17 @@ class InviteCandidates extends Component
     public array $emailList = [];
     public $testId;
     public $excelFile = null;
+    public string $selectedDepartment = '';
+    public $departments = [];
+    public $newDepartmentName = '';
+
 
     
     protected $validationAttributes = [
         'newEmail' => 'email',
         'firstName' => 'first name',
         'lastName' => 'last name',
+        'selectedDepartment' => 'required|string|max:255',
         'role' => 'role',
     ];
 
@@ -59,6 +65,8 @@ class InviteCandidates extends Component
         $this->testId = $testId;
         // Retrieve saved data from session
         $this->emailList = session("test_{$testId}_emails", []);
+
+        $this->departments = Department::orderBy('name')->get();
         
         // Ensure OAuth token is available
         $this->checkAccessToken();
@@ -75,6 +83,25 @@ class InviteCandidates extends Component
             return redirect()->route('google.login', ['testId' => $this->testId]);
         }
     }
+   
+    public function addNewDepartment()
+    {
+        $this->validate([
+            'newDepartmentName' => 'required|string|max:255|unique:departments,name',
+        ]);
+
+        Department::create(['name' => $this->newDepartmentName]);
+
+        $this->departments = Department::orderBy('name')->get(); // refresh list
+        $this->selectedDepartment = $this->newDepartmentName;
+        $this->newDepartmentName = '';
+    }
+
+    public function setDepartment($department)
+    {
+        $this->selectedDepartment = $department;
+    }
+
 
     public function addEmail()
     {
@@ -84,6 +111,7 @@ class InviteCandidates extends Component
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'role' => 'required|string|max:255',
+            'selectedDepartment' => 'required|string|max:255',
             'newEmail' => 'required|email|max:255',
         ]);
 
@@ -107,12 +135,13 @@ class InviteCandidates extends Component
             'firstName' => $this->firstName,
             'lastName' => $this->lastName,
             'role' => $this->role,
+            'department' => $this->selectedDepartment,
             'email' => $this->newEmail,
         ];
     
         session(["test_{$this->testId}_emails" => $this->emailList]);
         
-        $this->reset(['firstName', 'lastName', 'role', 'newEmail']);
+        $this->reset(['firstName', 'lastName', 'role', 'selectedDepartment', 'newEmail']);
     }
 
     public function removeEmail($index)
@@ -146,6 +175,7 @@ class InviteCandidates extends Component
                         'firstName' => $invite['firstName'],
                         'lastName' => $invite['lastName'],
                         'role' => $invite['role'],
+                        'department' => $invite['department'],
                         'invited_at' => now()->toISOString(),
                         'deadline' => now()->addDays(2)->toISOString(),
                     ];
@@ -166,10 +196,10 @@ class InviteCandidates extends Component
                 try {
                     $message = new \Google\Service\Gmail\Message();
                     $template = str_replace(
-                        ['{{ $testName }}', '{{ $invitationLink }}', '{{ $role }}'],
-                        [$test->title, $invitation->invitation_link, $invite['role']],
+                        ['{{ $testName }}', '{{ $invitationLink }}', '{{ $role }}', '{{ $department }}'],
+                        [$test->title, $invitation->invitation_link, $invite['role'], $invite['department']],
                         file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'))
-                    );
+                    );                    
     
                     $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
                     $rawMessage .= "To: <{$invite['email']}>\r\n";
@@ -260,7 +290,8 @@ class InviteCandidates extends Component
 
     public function render()
     {
-        return view('livewire.invite-candidates');
+        return view('livewire.invite-candidates', ['departments' => $this->departments]);
+
     }
 }
 

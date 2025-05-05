@@ -85,6 +85,28 @@
                             <p class="text-lg md:text-2xl font-bold text-gray-900">{{ $totalTests }}</p>
                         </div>
                     </div>
+                    
+                    @if(session('error'))
+                        <div class="mb-4 text-sm text-red-600 bg-red-100 border border-red-400 p-3 rounded-md">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
+                    @if(session('success'))
+                        <div class="mb-4 text-sm text-green-600 bg-green-100 border border-green-400 p-3 rounded-md">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if($errors->any())
+                        <div class="mb-4 text-sm text-red-600 bg-red-100 border border-red-400 p-3 rounded-md">
+                            <ul class="list-disc pl-5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
                     <div class="overflow-x-auto rounded-lg ">
                         <div class="max-h-[70vh] overflow-y-auto border border-gray-200">
