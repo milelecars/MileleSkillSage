@@ -49,7 +49,14 @@
                                     <!-- Department Filter -->
                                     <div>
                                         <label for="department" class="block text-xs font-medium text-gray-700">Department</label>
-                                        <input type="text" name="department" id="department" value="{{ request('department') }}" placeholder="Search by department" class="placeholder:text-xs md:placeholder:text-sm w-full border-gray-300 rounded-md mt-1">
+                                        <select name="department" id="department" class="w-full border-gray-300 rounded-md mt-1 placeholder:text-xs md:placeholder:text-sm">
+                                            <option value="">All Departments</option>
+                                            @foreach($departments as $dept)
+                                                <option value="{{ $dept->name }}" {{ request('department') === $dept->name ? 'selected' : '' }}>
+                                                    {{ $dept->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
 
                                     <!-- Action Buttons -->

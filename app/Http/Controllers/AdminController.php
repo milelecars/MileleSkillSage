@@ -355,7 +355,7 @@ class AdminController extends Controller
                 'all_roles' => $candidate->tests->pluck('pivot.role'),
                 'role_filter' => $role,
             ]);
-        // hello world
+    
             return $candidate->tests->filter(function ($test) use ($role) {
                 if (!$role) return true;
                 return strtolower($test->pivot->role ?? '') === strtolower($role);
@@ -601,8 +601,10 @@ class AdminController extends Controller
 
         ];        
 
+        $departments = \App\Models\Department::select('name')->orderBy('name')->get();
+
         return view('admin.manage-candidates', array_merge(
-            compact('candidates', 'name', 'email', 'role', 'department', 'availableTests', 'testFilter'), 
+            compact('candidates', 'name', 'email', 'role', 'department', 'availableTests', 'testFilter', 'departments'), 
             $stats
         ));
     }
