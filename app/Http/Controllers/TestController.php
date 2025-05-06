@@ -8,6 +8,7 @@ use App\Models\Question;
 use App\Models\QuestionChoice;
 use App\Models\QuestionMedia;
 use App\Models\Invitation;
+use App\Models\Department;
 use App\Models\FlagType;
 use App\Models\CandidateFlag;
 use App\Models\Answer;
@@ -1551,6 +1552,7 @@ class TestController extends Controller
             ->where('candidate_id', $candidate->id)
             ->where('test_id', $testId)
             ->update([
+                'status' => 'suspended',
                 'suspension_reason' => $request->description,
                 'evidence_path' => $request->file('evidence')->store('unsuspension_evidence'), 
             ]);

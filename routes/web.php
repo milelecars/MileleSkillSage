@@ -11,6 +11,7 @@ use App\Http\Controllers\ReportPDFController;
 use App\Http\Controllers\CreateTestController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\DescriptionController;
+use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\Auth\RegisteredAdminController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ScreenshotController;
@@ -85,6 +86,8 @@ Route::middleware('auth:web')->group(function () {
     ->name('invitations.extend-deadline');     
 
     Route::get('/admin/invite', [AdminController::class, 'inviteCandidate'])->name('admin.invite');
+    Route::post('/departments/store', [DepartmentController::class, 'store'])->name('departments.store');
+    Route::get('/departments/search', [DepartmentController::class, 'search'])->name('departments.search');
     Route::get('/admin/select-candidate', [AdminController::class, 'inviteCandidate'])
     ->name('admin.select-candidate');
     Route::post('/admin/send', [AdminController::class, 'sendInvitation'])

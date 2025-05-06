@@ -55,6 +55,12 @@
                                         <input type="text" name="role" id="role" value="<?php echo e(request('role')); ?>" placeholder="Search by role" class="placeholder:text-xs md:placeholder:text-sm w-full border-gray-300 rounded-md mt-1">
                                     </div>
 
+                                    <!-- Department Filter -->
+                                    <div>
+                                        <label for="department" class="block text-xs font-medium text-gray-700">Department</label>
+                                        <input type="text" name="department" id="department" value="<?php echo e(request('department')); ?>" placeholder="Search by department" class="placeholder:text-xs md:placeholder:text-sm w-full border-gray-300 rounded-md mt-1">
+                                    </div>
+
                                     <!-- Action Buttons -->
                                     <div class="flex justify-between items-center pt-5">
                                         <a href="<?php echo e(route('admin.export-candidates', ['search' => $search ?? '', 'test_filter' => $testFilter ?? ''])); ?>" class="inline-flex items-center bg-green-600 text-white text-xs md:text-sm px-3 py-2 rounded-md hover:bg-green-700">
@@ -94,76 +100,130 @@
                             <p class="text-lg md:text-2xl font-bold text-gray-900"><?php echo e($totalTests); ?></p>
                         </div>
                     </div>
+                    
+                    <?php if(session('error')): ?>
+                        <div class="mb-4 text-sm text-red-600 bg-red-100 border border-red-400 p-3 rounded-md">
+                            <?php echo e(session('error')); ?>
+
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if(session('success')): ?>
+                        <div class="mb-4 text-sm text-green-600 bg-green-100 border border-green-400 p-3 rounded-md">
+                            <?php echo e(session('success')); ?>
+
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if($errors->any()): ?>
+                        <div class="mb-4 text-sm text-red-600 bg-red-100 border border-red-400 p-3 rounded-md">
+                            <ul class="list-disc pl-5">
+                                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <li><?php echo e($error); ?></li>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
 
                     <div class="overflow-x-auto rounded-lg ">
-                        <div class="max-h-[70vh] overflow-y-auto border border-gray-200">
-                            <table class="min-w-full divide-y divide-gray-200 " id="candidatesTable">
+                        <div class="max-h-[70vh] table-fixed overflow-y-auto border border-gray-200">
+                            <table class="min-w-full divide-gray-200" id="candidatesTable">
                                 <thead class="bg-gray-100 sticky top-0 z-10">
                                     <tr>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="candidate">
+                                        <th class="md:w-[100px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="candidate">
+
                                             <div class="flex items-center justify-center">
                                                 Candidate
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="test">
+                                        <th class="md:w-[140px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="test">
+
                                             <div class="flex items-center justify-center">
                                                 Test
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-4 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="role">
+
+                                        <th class="md:w-[120px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="role">
+
                                             <div class="flex items-center justify-center">
                                                 Role
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-8 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="status">
+                                        <th class="md:w-[130px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="department">
+                                            <div class="flex items-center justify-center">
+                                                Department
+                                                <button class="sort-icon ml-1">⇅</button>
+                                            </div>
+                                        </th>
+                                        <th class="md:w-[120px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="status">
+
                                             <div class="flex items-center justify-center">
                                                 Status
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer w-[10%]" data-sort="started">
-                                            <div class="px-2 flex items-center">
+
+                                        <th class="md:w-[160px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="started">
+                                            <div class="px-2 flex items-center justify-center">
                                                 Started At
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer w-[11%]" data-sort="completed">
-                                            <div class="px-2 flex items-center">
+
+                                        <th class="md:w-[160px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="completed">
+                                            <div class="px-2 flex items-center justify-center">
                                                 Completed At
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="score">
+
+                                        <th class="md:w-[80px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="score">
+
                                             <div class="flex items-center justify-center">
                                                 Score
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="percentile">
+
+                                        <th class="md:w-[120px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase cursor-pointer" data-sort="percentile">
+
                                             <div class="flex items-center justify-center">
                                                 Percentile
                                                 <button class="sort-icon ml-1">⇅</button>
                                             </div>
                                         </th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Report</th>
-                                        <th class="px-3 py-3 text-xs font-semibold text-gray-500 uppercase">Actions</th>
+
+                                        <th class="md:w-[70px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase">
+                                            Report
+                                        </th>
+                                        <th class="md:w-[90px] px-2 md:px-0 py-1 md:py-3 text-xs font-semibold text-gray-500 uppercase">
+                                            Actions
+                                        </th>
                                     </tr>
                                 </thead>
+
+
                                 <tbody class="bg-white divide-y divide-gray-200 text-center">
                                     <?php $__empty_1 = true; $__currentLoopData = $candidates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $candidate): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                         <tr class="relative items-center justify-center" 
                                             data-candidate="<?php echo e($candidate['name'] ?? $candidate['email']); ?>" 
                                             data-test="<?php echo e($candidate['test_title']); ?>" 
                                             data-role="<?php echo e($candidate['role'] ?? '-'); ?>"
+
+                                            data-department="<?php echo e($candidate['department'] ?? '-'); ?>"
+                                            data-department="<?php echo e($candidate['department'] ?? '-'); ?>"
+
                                             data-status="<?php echo e($candidate['status']); ?>"
                                             data-started="<?php echo e(isset($candidate['started_at']) ? \Carbon\Carbon::parse($candidate['started_at'])->format('Y-m-d H:i:s') : '0'); ?>"
                                             data-completed="<?php echo e(isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('Y-m-d H:i:s') : '0'); ?>"
                                             data-score="<?php echo e(isset($candidate['score']) ? $candidate['score'] : '0'); ?>"
                                             data-percentile="<?php echo e(isset($candidate['percentile']) ? $candidate['percentile'] : '0'); ?>">
-                                            <td class="px-2 py-4 h-full">
+                                          
+                                            <td class="py-4 h-full">
+
                                                 <?php if($candidate['has_started']): ?>
                                                     <a href="<?php echo e(route('admin.candidate-result', ['test' => $candidate['test_id'], 'candidate' => $candidate['id']])); ?>" class="hover:text-blue-600">
                                                         <div class="text"><?php echo e($candidate['name']); ?></div>
@@ -174,12 +234,16 @@
                                                 <?php endif; ?>
                                             </td>
 
-                                            <td class="px-2 py-4 h-full text-xs md:text-sm"><?php echo e($candidate['test_title']); ?></td>
 
-                                            <td class="px-2 py-4 h-full text-xs md:text-sm"><?php echo e($candidate['role'] ?? "-"); ?></td>
+                                            <td class="py-4 h-full text-xs md:text-sm"><?php echo e($candidate['test_title']); ?></td>
+
+                                            <td class="py-4 h-full text-xs md:text-sm"><?php echo e($candidate['role'] ?? "-"); ?></td>
+
+                                            <td class="py-4 h-full text-xs md:text-sm"><?php echo e($candidate['department'] ?? "-"); ?></td>
 
                                             
-                                            <td class="px-2 py-4 h-full text-xs md:text-sm">
+                                            <td class="py-4 h-full text-xs md:text-sm">
+
                                                 <?php if($candidate['status'] === 'accepted'): ?>
                                                     <span class="text-green-800 bg-green-100 px-2 py-1 rounded-full">Accepted</span>
                                                 <?php elseif($candidate['status'] === 'rejected'): ?>
@@ -205,7 +269,9 @@
                                                 <?php echo e(isset($candidate['completed_at']) ? \Carbon\Carbon::parse($candidate['completed_at'])->format('M d, Y H:i') : '-'); ?>
 
                                             </td>
-                                            <td class="px-2 py-4 h-full text-xs md:text-sm">
+
+                                            <td class="py-4 h-full text-xs md:text-sm">
+
                                                 <?php if(isset($candidate['score'])): ?>
                                                     <span class="font-medium">
                                                     <?php echo e($candidate['score']); ?><?php echo e($candidate['hasMCQ'] ? '%' : ''); ?>
@@ -216,7 +282,8 @@
                                                 <?php endif; ?>
                                             </td>
                                             
-                                            <td class="px-2 py-4 h-full text-xs md:text-sm">
+                                            <td class="py-4 h-full text-xs md:text-sm">
+
                                                 <?php if(isset($candidate['percentile'])): ?>
                                                     <?php if($candidate['percentile'] >= 99): ?>
                                                         Top 1%

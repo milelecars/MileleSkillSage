@@ -6,6 +6,7 @@ use App\Models\Test;
 use Livewire\Component;
 use App\Mail\InvitationEmail;
 use App\Models\Invitation;
+use App\Models\Department;
 use App\Http\Controllers\OAuthController;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
@@ -29,15 +30,21 @@ class InviteCandidates extends Component
     public string $firstName = '';
     public string $lastName = '';
     public string $role = '';
+    public string $candidate = '';
     public array $emailList = [];
     public $testId;
     public $excelFile = null;
+    public string $selectedDepartment = '';
+    public $departments = [];
+    public $newDepartmentName = '';
+
 
     
     protected $validationAttributes = [
         'newEmail' => 'email',
         'firstName' => 'first name',
         'lastName' => 'last name',
+        'selectedDepartment' => 'required|string|max:255',
         'role' => 'role',
     ];
 
@@ -46,6 +53,8 @@ class InviteCandidates extends Component
         'firstName.required' => 'First name is required',
         'lastName.required' => 'Last name is required',
         'role.required' => 'Role is required',
+        'selectedDepartment.required' => 'Department is required',
+        'selectedDepartment.max' => 'Department cannot exceed 255 characters',
         'newEmail.required' => 'Email is required',
         'newEmail.email' => 'Please enter a valid email',
         'firstName.max' => 'First name cannot exceed 255 characters',
@@ -59,6 +68,8 @@ class InviteCandidates extends Component
         $this->testId = $testId;
         // Retrieve saved data from session
         $this->emailList = session("test_{$testId}_emails", []);
+
+        $this->departments = Department::orderBy('name')->get();
         
         // Ensure OAuth token is available
         $this->checkAccessToken();
@@ -75,6 +86,25 @@ class InviteCandidates extends Component
             return redirect()->route('google.login', ['testId' => $this->testId]);
         }
     }
+   
+    public function addNewDepartment()
+    {
+        $this->validate([
+            'newDepartmentName' => 'required|string|max:255|unique:departments,name',
+        ]);
+
+        Department::create(['name' => $this->newDepartmentName]);
+
+        $this->departments = Department::orderBy('name')->get(); // refresh list
+        $this->selectedDepartment = $this->newDepartmentName;
+        $this->newDepartmentName = '';
+    }
+
+    public function setDepartment($department)
+    {
+        $this->selectedDepartment = $department;
+    }
+
 
     public function addEmail()
     {
@@ -84,6 +114,7 @@ class InviteCandidates extends Component
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'role' => 'required|string|max:255',
+            'selectedDepartment' => 'required|string|max:255',
             'newEmail' => 'required|email|max:255',
         ]);
 
@@ -107,12 +138,13 @@ class InviteCandidates extends Component
             'firstName' => $this->firstName,
             'lastName' => $this->lastName,
             'role' => $this->role,
+            'department' => $this->selectedDepartment,
             'email' => $this->newEmail,
         ];
     
         session(["test_{$this->testId}_emails" => $this->emailList]);
         
-        $this->reset(['firstName', 'lastName', 'role', 'newEmail']);
+        $this->reset(['firstName', 'lastName', 'role', 'selectedDepartment', 'newEmail']);
     }
 
     public function removeEmail($index)
@@ -146,6 +178,7 @@ class InviteCandidates extends Component
                         'firstName' => $invite['firstName'],
                         'lastName' => $invite['lastName'],
                         'role' => $invite['role'],
+                        'department' => $invite['department'],
                         'invited_at' => now()->toISOString(),
                         'deadline' => now()->addDays(2)->toISOString(),
                     ];
@@ -165,11 +198,15 @@ class InviteCandidates extends Component
             foreach ($this->emailList as $invite) {
                 try {
                     $message = new \Google\Service\Gmail\Message();
-                    $template = str_replace(
-                        ['{{ $testName }}', '{{ $invitationLink }}', '{{ $role }}'],
-                        [$test->title, $invitation->invitation_link, $invite['role']],
-                        file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'))
-                    );
+                    $template = view('emails.invitation-email-template', [
+                        'testName' => $test->title,
+                        'invitationLink' => $invitation->invitation_link,
+                        'role' => $invite['role'],
+                        'department' => $invite['department'],
+                        'firstName' => $invite['firstName'],
+                        'lastName' => $invite['lastName'],
+                    ])->render();
+                                      
     
                     $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
                     $rawMessage .= "To: <{$invite['email']}>\r\n";
@@ -193,13 +230,18 @@ class InviteCandidates extends Component
     
             // Clear the session and reset if no failures
             if (empty($failedEmails)) {
-                $this->reset(['newEmail', 'firstName', 'lastName', 'role']);
+                $this->reset(['newEmail', 'firstName', 'lastName', 'role', 'selectedDepartment']);
                 $this->emailList = [];
                 session()->forget("test_{$this->testId}_emails");
                 session()->flash('success', 'Invitations sent successfully!');
             } else {
                 // Partial success
-                session()->flash('warning', 'Some invitations failed to send: ' . implode(', ', $failedEmails));
+                if (!empty($failedEmails)) {
+                    $failList = collect($failedEmails)->map(fn($email) => "<li class='text-red-600'>• $email</li>")->implode('');
+                    $failMessage = "<strong>Some emails failed to send:</strong><ul class='mt-1 list-disc ml-6'>$failList</ul>";
+                
+                    session()->flash('warning_html', $failMessage);
+                }                
             }
     
             $this->dispatch('refresh');
@@ -224,7 +266,7 @@ class InviteCandidates extends Component
 
             foreach ($rows as $row) {
                 if (
-                    isset($row['firstname'], $row['lastname'], $row['role'], $row['email']) &&
+                    isset($row['firstname'], $row['lastname'], $row['role'], $row['department'], $row['email']) &&
                     filter_var($row['email'], FILTER_VALIDATE_EMAIL)
                 ) {
                     $emailExists = collect($this->emailList)->contains('email', strtolower($row['email']));
@@ -233,6 +275,7 @@ class InviteCandidates extends Component
                             'firstName' => $row['firstname'],
                             'lastName' => $row['lastname'],
                             'role' => $row['role'],
+                            'department' => $row['department'],
                             'email' => strtolower($row['email']),
                         ];
                     }
@@ -260,7 +303,8 @@ class InviteCandidates extends Component
 
     public function render()
     {
-        return view('livewire.invite-candidates');
+        return view('livewire.invite-candidates', ['departments' => $this->departments]);
+
     }
 }
 

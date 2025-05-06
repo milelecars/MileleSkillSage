@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Test;
 use App\Models\Candidate;
-use Illuminate\Http\Request;
+use App\Models\Department;
 use App\Models\Invitation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -64,21 +65,29 @@ class InvitationController extends Controller
         }
             
         $role = $candidateInvite['role'];
+        $department = $candidateInvite['department'];
+        $department_id = Department::where('name', $department)->value('id');
         $candidate = Candidate::firstOrCreate(
             ['email' => $validatedData['email']],
             ['name' => $validatedData['name']]
         );
         
+        if (!$department_id) {
+            return back()->withErrors(['department' => 'Department not found.']);
+        }
+
         $existingAttempt = $candidate->tests()->where('test_id', $invitation->test_id)->first();
 
         if (!$existingAttempt) {
             $candidate->tests()->attach($invitation->test_id, [
                 'status' => 'not started',
-                'role' =>   $role
+                'role' =>   $role,
+                'department_id' => $department_id,
             ]);
         }else{
             $candidate->tests()->updateExistingPivot($invitation->test_id, [
                 'role' => $role,
+                'department_id' => $department_id,
             ]);
         }
         

@@ -1,3 +1,5 @@
+
+<!-- resources/views/admin/candidate-details.blade.php -->
 <?php if (isset($component)) { $__componentOriginal9ac128a9029c0e4701924bd2d73d7f54 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal9ac128a9029c0e4701924bd2d73d7f54 = $attributes; } ?>
 <?php $component = App\View\Components\AppLayout::resolve([] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
@@ -31,141 +33,116 @@
                     <!-- Two Column Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <!-- Left Column - Test Details -->
-                        <div class="space-y-6">
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                                    <h3 class="text-base md:text-lg font-semibold text-gray-900">Test Details</h3>
-                                </div>
-                                <div class="p-6 space-y-4">
-                                    <!-- Test Name -->
-                                    <div class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                        </div>
-                                        <div class="text-sm md:text-base">
-                                            <p class="text-gray-600">Test Name</p>
-                                            <p class="font-semibold"><?php echo e($test->title); ?></p>
-                                        </div>
-                                    </div>
-    
-                                    <!-- IP Address -->
-                                    <div class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                                            </svg>
-                                        </div>
-                                        <div class="text-sm md:text-base">
-                                            <p class="text-gray-600">Location</p>
-                                            <p class="font-semibold">
-                                                <?php echo e($location['formatted_address'] ?? 'N/A'); ?>
-
-                                            </p>
-                                        </div>
-                                    </div>
-    
-                                    <!-- Started At -->
-                                    <div class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <div class="text-sm md:text-base">
-                                            <p class="text-gray-600">Started At</p>
-                                            <p class="font-semibold"><?php echo e($test->pivot->started_at ? Carbon\Carbon::parse($test->pivot->started_at)->format('M d, Y H:i') : 'Not started'); ?></p>
-                                        </div>
-                                    </div>
-    
-                                    <!-- Completed At -->
-                                    <div class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <div class="text-sm md:text-base">
-                                            <p class="text-gray-600">Completed At</p>
-                                            <p class="font-semibold"><?php echo e($test->pivot->completed_at ? Carbon\Carbon::parse($test->pivot->completed_at)->format('M d, Y H:i') : 'Not completed'); ?></p>
-                                        </div>
-                                    </div>
-    
-                                    <!-- Duration -->
-                                    <div class="flex items-center space-x-3">
-                                        <div class="flex-shrink-0">
-                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                            </svg>
-                                        </div>
-                                        <div class="text-sm md:text-base">
-                                            <p class="text-gray-600">Duration</p>
-                                            <p class="font-semibold">
-                                                <?php if($test->pivot->started_at && $test->pivot->completed_at): ?>
-                                                    <?php echo e($duration); ?>
-
-                                                <?php else: ?>
-                                                    N/A
-                                                <?php endif; ?>
-                                            </p>
-                                        </div>
-                                    </div>
-                                
-                                    <!-- Report -->
-                                    <div>
-                                        <a  class="flex items-center space-x-3" href="<?php echo e(route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id])); ?>">
-                                            <div class="flex-shrink-0">
-                                                <svg fill="#a7acb3" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#c5c9d0" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
-                                            </div>
-                                            <div>
-                                                <p class="text-sm md:text-base font-semibold">Report</p>
-                                            </div>
-                                        </a>
-                                    </div>
-    
-                                    <!-- Suspension Reason -->
-                                    <?php if($test->pivot->is_suspended): ?>
-                                        <div class="flex items-center space-x-3">
-                                            <div class="flex-shrink-0">
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
-                                                </svg>
-                                            </div>
-                                            <div class="text-sm md:text-base">
-                                                <p class="text-gray-600">Suspension Reason</p>
-                                                <p class="font-semibold">
-                                                    <?php echo e($suspensionReason); ?>
-
-                                                </p>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-    
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                                <h3 class="text-base md:text-lg font-semibold text-gray-900">Test Details</h3>
                             </div>
-    
-                            <?php if($hasLSQ && !empty($categoryScores)): ?>
-                                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mt-8">
-                                    <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-                                        <h3 class="text-base md:text-lg font-semibold text-gray-900">Average Category Scores</h3>
+                            <div class="p-6 space-y-4">
+                                <!-- Test Name -->
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
                                     </div>
-                                    <div class="p-6 space-y-4">
-                                        <?php $__currentLoopData = $categoryScores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                            <div>
-                                                <div class="flex justify-between mb-1">
-                                                    <span class="text-sm font-medium text-gray-700"><?php echo e($category); ?></span>
-                                                    <span class="text-sm font-semibold"><?php echo e($data['average']); ?>/5</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                                    <div class="bg-indigo-500 h-2.5 rounded-full" style="width: <?php echo e(($data['average'] / 5) * 100); ?>%"></div>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="text-sm md:text-base">
+                                        <p class="text-gray-600">Test Name</p>
+                                        <p class="font-semibold"><?php echo e($test->title); ?></p>
                                     </div>
                                 </div>
-                            <?php endif; ?>
 
+                                <!-- IP Address -->
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-sm md:text-base">
+                                        <p class="text-gray-600">Location</p>
+                                        <p class="font-semibold">
+                                            <?php echo e($location['formatted_address'] ?? 'N/A'); ?>
+
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Started At -->
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-sm md:text-base">
+                                        <p class="text-gray-600">Started At</p>
+                                        <p class="font-semibold"><?php echo e($test->pivot->started_at ? Carbon\Carbon::parse($test->pivot->started_at)->format('M d, Y H:i') : 'Not started'); ?></p>
+                                    </div>
+                                </div>
+
+                                <!-- Completed At -->
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-sm md:text-base">
+                                        <p class="text-gray-600">Completed At</p>
+                                        <p class="font-semibold"><?php echo e($test->pivot->completed_at ? Carbon\Carbon::parse($test->pivot->completed_at)->format('M d, Y H:i') : 'Not completed'); ?></p>
+                                    </div>
+                                </div>
+
+                                <!-- Duration -->
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-sm md:text-base">
+                                        <p class="text-gray-600">Duration</p>
+                                        <p class="font-semibold">
+                                            <?php if($test->pivot->started_at && $test->pivot->completed_at): ?>
+                                                <?php echo e($duration); ?>
+
+                                            <?php else: ?>
+                                                N/A
+                                            <?php endif; ?>
+                                        </p>
+                                    </div>
+                                </div>
+                               
+                                <!-- Report -->
+                                <div>
+                                    <a  class="flex items-center space-x-3" href="<?php echo e(route('reports.candidate-report', ['candidateId' => $candidate->id, 'testId' => $test->id])); ?>">
+                                        <div class="flex-shrink-0">
+                                            <svg fill="#a7acb3" width="20px" height="20px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="#c5c9d0" stroke-width="0.00024000000000000003"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="m20 8-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM9 19H7v-9h2v9zm4 0h-2v-6h2v6zm4 0h-2v-3h2v3zM14 9h-1V4l5 5h-4z"></path></g></svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm md:text-base font-semibold">Report</p>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <!-- Suspension Reason -->
+                                <?php if($test->pivot->is_suspended): ?>
+                                    <div class="flex items-center space-x-3">
+                                        <div class="flex-shrink-0">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-400">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" />
+                                            </svg>
+                                        </div>
+                                        <div class="text-sm md:text-base">
+                                            <p class="text-gray-600">Suspension Reason</p>
+                                            <p class="font-semibold">
+                                                <?php echo e($suspensionReason); ?>
+
+                                            </p>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <!-- Right Column - Status and Screenshots -->
@@ -175,34 +152,9 @@
                                 <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
                                     <h3 class="text-base md:text-lg font-semibold text-gray-900">Test Status</h3>
                                 </div>
-                                <div class="flex p-6 justify-between">
-                                    <div class="space-y-2">
-                                        <div class="flex justify-between">
-                                            <span class="text-sm md:text-base font-semibold">
-                                                Score: <?php echo e($hasMCQ 
-                                                        ? ($test->pivot->correct_answers ?? '0' ) . ' / ' . ($totalQuestions ?? '')
-                                                        : ($originalScore ?? 'N/A')); ?>
-
-                                            </span>
-                                            <span class="font-medium text-xs md:text-sm">
-                                                <?php echo e($hasMCQ ? $originalScore . '%' : ''); ?>
-
-                                            </span>
-
-                                        </div>
-                                        <?php if($hasMCQ): ?>
-                                            <div class="w-full px-4">
-                                                <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                                    <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
-                                                        style="width: <?php echo e($originalScore); ?>%"></div>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-
-
-                                    </div>
-                                    <div class="flex gap-2 items-center">
-                                        <span class="text-sm md:text-base font-semibold">Status:</span>
+                                <div class="p-6 space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm md:text-base text-gray-600">Status</span>
                                         <?php if($test->pivot->status === 'accepted'): ?>
                                             <span class="inline-flex items-center px-3 py-1 rounded-full text-xs md:text-sm font-medium text-green-800 bg-green-100">
                                                 Accepted
@@ -229,7 +181,29 @@
                                             </span>
                                         <?php endif; ?>
                                     </div>
-                                    
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between">
+                                            <span class="text-sm md:text-base text-gray-600">
+                                                Score: <?php echo e($hasMCQ 
+                                                        ? ($test->pivot->correct_answers ?? '0' ) . ' / ' . ($totalQuestions ?? '')
+                                                        : ($score ?? 'N/A')); ?>
+
+                                            </span>
+                                            <span class="font-medium text-xs md:text-sm">
+                                                <?php echo e($hasMCQ ? $score . '%' : ''); ?>
+
+                                            </span>
+
+                                        </div>
+                                        <div class="w-full px-4">
+                                            <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                                <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                                                    style="width: <?php echo e($score); ?>%"></div>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
                                 </div>
                             </div>
 

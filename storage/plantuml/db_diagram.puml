@@ -29,6 +29,7 @@ entity "Candidate Test" {
   * test_id : int
   --
   * role : string
+  * department_id : string
   * started_at : datetime
   * completed_at : datetime
   * score : int
