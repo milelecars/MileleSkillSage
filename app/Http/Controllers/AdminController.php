@@ -368,6 +368,7 @@ class AdminController extends Controller
                 $unsuspendCount = $test->pivot->unsuspend_count;
 
                 $isExpired = false;
+                $candidateInvite = null;
 
                 if ($hasLoggedIn) {
 
@@ -449,7 +450,7 @@ class AdminController extends Controller
                     'unsuspend_count' => $unsuspendCount,
                     'started_at' => $test->pivot->started_at,
                     'completed_at' => $test->pivot->completed_at,
-                    'expiration_date' => $isExpired ?? $candidateInvite['deadline'],
+                    'expiration_date' => $isExpired ? $candidateInvite['deadline'] ?? null : null,
                     'score'=> $test->pivot->score,
                     'percentile' => $percentileByTestId[$test->id][$candidate->id] ?? null,
                     'hasMCQ' => $hasMCQ,
