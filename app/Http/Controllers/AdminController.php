@@ -6,6 +6,7 @@ use App\Models\Candidate;
 use App\Models\Test;
 use App\Models\Invitation;
 use App\Models\Answer;
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; 
 use Illuminate\Support\Facades\Storage;
@@ -55,6 +56,7 @@ class AdminController extends Controller
     {
         $tests = Test::all();
         $allTestIds = $tests->pluck('id')->toArray();
+        $departments = Department::orderBy('name')->get();
     
         $query = Invitation::query();
     
@@ -89,7 +91,7 @@ class AdminController extends Controller
             return array_values(array_diff($allTestIds, $invitedTestIds));
         });
     
-        return view('admin.invite', compact('emailToTestIds', 'emailToUninvitedTestIds', 'tests'));
+        return view('admin.invite', compact('emailToTestIds', 'emailToUninvitedTestIds', 'tests', 'departments'));
     }
 
     public function sendInvitation(Request $request)
@@ -99,6 +101,7 @@ class AdminController extends Controller
             
             $emailTestMap = $request->input('email_test_map');
             $role = $request->input('role');
+            $department = $request->input('department');
             $oAuthController = new OAuthController();
 
             try {
@@ -121,11 +124,12 @@ class AdminController extends Controller
                         $test = Test::findOrFail($testId);
     
                         
-                        $htmlContent = str_replace(
-                            ['{{ $testName }}', '{{ $invitationLink }}', '{{ $role }}'],
-                            [$test->title, $invitation->invitation_link,  $role],
-                            $template
-                        );
+                        $htmlContent = view('emails.invitation-email-template', [
+                            'testName' => $test->title,
+                            'invitationLink' => $invitation->invitation_link,
+                            'role' => $role,
+                            'department' => $department,
+                        ])->render();                        
     
                         $message = new \Google\Service\Gmail\Message();
                         
@@ -176,6 +180,7 @@ class AdminController extends Controller
                             'firstName' => $firstName,
                             'lastName' => $lastName,
                             'role' => $role,
+                            'department' => $department,
                             'invited_at' => now()->toISOString(),
                             'deadline' => now()->addDays(2)->toISOString() 
                         ];
@@ -303,19 +308,21 @@ class AdminController extends Controller
         $name = $request->input('name');
         $email = $request->input('email');
         $role = $request->input('role');
+        $department = $request->input('department');
         $testFilter = $request->input('test_filter');
 
         Log::debug('Filters Received', [
             'name' => $name,
             'email' => $email,
             'role' => $role,
+            'department' => $department,
             'testFilter' => $testFilter,
         ]);
         
         $activeTestCandidates = Candidate::with(['tests' => function ($query) use ($testFilter) {
             $query->select('tests.id', 'title', 'description', 'duration')
                 ->when($testFilter, fn($q) => $q->where('tests.id', $testFilter))
-                ->withPivot('role', 'started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status', 'is_suspended', 'unsuspend_count');
+                ->withPivot('role', 'department_id', 'started_at', 'completed_at', 'score', 'red_flags', 'correct_answers', 'wrong_answers', 'ip_address', 'status', 'is_suspended', 'unsuspend_count');
         }])
         ->when($testFilter, function ($query, $testFilter) {
             $query->whereHas('tests', fn($q) => $q->where('tests.id', $testFilter));
@@ -325,6 +332,14 @@ class AdminController extends Controller
                 $q->whereRaw('LOWER(candidate_test.role) = ?', [strtolower($role)]);
             });
         })
+        ->when($department, function ($query) use ($department) {
+            $query->whereHas('tests', function ($q) use ($department) {
+                $departmentId = \App\Models\Department::where('name', $department)->value('id');
+                if ($departmentId) {
+                    $q->where('candidate_test.department_id', $departmentId);
+                }
+            });
+        })        
         ->when($name, function ($query) use ($name) {
             $query->where('name', 'like', "%$name%");
         })
@@ -340,7 +355,7 @@ class AdminController extends Controller
                 'all_roles' => $candidate->tests->pluck('pivot.role'),
                 'role_filter' => $role,
             ]);
-        
+        // hello world
             return $candidate->tests->filter(function ($test) use ($role) {
                 if (!$role) return true;
                 return strtolower($test->pivot->role ?? '') === strtolower($role);
@@ -426,6 +441,7 @@ class AdminController extends Controller
                     'name' => $candidate->name,
                     'email' => $candidate->email,
                     'role' => $test->pivot->role ?? '-',
+                    'department' => $test->pivot->department ?? '-',
                     'test_title' => $test->title,
                     'test_id' => $test->id,
                     'status' => $status,
@@ -466,26 +482,29 @@ class AdminController extends Controller
         ->whereJsonLength('invited_emails->invites', '>', 0)
         ->with('test:id,title')
         ->get()
-        ->flatMap(function ($invitation) use ($name, $email, $role, $takenTests) {
+        ->flatMap(function ($invitation) use ($name, $email, $role, $department, $takenTests) {
             $invites = is_string($invitation->invited_emails) 
                 ? json_decode($invitation->invited_emails, true)['invites'] ?? []
                 : ($invitation->invited_emails['invites'] ?? []);
             
-            return collect($invites)->map(function ($invite) use ($invitation, $name, $email, $role, $takenTests) {
+            return collect($invites)->map(function ($invite) use ($invitation, $name, $email, $role, $department, $takenTests) {
                 $inviteEmail = strtolower($invite['email']);
                 $inviteRole = strtolower($invite['role'] ?? '-');
+                $inviteDepartment = strtolower($invite['department'] ?? '-');
                 $deadline = Carbon::parse($invite['deadline']);
                 $isExpired = now()->greaterThan($deadline);
             
                 $matchesName = $name ? str_contains($inviteEmail, strtolower($name)) : true;
                 $matchesEmail = $email ? str_contains($inviteEmail, strtolower($email)) : true;
                 $matchesRole = $role ? strtolower($inviteRole) === strtolower($role) : true;
+                $matchesDepartment = $department ? strtolower($inviteDepartment) === strtolower($department) : true;
             
-                if ($matchesName && $matchesEmail && $matchesRole) {
+                if ($matchesName && $matchesEmail && $matchesRole && $matchesDepartment) {
                     return [
                         'email' => $invite['email'],
                         'test_title' => $invitation->test->title ?? '-',
                         'role' => $invite['role'] ?? '-',
+                        'department' => $invite['department'] ?? '-',
                         'test_id' => $invitation->test_id,
                         'status' => $isExpired ? 'expired' : 'invited',
                         'has_started' => false,
@@ -560,7 +579,7 @@ class AdminController extends Controller
         ];        
 
         return view('admin.manage-candidates', array_merge(
-            compact('candidates', 'name', 'email', 'role', 'availableTests', 'testFilter'), 
+            compact('candidates', 'name', 'email', 'role', 'department', 'availableTests', 'testFilter'), 
             $stats
         ));
     }

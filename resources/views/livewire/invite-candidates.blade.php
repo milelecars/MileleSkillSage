@@ -4,9 +4,9 @@
             {{ session('success') }}
         </div>
     @endif
-    @if (session('warning'))
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 text-xs md:text-base p-4 my-4 rounded-lg">
-            {{ session('warning') }}
+    @if(session('warning_html'))
+        <div class="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-md text-sm">
+            {!! session('warning_html') !!}
         </div>
     @endif
     @if ($errors->has('submission'))

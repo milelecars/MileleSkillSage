@@ -13,12 +13,12 @@
         
         <p>On behalf of Milele Motors, we are delighted to invite you to take part in our assessment process.</p>
         
-        <p>You have been selected to complete the <strong>"{{ $testName }}"</strong> assessment as part of our evaluation process for the role of <strong><u>{{ $role }} at Milele {{ $department }} Department</u></strong>. This test will assist us in evaluating your skills and determining your potential fit within our organization.</p>
+        <p>You have been selected to complete the <strong>"<?php echo e($testName); ?>"</strong> assessment as part of our evaluation process for the role of <strong><u><?php echo e($role); ?> at Milele <?php echo e($department); ?> Department</u></strong>. This test will assist us in evaluating your skills and determining your potential fit within our organization.</p>
         
         <p>To begin the test, please click on the link below:</p>
 
         <p style="text-align: center;">
-            <a href="{{ $invitationLink }}" 
+            <a href="<?php echo e($invitationLink); ?>" 
             style="background-color: #0056b3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
             Start the Test
             </a>
@@ -45,4 +45,4 @@
         </p>
     </div>
 </body>
-</html>
+</html><?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/emails/invitation-email-template.blade.php ENDPATH**/ ?>

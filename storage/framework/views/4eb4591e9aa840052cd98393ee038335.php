@@ -5,9 +5,9 @@
 
         </div>
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
-    <!--[if BLOCK]><![endif]--><?php if(session('warning')): ?>
-        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 text-xs md:text-base p-4 my-4 rounded-lg">
-            <?php echo e(session('warning')); ?>
+    <!--[if BLOCK]><![endif]--><?php if(session('warning_html')): ?>
+        <div class="mb-4 p-4 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-md text-sm">
+            <?php echo session('warning_html'); ?>
 
         </div>
     <?php endif; ?><!--[if ENDBLOCK]><![endif]-->

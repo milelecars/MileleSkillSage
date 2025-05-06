@@ -30,6 +30,7 @@ class InviteCandidates extends Component
     public string $firstName = '';
     public string $lastName = '';
     public string $role = '';
+    public string $candidate = '';
     public array $emailList = [];
     public $testId;
     public $excelFile = null;
@@ -52,6 +53,8 @@ class InviteCandidates extends Component
         'firstName.required' => 'First name is required',
         'lastName.required' => 'Last name is required',
         'role.required' => 'Role is required',
+        'selectedDepartment.required' => 'Department is required',
+        'selectedDepartment.max' => 'Department cannot exceed 255 characters',
         'newEmail.required' => 'Email is required',
         'newEmail.email' => 'Please enter a valid email',
         'firstName.max' => 'First name cannot exceed 255 characters',
@@ -195,11 +198,15 @@ class InviteCandidates extends Component
             foreach ($this->emailList as $invite) {
                 try {
                     $message = new \Google\Service\Gmail\Message();
-                    $template = str_replace(
-                        ['{{ $testName }}', '{{ $invitationLink }}', '{{ $role }}', '{{ $department }}'],
-                        [$test->title, $invitation->invitation_link, $invite['role'], $invite['department']],
-                        file_get_contents(resource_path('views/emails/invitation-email-template.blade.php'))
-                    );                    
+                    $template = view('emails.invitation-email-template', [
+                        'testName' => $test->title,
+                        'invitationLink' => $invitation->invitation_link,
+                        'role' => $invite['role'],
+                        'department' => $invite['department'],
+                        'firstName' => $invite['firstName'],
+                        'lastName' => $invite['lastName'],
+                    ])->render();
+                                      
     
                     $rawMessage = "From: Milele SkillSage <mileleskillsage@gmail.com>\r\n";
                     $rawMessage .= "To: <{$invite['email']}>\r\n";
@@ -223,13 +230,18 @@ class InviteCandidates extends Component
     
             // Clear the session and reset if no failures
             if (empty($failedEmails)) {
-                $this->reset(['newEmail', 'firstName', 'lastName', 'role']);
+                $this->reset(['newEmail', 'firstName', 'lastName', 'role', 'selectedDepartment']);
                 $this->emailList = [];
                 session()->forget("test_{$this->testId}_emails");
                 session()->flash('success', 'Invitations sent successfully!');
             } else {
                 // Partial success
-                session()->flash('warning', 'Some invitations failed to send: ' . implode(', ', $failedEmails));
+                if (!empty($failedEmails)) {
+                    $failList = collect($failedEmails)->map(fn($email) => "<li class='text-red-600'>• $email</li>")->implode('');
+                    $failMessage = "<strong>Some emails failed to send:</strong><ul class='mt-1 list-disc ml-6'>$failList</ul>";
+                
+                    session()->flash('warning_html', $failMessage);
+                }                
             }
     
             $this->dispatch('refresh');
@@ -254,7 +266,7 @@ class InviteCandidates extends Component
 
             foreach ($rows as $row) {
                 if (
-                    isset($row['firstname'], $row['lastname'], $row['role'], $row['email']) &&
+                    isset($row['firstname'], $row['lastname'], $row['role'], $row['department'], $row['email']) &&
                     filter_var($row['email'], FILTER_VALIDATE_EMAIL)
                 ) {
                     $emailExists = collect($this->emailList)->contains('email', strtolower($row['email']));
@@ -263,6 +275,7 @@ class InviteCandidates extends Component
                             'firstName' => $row['firstname'],
                             'lastName' => $row['lastname'],
                             'role' => $row['role'],
+                            'department' => $row['department'],
                             'email' => strtolower($row['email']),
                         ];
                     }
