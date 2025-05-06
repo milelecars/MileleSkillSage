@@ -98,13 +98,13 @@
                             
                             {{-- Department Dropdown --}}
                             <div x-data="departmentDropdown()" class="mb-6 flex flex-col">
-                                <label for="department" class="text-base md:text-lg font-semibold text-gray-800 mb-2">Select or Create Department</label>
+                                <label for="department" class="text-base md:text-lg font-semibold text-gray-800 mb-2">Enter Department</label>
 
                                 <!-- Trigger Button -->
                                 <div class="relative w-full">
                                     <button type="button"
                                             @click="toggle"
-                                            class="text-gray-500 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-sm px-5 py-2 text-center inline-flex items-center w-full justify-between">
+                                            class="text-gray-500 border border-gray-300 rounded-md font-medium text-sm px-5 py-2 text-center inline-flex items-center w-full justify-between">
                                         <span x-text="selected || 'Select Department'"></span>
                                         <svg class="w-2.5 h-2.5 ml-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
                                             <path stroke="#7b7789" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
@@ -112,13 +112,13 @@
                                     </button>
 
                                     <!-- Dropdown -->
-                                    <div x-show="open" @click.outside="close" class="z-50 absolute bg-gray-50 rounded-lg shadow-sm w-full mt-1">
+                                    <div x-show="open" @click.outside="close" class="z-50 absolute bg-white border border-gray-300 rounded-md shadow-sm w-full mt-1">
                                         <!-- Add New Department Input -->
-                                        <div class="p-2 border-t border-gray-200 bg-gray-50">
+                                        <div class="p-2 border-b bg-white border-gray-300">
                                             <input type="text"
                                                 x-model="newDept"
                                                 placeholder="New department"
-                                                class="text-sm border rounded p-1 w-full mb-2" />
+                                                class="text-sm border border-gray-300 rounded p-1 w-full mb-2" />
 
                                             <button type="button" @click="addDepartment"
                                                     class="text-blue-600 text-sm hover:underline">

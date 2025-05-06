@@ -110,7 +110,7 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                             type="button"
                                             data-dropdown-toggle="dropdownDepartment" 
                                             data-dropdown-placement="top" 
-                                            class="text-gray-500 bg-gray-200 hover:bg-gray-300 font-medium rounded-lg text-sm px-5 py-2 text-center inline-flex items-center"
+                                            class="text-gray-500 bg-white border border-gray-300 rounded-md font-medium text-sm px-5 py-2 text-center inline-flex items-center"
                                     >
                                         <?php echo e($selectedDepartment ?: 'Select Department'); ?>
 
@@ -123,8 +123,8 @@ unset($__errorArgs, $__bag); ?><!--[if ENDBLOCK]><![endif]-->
                                     </button>
 
                                     <!-- Dropdown menu with increased z-index -->
-                                    <div id="dropdownDepartment" class="z-50 hidden bg-gray-50 rounded-lg shadow-sm w-60">
-                                        <div class="p-2 border-t border-gray-200 bg-gray-50">
+                                    <div id="dropdownDepartment" class="z-50 hidden bg-white border border-gray-300 rounded-md shadow-sm w-60">
+                                        <div class="p-2 border-b bg-white border-gray-300">
                                             <input type="text" wire:model.defer="newDepartmentName" placeholder="New department"
                                                 class="text-sm border rounded p-1 w-full mb-2" />
                                             <button wire:click="addNewDepartment"
