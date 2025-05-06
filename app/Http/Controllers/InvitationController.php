@@ -66,7 +66,7 @@ class InvitationController extends Controller
             
         $role = $candidateInvite['role'];
         $department = $candidateInvite['department'];
-        $department_id = Department::where('name', $department)->value('id');
+        $department_id = Department::whereRaw('LOWER(name) = ?', [strtolower($department)])->value('id');
         $candidate = Candidate::firstOrCreate(
             ['email' => $validatedData['email']],
             ['name' => $validatedData['name']]

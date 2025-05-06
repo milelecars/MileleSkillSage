@@ -334,7 +334,7 @@ class AdminController extends Controller
         })
         ->when($department, function ($query) use ($department) {
             $query->whereHas('tests', function ($q) use ($department) {
-                $departmentId = \App\Models\Department::where('name', $department)->value('id');
+                $departmentId = \App\Models\Department::whereRaw('LOWER(name) = ?', [strtolower($department)])->value('id');
                 if ($departmentId) {
                     $q->where('candidate_test.department_id', $departmentId);
                 }
