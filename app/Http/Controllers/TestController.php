@@ -210,7 +210,6 @@ class TestController extends Controller
             return redirect()->back()->with('error', 'Error creating test: ' . $e->getMessage());
         }
     }
-    
 
     public function edit($id)
     {
@@ -1067,6 +1066,11 @@ class TestController extends Controller
                     ->with('error', 'Test attempt not found.');
             }
 
+            if ($testAttempt->pivot->status === 'completed') {
+                return redirect()->route('tests.result', ['id' => $id])
+                    ->with('info', 'Test was already submitted.');
+            }
+
             // Load all saved answers
             $answers = Answer::where('candidate_id', $candidate->id)
                 ->where('test_id', $test->id)
@@ -1606,8 +1610,6 @@ class TestController extends Controller
             ->where('candidate_id', $request->candidateId)
             ->where('test_id', $request->testId)
             ->first();
-
-        Log::info('here is', [$candidateTest->unsuspend_count]);
 
         return response()->json([
             'unsuspend_count' => $candidateTest ? $candidateTest->unsuspend_count : 0,

@@ -386,7 +386,24 @@
         .guide-color.unanswered {
             background-color: #e5e5e5;
         }
-        
+
+        /* LSQ category */
+        .lsq-bar-wrapper {
+            width: 100%;
+            background-color: #e5e5e5;
+            border-radius: 12px;
+            height: 14px;
+            overflow: hidden;
+            margin-top: 6px;
+            margin-bottom: 16px;
+        }
+
+        .lsq-bar-fill {
+            height: 100%;
+            background-color: #0066ff;
+            border-radius: 12px 0 0 12px;
+        }
+
         /* Red-Flagged Section */
         .red-flag-section {
             background: #fdf2f2;
@@ -545,6 +562,30 @@
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </table>
     </div>
+
+    <?php if($hasLSQ && isset($categoryScores) && count($categoryScores)): ?>
+        <div class="test-section">
+            <div class="test">
+                <table class="test-header-table">
+                    <tr>
+                        <td class="test-title">Average Category Scores</td>
+                        <td class="test-score"></td>
+                    </tr>
+                </table>
+
+                <?php $__currentLoopData = $categoryScores; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $data): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="skill-item">
+                        <div class="skill-name"><?php echo e($category); ?>: <?php echo e($data['average']); ?>/5</div>
+                        <div class="lsq-bar-wrapper">
+                            <div class="lsq-bar-fill" style="width: <?php echo e(($data['average'] / 5) * 100); ?>%"></div>
+                        </div>
+                    </div>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </div>
+        </div>
+    <?php endif; ?>
+
+
 
     <!-- Red-Flagged LSQ Questions Grouped by Category -->
     <?php if($hasLSQ): ?>

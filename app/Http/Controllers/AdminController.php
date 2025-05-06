@@ -477,7 +477,7 @@ class AdminController extends Controller
             })
             ->toArray();
 
-        $invitedEmails = Invitation::when($testFilter, function($query) use ($testFilter) {
+        $invitedEmailsRaw = Invitation::when($testFilter, function($query) use ($testFilter) {
             return $query->where('test_id', $testFilter);
         })
         ->whereJsonLength('invited_emails->invites', '>', 0)
@@ -494,13 +494,14 @@ class AdminController extends Controller
                 $inviteDepartment = strtolower($invite['department'] ?? '-');
                 $deadline = Carbon::parse($invite['deadline']);
                 $isExpired = now()->greaterThan($deadline);
-            
+        
                 $matchesName = $name ? str_contains($inviteEmail, strtolower($name)) : true;
                 $matchesEmail = $email ? str_contains($inviteEmail, strtolower($email)) : true;
                 $matchesRole = $role ? strtolower($inviteRole) === strtolower($role) : true;
                 $matchesDepartment = $department ? strtolower($inviteDepartment) === strtolower($department) : true;
             
                 if ($matchesName && $matchesEmail && $matchesRole && $matchesDepartment) {
+
                     return [
                         'email' => $invite['email'],
                         'test_title' => $invitation->test->title ?? '-',
@@ -516,11 +517,32 @@ class AdminController extends Controller
                         'is_invitation' => true
                     ];
                 }
-            
+        
                 return null;
             })->filter();
-                
         });
+        
+        $takenTestsFlat = DB::table('candidate_test')
+            ->select('candidate_id', 'test_id', 'candidates.email')
+            ->join('candidates', 'candidates.id', '=', 'candidate_test.candidate_id')
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'email' => strtolower($record->email),
+                    'test_id' => $record->test_id
+                ];
+            })
+            ->values();
+        
+        $invitedEmails = $invitedEmails->filter(function ($invite) use ($takenTestsFlat) {
+            $exists = $takenTestsFlat->contains(function ($taken) use ($invite) {
+                return strtolower($invite['email']) === $taken['email']
+                    && $invite['test_id'] == $taken['test_id'];
+            });
+        
+            return !$exists;
+        });
+        
 
         $availableTests = Test::select('id', 'title')->get();
 
@@ -558,7 +580,8 @@ class AdminController extends Controller
             ]);
         
         $candidates = $allCandidates->values();
-
+        
+        
         $stats = [
             'totalInvited' => $allCandidates->count(),
         
@@ -810,14 +833,45 @@ class AdminController extends Controller
         }
         
         $totalQuestions = $questions->count() ?? 0;
-        $score = $test->pivot->score;
+        $originalScore = $test->pivot->score;
         $hasMCQ = $questions->contains('question_type', 'MCQ');
         $hasLSQ = $questions->contains('question_type', 'LSQ');
         $suspensionReason = $test->pivot->suspension_reason;
         $realIP = $this->testReportService->getClientIP();
         $location = $this->testReportService->getLocationFromIP($realIP);
-        Log::info("Location Data", $location);
-    
+        
+        $categoryScores = [];
+
+        if ($hasLSQ) {
+            $lsqAnswers = \App\Models\Answer::with('question')
+                ->where('candidate_id', $candidate->id)
+                ->where('test_id', $test->id)
+                ->whereHas('question', function ($query) {
+                    $query->where('question_type', 'LSQ');
+                })
+                ->get();
+
+            foreach ($lsqAnswers as $answer) {
+                $question = $answer->question;
+
+                if (!$question || !$question->category) {
+                    continue;
+                }
+
+                $category = $question->category;
+                $rawScore = (int) $answer->answer_text;
+                $score = $question->reverse ? (6 - $rawScore) : $rawScore;
+
+                $categoryScores[$category]['total'] = ($categoryScores[$category]['total'] ?? 0) + $score;
+                $categoryScores[$category]['count'] = ($categoryScores[$category]['count'] ?? 0) + 1;
+            }
+
+            foreach ($categoryScores as $cat => $data) {
+                $categoryScores[$cat]['average'] = round($data['total'] / $data['count'], 2);
+            }
+        }
+
+            
         return view('admin.candidate-result', compact(
             'candidate',
             'test',
@@ -825,10 +879,12 @@ class AdminController extends Controller
             'screenshots',
             'totalQuestions',
             'score',
+            'originalScore',
             'duration',
             'hasMCQ',
             'hasLSQ',
-            'suspensionReason'
+            'suspensionReason',
+            'categoryScores'
         ));
     }
     
