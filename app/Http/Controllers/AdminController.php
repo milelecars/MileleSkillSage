@@ -441,7 +441,7 @@ class AdminController extends Controller
                     'name' => $candidate->name,
                     'email' => $candidate->email,
                     'role' => $test->pivot->role ?? '-',
-                    'department' => $test->pivot->department ?? '-',
+                    'department' => \App\Models\Department::find($test->pivot->department_id)?->name ?? '-',
                     'test_title' => $test->title,
                     'test_id' => $test->id,
                     'status' => $status,
