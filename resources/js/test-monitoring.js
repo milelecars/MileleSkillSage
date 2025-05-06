@@ -279,6 +279,14 @@ class TestMonitoring {
 // Initialize monitoring when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     try {
+        const pathRegex = /^\/tests\/\d+\/start\/?$/; // Matches /tests/{id}/start or /tests/{id}/start/
+        const currentPath = window.location.pathname;
+
+        if (!pathRegex.test(currentPath)) {
+            console.log('TestMonitoring script skipped due to unmatched route:', currentPath);
+            return; 
+        }
+
         const testIdElement = document.getElementById('test-id');
         const candidateIdElement = document.getElementById('candidate-id');
         

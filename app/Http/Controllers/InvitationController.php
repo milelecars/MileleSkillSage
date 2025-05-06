@@ -173,15 +173,18 @@ class InvitationController extends Controller
 
 
             $candidate = DB::table('candidates')->where('email', $request->email)->first();
-            if (!$candidate) {
-                throw new \Exception('Candidate not found.');
+            if ($candidate) {
+                DB::table('candidate_test')
+                    ->where('candidate_id', $candidate->id)
+                    ->where('test_id', $request->test_id)
+                    ->update(['status' => 'not started']);
+            } else {
+                Log::warning('Candidate not found, skipping status update', [
+                    'email' => $request->email,
+                    'test_id' => $request->test_id,
+                ]);
             }
-
-            DB::table('candidate_test')
-                ->where('candidate_id', $candidate->id)
-                ->where('test_id', $request->test_id)
-                ->update(['status' => 'not started']);
-   
+                
            Log::info('Deadline extended successfully', [
                'test_id' => $request->test_id,
                'email' => $request->email,

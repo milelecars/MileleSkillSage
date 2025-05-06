@@ -386,7 +386,24 @@
         .guide-color.unanswered {
             background-color: #e5e5e5;
         }
-        
+
+        /* LSQ category */
+        .lsq-bar-wrapper {
+            width: 100%;
+            background-color: #e5e5e5;
+            border-radius: 12px;
+            height: 14px;
+            overflow: hidden;
+            margin-top: 6px;
+            margin-bottom: 16px;
+        }
+
+        .lsq-bar-fill {
+            height: 100%;
+            background-color: #0066ff;
+            border-radius: 12px 0 0 12px;
+        }
+
         /* Red-Flagged Section */
         .red-flag-section {
             background: #fdf2f2;
@@ -544,6 +561,30 @@
             @endforeach
         </table>
     </div>
+
+    @if($hasLSQ && isset($categoryScores) && count($categoryScores))
+        <div class="test-section">
+            <div class="test">
+                <table class="test-header-table">
+                    <tr>
+                        <td class="test-title">Average Category Scores</td>
+                        <td class="test-score"></td>
+                    </tr>
+                </table>
+
+                @foreach($categoryScores as $category => $data)
+                    <div class="skill-item">
+                        <div class="skill-name">{{ $category }}: {{ $data['average'] }}/5</div>
+                        <div class="lsq-bar-wrapper">
+                            <div class="lsq-bar-fill" style="width: {{ ($data['average'] / 5) * 100 }}%"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+
 
     <!-- Red-Flagged LSQ Questions Grouped by Category -->
     @if($hasLSQ)

@@ -103,6 +103,34 @@ class TestReportService
         $hasMCQ = $questions->contains('question_type', 'MCQ');
         $hasLSQ = $questions->contains('question_type', 'LSQ');
 
+        $categoryScores = [];
+
+        if ($hasLSQ) {
+            $lsqAnswers = Answer::with('question')
+                ->where('candidate_id', $candidateId)
+                ->where('test_id', $testId)
+                ->whereHas('question', function ($q) {
+                    $q->where('question_type', 'LSQ');
+                })->get();
+
+            foreach ($lsqAnswers as $answer) {
+                $q = $answer->question;
+                if (!$q) continue;
+
+                $cat = $q->category;
+                $val = (int) $answer->answer_text;
+                $score = $q->reverse ? (6 - $val) : $val;
+
+                $categoryScores[$cat]['total'] = ($categoryScores[$cat]['total'] ?? 0) + $score;
+                $categoryScores[$cat]['count'] = ($categoryScores[$cat]['count'] ?? 0) + 1;
+            }
+
+            foreach ($categoryScores as $cat => $info) {
+                $categoryScores[$cat]['average'] = round($info['total'] / $info['count'], 2);
+            }
+        }
+
+
         $ip = $candidateTest->ip_address;
         Log::info('Looking up IP:', ['ip' => $ip]);
     
@@ -162,7 +190,7 @@ class TestReportService
             'groupedQuestions' => $groupedQuestions  ?? [],
             'hasMCQ' => $hasMCQ,
             'hasLSQ' => $hasLSQ,
-            
+            'categoryScores' => $categoryScores,
         ];
 
         $fileName = "report_candidate{$candidateId}_test{$testId}_" . time() . '.pdf';
