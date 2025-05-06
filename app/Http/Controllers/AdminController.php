@@ -533,7 +533,7 @@ class AdminController extends Controller
             })
             ->values();
         
-        $invitedEmails = $invitedEmails->filter(function ($invite) use ($takenTestsFlat) {
+        $invitedEmails = $invitedEmailsRaw->filter(function ($invite) use ($takenTestsFlat) {
             $exists = $takenTestsFlat->contains(function ($taken) use ($invite) {
                 return strtolower($invite['email']) === $taken['email']
                     && $invite['test_id'] == $taken['test_id'];
