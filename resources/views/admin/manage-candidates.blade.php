@@ -338,7 +338,7 @@
                                                         </button>
 
                                                         <!-- Deadline Extension Modal -->
-                                                        <div x-show="showDeadlineModal" 
+                                                        <div x-show="showDeadlineModal" x-cloak
                                                             class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center">
                                                             <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
                                                                 <h3 class="text-base md:text-lg font-semibold mb-6">Extend Deadline</h3>
