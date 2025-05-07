@@ -879,7 +879,6 @@ class AdminController extends Controller
             'location',
             'screenshots',
             'totalQuestions',
-            'score',
             'originalScore',
             'duration',
             'hasMCQ',
