@@ -49,7 +49,7 @@
                                         </svg>
                                     </button>
                                 
-                                    <div x-show="open" 
+                                    <div x-show="open" x-cloak
                                         @click.away="open = false"
                                         class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
                                         style="display: none;">

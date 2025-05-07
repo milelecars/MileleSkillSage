@@ -44,6 +44,11 @@
                             {{ __('Profile') }}
                         </x-dropdown-link> --}}
 
+                        <!-- Access Control -->
+                        <x-dropdown-link :href="route('admin.access-control')">
+                            {{ __('Access Control') }}
+                        </x-dropdown-link>
+
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -51,6 +56,7 @@
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
+                        
                     </x-slot>
                 </x-dropdown>
             </div>
@@ -100,6 +106,13 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link> --}}
 
+                <!-- Access Control -->
+                <x-responsive-nav-link :href="route('admin.access-control')">
+                    {{ __('Access Control') }}
+                </x-responsive-nav-link>
+
+
+                
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -110,6 +123,7 @@
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
+
             </div>
         </div>
     </div>

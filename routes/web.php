@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FlagController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AccessController;
 use App\Http\Controllers\CameraController;
 use App\Http\Controllers\CandidateController;
 use App\Http\Controllers\ReportPDFController;
@@ -112,6 +113,12 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/tests/archived', [TestController::class, 'archived'])->name('tests.archived');
     Route::patch('/tests/{id}/restore', [TestController::class, 'restore'])->name('tests.restore'); 
     Route::get('/tests/{id}/invite', [TestController::class, 'invite'])->name('tests.invite');
+
+    Route::get('/admin/access-control', [AccessController::class, 'index'])->name('admin.access-control');
+    Route::post('/admin/access-control', [AccessController::class, 'store'])->name('admin.access-control.store');
+    Route::put('/admin/access-control/{admin}', [AccessController::class, 'update'])->name('admin.access-control.update');
+    Route::delete('/admin/access-control/{admin}', [AccessController::class, 'destroy'])->name('admin.access-control.destroy');
+
 
 });
 
