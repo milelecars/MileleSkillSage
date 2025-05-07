@@ -2,7 +2,7 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white rounded-lg p-4 sm:p-5 text-theme">
-                <h1 class="text-2xl font-bold mb-6">Manage Admins</h1>
+                <h1 class="text-lg md:text-2xl font-bold mb-6 ml-5 md:ml-0">Manage Admins</h1>
 
                 @if (session('success'))
                     <div class="bg-green-100 border border-green-400 text-green-700 text-sm p-4 mb-4 rounded-lg">
