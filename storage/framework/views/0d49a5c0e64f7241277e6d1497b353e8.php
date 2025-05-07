@@ -25,7 +25,7 @@
                             </button>
 
                             <!-- Dropdown filter menu -->
-                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-50">
+                            <div x-show="open" x-cloak @click.away="open = false" class="absolute right-0 mt-2 w-72 bg-white border border-gray-200 shadow-lg rounded-lg p-4 z-50">
                                 <form method="GET" action="<?php echo e(route('admin.manage-candidates')); ?>" class="space-y-3">
                                     <div>
                                         <label for="test_filter" class="block text-xs font-medium text-gray-700">Test</label>
@@ -304,7 +304,7 @@
                                                             </svg>
                                                         </button>
                                                         
-                                                        <div x-show="open" 
+                                                        <div x-show="open" x-cloak 
                                                             @click.away="open = false" 
                                                             class="absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg py-1 z-50">
                                                             

@@ -112,7 +112,7 @@
                                     </button>
 
                                     <!-- Dropdown -->
-                                    <div x-show="open" @click.outside="close" class="z-50 absolute bg-white border border-gray-300 rounded-md shadow-sm w-full mt-1">
+                                    <div x-show="open" x-cloak @click.outside="close" class="z-50 absolute bg-white border border-gray-300 rounded-md shadow-sm w-full mt-1">
                                         <!-- Add New Department Input -->
                                         <div class="p-2 border-b bg-white border-gray-300">
                                             <input type="text"

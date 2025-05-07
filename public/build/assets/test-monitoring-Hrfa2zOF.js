@@ -223,6 +223,12 @@ class TestMonitoring {
 }
 document.addEventListener("DOMContentLoaded", () => {
   try {
+    const pathRegex = /^\/tests\/\d+\/start\/?$/;
+    const currentPath = window.location.pathname;
+    if (!pathRegex.test(currentPath)) {
+      console.log("TestMonitoring script skipped due to unmatched route:", currentPath);
+      return;
+    }
     const testIdElement = document.getElementById("test-id");
     const candidateIdElement = document.getElementById("candidate-id");
     if (testIdElement && candidateIdElement) {
