@@ -146,11 +146,14 @@ class InvitationController extends Controller
                throw new \Exception('Invitation not found for this test.');
            }
    
-           
            $invitedEmails = json_decode($invitation->invited_emails, true);
            $invites = $invitedEmails['invites'] ?? [];
            $updated = false;
-   
+           
+           Log::error('Hello1', [
+            'invitation' => $invitation,
+            'invites' => $invites
+            ]);
            
            foreach ($invites as $key => $invite) {
                if ($invite['email'] === $request->email) {
