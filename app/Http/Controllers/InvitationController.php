@@ -58,7 +58,10 @@ class InvitationController extends Controller
             ->firstOrFail();
 
         $invites = $invitation->invited_emails['invites'] ?? [];
-        $candidateInvite = collect($invites)->firstWhere('email', $validatedData['email']);
+        $userEmail = strtolower($validatedData['email']);
+        $candidateInvite = collect($invites)->first(function($invite) use ($userEmail) {
+            return strtolower($invite['email']) === $userEmail;
+        });
         
         if (!$candidateInvite) {
             return back()->withErrors(['email' => 'The email does not match the invitation.']);
@@ -68,7 +71,7 @@ class InvitationController extends Controller
         $department = $candidateInvite['department'];
         $department_id = Department::whereRaw('LOWER(name) = ?', [strtolower($department)])->value('id');
         $candidate = Candidate::firstOrCreate(
-            ['email' => $validatedData['email']],
+            ['email' => $userEmail],
             ['name' => $validatedData['name']]
         );
         

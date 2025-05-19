@@ -130,6 +130,7 @@
                                     wire:model="newEmail" 
                                     class="border border-gray-300 rounded-md p-2 text-sm"
                                     name="newEmail"
+                                    @input="this.value = this.value.toLowerCase()"
                                 >
                                 @error('newEmail') 
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
