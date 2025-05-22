@@ -825,6 +825,24 @@ class TestController extends Controller
             } else {
                 $endTime = Carbon::parse($testSession['end_time']);
             }
+            
+            if (!isset($testSession['question_order'])) {
+                $allQuestionIds = $questions->pluck('id')->toArray();
+
+                if ($test->questions->contains('question_type', 'LSQ')) {
+                    shuffle($allQuestionIds);
+                }
+
+                $testSession['question_order'] = $allQuestionIds;
+                $testSession['total_questions'] = count($allQuestionIds);
+                session(['test_session' => $testSession]);
+
+                Log::warning('question_order was missing in session and rebuilt', [
+                    'candidate_id' => $candidate->id,
+                    'test_id' => $test->id
+                ]);
+            }
+
         }        
     
         $questions = $questions->sortBy(function($question) use ($testSession) {
