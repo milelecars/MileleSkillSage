@@ -1,53 +1,56 @@
-<div class="py-8" wire:key="question-{{ $question->id }}">
+<div class="py-8" wire:key="question-<?php echo e($question->id); ?>">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center">
         <div class="bg-white rounded-lg shadow-md overflow-hidden w-full">
             <div class="flex flex-col md:flex-row">
                 <!-- Question Section -->
                 <div class="w-full md:w-[60%] p-4 sm:p-6 border-b md:border-b-0 md:border-r">
                     <div class="mb-4 text-xs md:text-sm text-gray-600">
-                        Question {{ $currentIndex + 1 }} of {{ count($questions) }}
+                        Question <?php echo e($currentIndex + 1); ?> of <?php echo e(count($questions)); ?>
+
                     </div>
                     <h2 class="text-base md:text-xl font-medium mb-6">
-                        {{ $question->question_text }}
+                        <?php echo e($question->question_text); ?>
+
                     </h2>
 
-                    @if($question->question_type === 'MCQ')
-                        @if($question->media instanceof \Illuminate\Database\Eloquent\Collection)
-                            @foreach($question->media as $media)
-                                @if($media->image_url)
-                                    <img src="{{ $media->image_url }}"
-                                        alt="{{ $media->description ?? 'Question Image' }}"
+                    <!--[if BLOCK]><![endif]--><?php if($question->question_type === 'MCQ'): ?>
+                        <!--[if BLOCK]><![endif]--><?php if($question->media instanceof \Illuminate\Database\Eloquent\Collection): ?>
+                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $question->media; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $media): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <!--[if BLOCK]><![endif]--><?php if($media->image_url): ?>
+                                    <img src="<?php echo e($media->image_url); ?>"
+                                        alt="<?php echo e($media->description ?? 'Question Image'); ?>"
                                         class="mb-6 max-w-full rounded-lg border border-black">
-                                @endif
-                            @endforeach
-                        @elseif(isset($question->media->image_url))
-                            <img src="{{ $question->media->image_url }}"
-                                alt="{{ $question->media->description ?? 'Question Image' }}"
+                                <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
+                        <?php elseif(isset($question->media->image_url)): ?>
+                            <img src="<?php echo e($question->media->image_url); ?>"
+                                alt="<?php echo e($question->media->description ?? 'Question Image'); ?>"
                                 class="mb-6 max-w-full rounded-lg border border-black">
-                        @endif
-                    @endif
+                        <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
                 </div>
 
                 <!-- Answer Section -->
                 <div class="w-full md:w-[40%] p-6 bg-gray-50">
-                    @if($question->question_type === 'MCQ')
+                    <!--[if BLOCK]><![endif]--><?php if($question->question_type === 'MCQ'): ?>
                         <div class="space-y-4">
-                            @foreach($question->choices as $choice)
+                            <!--[if BLOCK]><![endif]--><?php $__currentLoopData = $question->choices; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $choice): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <label class="flex items-start p-3 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer">
                                     <input type="radio"
                                         wire:model="selectedAnswer"
-                                        name="question_{{ $question->id }}"
-                                        value="{{ $choice->id }}"
+                                        name="question_<?php echo e($question->id); ?>"
+                                        value="<?php echo e($choice->id); ?>"
                                         class="mt-1 form-radio text-blue-600"
                                         required>
                                     <span class="ml-3">
-                                        <span class="font-medium text-sm md:text-base">{{ chr(65 + $loop->index) }}.</span>
-                                        {{ $choice->choice_text }}
+                                        <span class="font-medium text-sm md:text-base"><?php echo e(chr(65 + $loop->index)); ?>.</span>
+                                        <?php echo e($choice->choice_text); ?>
+
                                     </span>
                                 </label>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><!--[if ENDBLOCK]><![endif]-->
                         </div>
-                    @elseif($question->question_type === 'LSQ')
+                    <?php elseif($question->question_type === 'LSQ'): ?>
                         <div class="space-y-4 flex flex-col items-center justify-center">
                             <input type="range"
                                 wire:model="lsqValue"
@@ -64,15 +67,16 @@
                                 <div class="w-12 text-[13px] md:text-base text-center -mr-6">Strongly Agree</div>
                             </div>
                         </div>
-                    @endif
+                    <?php endif; ?><!--[if ENDBLOCK]><![endif]-->
 
                     <!-- Submit / Next Button -->
                     <div class="mt-16 md:mt-6">
                         <button onclick="window.__PRESERVE_STREAM__ = true;" 
                             wire:click="submitAndNext"
                             class="w-full text-sm md:text-base text-white py-3 px-6 rounded-lg
-                            {{ $currentIndex === count($questions) - 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }}">
-                            {{ $currentIndex === count($questions) - 1 ? 'Submit Test' : 'Next Question' }}
+                            <?php echo e($currentIndex === count($questions) - 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'); ?>">
+                            <?php echo e($currentIndex === count($questions) - 1 ? 'Submit Test' : 'Next Question'); ?>
+
                         </button>
                     </div>
                 </div>
@@ -81,10 +85,11 @@
 
         <!-- Progress Bar -->
         <div class="h-1.5 bg-blue-100 w-[25%] mt-5">
-            <div class="h-full bg-blue-600 rounded-full" style="width: {{ ($currentIndex + 1) / count($questions) * 100 }}%"></div>
+            <div class="h-full bg-blue-600 rounded-full" style="width: <?php echo e(($currentIndex + 1) / count($questions) * 100); ?>%"></div>
         </div>
 
         <!-- Violation Log -->
         <div id="violation-log" class="fixed bottom-4 right-4 p-2 bg-black text-white text-xs rounded-lg opacity-50"></div>
     </div>
 </div>
+<?php /**PATH C:\Users\HeliaHaghighi\Desktop\MileleSkillSage\resources\views/livewire/test-player.blade.php ENDPATH**/ ?>

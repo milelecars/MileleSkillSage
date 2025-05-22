@@ -88,7 +88,7 @@ class TestPlayer extends Component
         $session['current_question'] = $this->currentIndex;
         session(['test_session' => $session]);
     
-        $this->reset(['selectedAnswer', 'lsqValue']);
+        $this->reset('selectedAnswer', 'lsqValue');
     }
 
     protected $listeners = ['timeExpired' => 'handleTimeExpiry'];

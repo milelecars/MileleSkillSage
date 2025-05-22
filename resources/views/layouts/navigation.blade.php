@@ -44,10 +44,12 @@
                             {{ __('Profile') }}
                         </x-dropdown-link> --}}
 
-                        <!-- Access Control -->
-                        <x-dropdown-link :href="route('admin.access-control')">
-                            {{ __('Access Control') }}
-                        </x-dropdown-link>
+                        @if(Auth::guard('web')->check())
+                            <!-- Access Control -->
+                            <x-dropdown-link :href="route('admin.access-control')">
+                                {{ __('Access Control') }}
+                            </x-dropdown-link>
+                        @endif
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -106,11 +108,12 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link> --}}
 
-                <!-- Access Control -->
-                <x-responsive-nav-link :href="route('admin.access-control')">
-                    {{ __('Access Control') }}
-                </x-responsive-nav-link>
-
+                @if(Auth::guard('web')->check())
+                    <!-- Access Control -->
+                    <x-responsive-nav-link :href="route('admin.access-control')">
+                        {{ __('Access Control') }}
+                    </x-responsive-nav-link>
+                @endif
 
                 
                 <!-- Authentication -->
