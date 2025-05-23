@@ -591,21 +591,13 @@ class TestController extends Controller
                 }
 
                 // Test Preview
-                $questionsExplained =[
-                    "The (B) answer is the right one, because the word “abuse” means practically the same thing as the word
-                    MALTREAT. For each question of this kind, you are to decide which of the four possible answers
-                    means most nearly the same thing as the capitalized word in the sentence.",
-                    "The (D) answer is the right one for this question, because the word “reached” most nearly means the
-                    same thing as ATTAINED. Notice that it is necessary to read all four choices. You are to choose
-                    the best answer, not just a possible answer.",
-                    "The answer is (A).",
-                    "For this question, the (C) answer is the right one, because 102 plus 120 plus 50 makes 272.",
-                    "The (A) answer is the right one, because 7x9=63.",
-                    "There are 3 boxes in the pile. So the (C) answer is the right one.",
-                    "The right answer is 4 boxes. Only 3 boxes show in the first picture. But the other picture shows that
-                    there is one more box which was covered up in the first picture. The hidden box has to be counted too,
-                    making 4 boxes altogether. So the (A) ansvrer is the right one.",
-                    "You can see that the right answer is 5 boxes. So the (B) answer is the right one."
+                $questionsExplained = [
+                    'The (B) answer is the right one, because the word "abuse" means practically the same thing as the word MALTREAT. For each question of this kind, you are to decide which of the four possible answers means most nearly the same thing as the capitalized word in the sentence.',
+                    'The (D) answer is the right one for this question, because the word "reached" most nearly means the same thing as ATTAINED. Notice that it is necessary to read all four choices. You are to choose the best answer, not just a possible answer.',
+                    'The answer is (A).',
+                    'For this question, the (C) answer is the right one, because 102 plus 120 plus 50 makes 272.',
+                    'The (A) answer is the right one, because 7x9=63.',
+                    'There are 3 boxes in the picture.'
                 ];
         
                 return view('tests.show', compact('test', 'isTestStarted', 'questions', 'hasMCQ', 'hasLSQ', 'questionsExplained',
@@ -740,8 +732,7 @@ class TestController extends Controller
         if($test->title == "General Mental Ability (GMA)"){
             $questions = $test->questions()
             ->with(['choices', 'media'])
-            ->skip(8)
-            ->take(PHP_INT_MAX)
+            ->whereRaw('id > (SELECT id FROM questions WHERE test_id = ? ORDER BY id LIMIT 8,1)', [$test->id])
             ->get();
         }else{
             
@@ -915,8 +906,7 @@ class TestController extends Controller
         if ($test->title == "General Mental Ability (GMA)") {
             $questions = $test->questions()
                 ->with(['choices', 'media'])
-                ->skip(8)
-                ->take(PHP_INT_MAX)
+                ->whereRaw('id > (SELECT id FROM questions WHERE test_id = ? ORDER BY id LIMIT 8,1)', [$test->id])
                 ->get();
         } else {
             $questions = $test->questions;
@@ -1060,10 +1050,16 @@ class TestController extends Controller
                 }
             ])->findOrFail($id);
 
-            // Filter + sort questions
-            $questions = $test->title === "General Mental Ability (GMA)"
-                ? $test->questions()->with(['choices', 'media'])->skip(8)->get()
-                : $test->questions;
+            // For GMA test, get questions after skipping first 8
+            if($test->title == "General Mental Ability (GMA)") {
+                $questions = $test->questions()
+                    ->with(['choices', 'media'])
+                    ->skip(8)
+                    ->take(PHP_INT_MAX)
+                    ->get();
+            } else {
+                $questions = $test->questions;
+            }
 
             $allQuestionIds = $testSession['question_order'];
             $questions = $questions->sortBy(function ($q) use ($allQuestionIds) {
@@ -1257,8 +1253,7 @@ class TestController extends Controller
         
         if ($test->title == "General Mental Ability (GMA)") {
             $questions = $test->questions()
-                ->skip(8)
-                ->take(PHP_INT_MAX)
+                ->whereRaw('id > (SELECT id FROM questions WHERE test_id = ? ORDER BY id LIMIT 8,1)', [$test->id])
                 ->get();
         } else {
             $questions = $test->questions;

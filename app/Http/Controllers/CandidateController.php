@@ -81,18 +81,20 @@ class CandidateController extends Controller
                                 'existing_status' => $candidateTest->status
                             ]);
                     
-                            if (str_replace(' ', '_', strtolower($candidateTest->status)) !== 'not_started') {
-                                $status = str_replace(' ', '_', $candidateTest->status);
-                            } else {
-                                $status = 'expired';
-                            }
-                            \Log::debug('$candidateTest->status !== not started:', [
-                               str_replace(' ', '_', strtolower($candidateTest->status)) !== 'not_started'
+                            // If test is expired but has any status other than 'not started', keep that status
+                            $status = str_replace(' ', '_', strtolower($candidateTest->status)) === 'not_started' 
+                                ? 'expired' 
+                                : str_replace(' ', '_', $candidateTest->status);
+                            
+                            \Log::debug('Setting status for expired test:', [
+                                'test_id' => $invitation->test_id,
+                                'status' => $status,
+                                'original_status' => $candidateTest->status
                             ]);
                         } else {
                             $status = 'expired';
                         }
-                    }else {
+                    } else {
                         // If not expired, check candidate_test status
                         $status = $candidateTest ? str_replace(' ', '_', $candidateTest->status) : 'not_started';
                     }

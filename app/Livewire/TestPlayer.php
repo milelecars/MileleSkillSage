@@ -18,6 +18,8 @@ class TestPlayer extends Component
     public $currentIndex = 0;
     public $selectedAnswer = null;
     public $lsqValue = 3;
+    public $isSubmitting = false;
+    protected $currentQuestion = null;
 
     protected $rules = [
         'selectedAnswer' => 'nullable|exists:question_choices,id',
@@ -26,69 +28,163 @@ class TestPlayer extends Component
 
     public function mount($test, $candidate, $questions, $currentIndex)
     {
+        logger()->info('Livewire MOUNT called', [
+            'incomingIndex' => $currentIndex,
+            'sessionCurrentQuestion' => session('test_session.current_question') ?? 'none',
+        ]);
+
         $this->test = $test;
         $this->candidate = $candidate;
         $this->questions = $questions;
         $this->currentIndex = $currentIndex;
+        $this->currentQuestion = $this->getCurrentQuestion();
 
         $sessionData = session('test_session');
-        $savedAnswer = $sessionData['answers'][$this->currentIndex] ?? null;
-        $this->selectedAnswer = is_numeric($savedAnswer) ? $savedAnswer : null;
-        $this->lsqValue = is_numeric($savedAnswer) ? $savedAnswer : 3;
+        if (!$sessionData) {
+            logger()->error('No test session found during mount');
+            return redirect()->route('tests.start', ['id' => $test->id]);
+        }
+
+        logger()->info('After setting currentIndex', [
+            'this.currentIndex' => $this->currentIndex,
+            'total_questions' => count($this->questions)
+        ]);
+
+        // Load saved answer if exists
+        if (isset($sessionData['answers'][$this->currentIndex])) {
+            $savedAnswer = $sessionData['answers'][$this->currentIndex];
+            if ($this->currentQuestion->question_type === 'MCQ') {
+                $this->selectedAnswer = is_numeric($savedAnswer) ? $savedAnswer : null;
+            } else {
+                $this->lsqValue = is_numeric($savedAnswer) ? $savedAnswer : 3;
+            }
+        }
+    }
+
+    public function getCurrentQuestion()
+    {
+        return $this->questions[$this->currentIndex] ?? null;
+    }
+
+    public function getQuestionProperty()
+    {
+        return $this->getCurrentQuestion();
+    }
+
+    public function getCurrentQuestionProperty()
+    {
+        return $this->getCurrentQuestion();
     }
 
     public function submitAndNext()
     {
-        $session = session('test_session');
-    
-        // ✅ Prevent accessing an invalid index
-        if (!isset($this->questions[$this->currentIndex])) {
-            logger()->error('Invalid currentIndex in Livewire', [
-                'index' => $this->currentIndex,
-                'total' => count($this->questions)
-            ]);
+        if ($this->isSubmitting) {
+            logger()->warning('Preventing double submission');
             return;
         }
-    
-        $question = $this->questions[$this->currentIndex];
-    
-        // ✅ Save MCQ Answer
-        if ($question->question_type === 'MCQ' && $this->selectedAnswer) {
-            $answerText = $question->choices->firstWhere('id', $this->selectedAnswer)->choice_text ?? null;
-            Answer::updateOrCreate([
-                'candidate_id' => $this->candidate->id,
-                'test_id' => $this->test->id,
-                'question_id' => $question->id,
-            ], [
-                'answer_text' => $answerText,
+
+        $this->isSubmitting = true;
+        
+        try {
+            $session = session('test_session');
+            logger()->info('[Livewire] submitAndNext triggered', [
+                'currentIndex' => $this->currentIndex,
+                'total_questions' => count($this->questions)
             ]);
-            $session['answers'][$this->currentIndex] = $this->selectedAnswer;
-        }
-    
-        // ✅ Save LSQ Answer
-        if ($question->question_type === 'LSQ') {
-            Answer::updateOrCreate([
-                'candidate_id' => $this->candidate->id,
-                'test_id' => $this->test->id,
-                'question_id' => $question->id,
-            ], [
-                'answer_text' => $this->lsqValue,
+        
+            if (!isset($this->questions[$this->currentIndex])) {
+                logger()->error('Invalid currentIndex in Livewire', [
+                    'index' => $this->currentIndex,
+                    'total' => count($this->questions)
+                ]);
+                return;
+            }
+        
+            $question = $this->getCurrentQuestion();
+            $this->currentQuestion = $question;
+
+            // Validate required selection
+            if ($question->question_type === 'MCQ' && !$this->selectedAnswer) {
+                $this->dispatch('showError', message: 'Please select an answer before proceeding.');
+                $this->isSubmitting = false;
+                return;
+            }
+        
+            // Save MCQ Answer
+            if ($question->question_type === 'MCQ' && $this->selectedAnswer) {
+                $choice = $question->choices->firstWhere('id', $this->selectedAnswer);
+                if ($choice) {
+                    Answer::updateOrCreate(
+                        [
+                            'candidate_id' => $this->candidate->id,
+                            'test_id' => $this->test->id,
+                            'question_id' => $question->id,
+                        ],
+                        ['answer_text' => $choice->choice_text]
+                    );
+                    $session['answers'][$this->currentIndex] = $this->selectedAnswer;
+                }
+            }
+        
+            // Save LSQ Answer
+            if ($question->question_type === 'LSQ') {
+                Answer::updateOrCreate(
+                    [
+                        'candidate_id' => $this->candidate->id,
+                        'test_id' => $this->test->id,
+                        'question_id' => $question->id,
+                    ],
+                    ['answer_text' => $this->lsqValue]
+                );
+                $session['answers'][$this->currentIndex] = $this->lsqValue;
+            }
+        
+            // Move index forward
+            $this->currentIndex++;
+            
+            // Reset form values AFTER moving to next question
+            $this->selectedAnswer = null;
+            $this->lsqValue = 3;
+            
+            // Update current question
+            $this->currentQuestion = $this->getCurrentQuestion();
+        
+            // Redirect to submit if we've reached the end
+            if ($this->currentIndex >= count($this->questions)) {
+                session(['test_session' => $session]);
+                return redirect()->route('tests.submit', ['id' => $this->test->id]);
+            }
+            
+            // Update session
+            $session['current_question'] = $this->currentIndex;
+            session(['test_session' => $session]);
+            
+            // Force a re-render
+            $this->dispatch('questionChanged');
+            
+        } catch (\Exception $e) {
+            logger()->error('Error in submitAndNext', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
-            $session['answers'][$this->currentIndex] = $this->lsqValue;
+        } finally {
+            $this->isSubmitting = false;
         }
-    
-        // ✅ Move index forward AFTER saving
-        $this->currentIndex++;
-    
-        // ✅ Redirect to GET /submit if we've reached the end
-        if ($this->currentIndex >= count($this->questions)) {
-            return redirect()->route('tests.submit', ['id' => $this->test->id]);
+    }
+
+    public function updatedCurrentIndex()
+    {
+        $this->selectedAnswer = null;
+        $this->lsqValue = 3;
+        $this->dispatch('questionChanged');
+    }
+
+    public function hydrate()
+    {
+        // Reset values after re-hydration
+        if ($this->currentQuestion && $this->currentQuestion->question_type === 'MCQ') {
+            $this->selectedAnswer = null;
         }
-    
-        $session['current_question'] = $this->currentIndex;
-        session(['test_session' => $session]);
-    
-        $this->reset('selectedAnswer', 'lsqValue');
     }
 
     protected $listeners = ['timeExpired' => 'handleTimeExpiry'];
@@ -126,12 +222,14 @@ class TestPlayer extends Component
                 ->with('error', 'Failed to auto-submit due to error.');
         }
     }
-    
-    
 
     public function render()
     {
-        $question = $this->questions[$this->currentIndex] ?? null;
-        return view('livewire.test-player', compact('question'));
+        $this->currentQuestion = $this->getCurrentQuestion();
+        logger()->info('Rendering question', [
+            'index' => $this->currentIndex,
+            'question_id' => $this->currentQuestion ? $this->currentQuestion->id : null
+        ]);
+        return view('livewire.test-player');
     }
 }
