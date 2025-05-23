@@ -195,9 +195,11 @@
                                             @endif
 
                                             @if($test->title == "General Mental Ability (GMA)" && Auth::guard('candidate')->check())
-                                                <span class="text-sm md:text-base">
-                                                    {{$questionsExplained[$index]}}
-                                                </span>
+                                                @if(isset($questionsExplained[$index]))
+                                                    <span class="text-sm md:text-base">
+                                                        {{$questionsExplained[$index]}}
+                                                    </span>
+                                                @endif
                                             @endif
                                         @endif
 

@@ -597,7 +597,9 @@ class TestController extends Controller
                     'The answer is (A).',
                     'For this question, the (C) answer is the right one, because 102 plus 120 plus 50 makes 272.',
                     'The (A) answer is the right one, because 7x9=63.',
-                    'There are 3 boxes in the picture.'
+                    'There are 3 boxes in the pile. So the (C) answer is the right one.',
+                    'The right answer is 4 boxes. Only 3 boxes show in the first picture. But the other picture shows that there is one more box which was covered up in the first picture. The hidden box has to be counted too, making 4 boxes altogether. So the (A) answer is the right one.',
+                    'You can see that the right answer is 5 boxes. So the (B) answer is the right one.'
                 ];
         
                 return view('tests.show', compact('test', 'isTestStarted', 'questions', 'hasMCQ', 'hasLSQ', 'questionsExplained',
