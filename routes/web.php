@@ -29,10 +29,10 @@ Route::get('/', function () {
 
 // Welcome route
 Route::get('/welcome', function () {
-    if (Auth::guard('web')->check()) {
-        Auth::guard('web')->logout();
-        session()->regenerateToken();
-    }
+    // if (Auth::guard('web')->check()) {
+    //     Auth::guard('web')->logout();
+    //     session()->regenerateToken();
+    // }
     return view('welcome');
 })->name('welcome');
 
