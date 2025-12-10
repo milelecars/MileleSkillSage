@@ -119,7 +119,9 @@ Route::middleware('auth:web')->group(function () {
     Route::post('/admin/access-control', [AccessController::class, 'store'])->name('admin.access-control.store');
     Route::put('/admin/access-control/{admin}', [AccessController::class, 'update'])->name('admin.access-control.update');
     Route::delete('/admin/access-control/{admin}', [AccessController::class, 'destroy'])->name('admin.access-control.destroy');
-
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->name('logout')
+    ->middleware('auth:web,candidate');
 
 });
 
@@ -138,11 +140,10 @@ Route::middleware('auth:candidate')->group(function () {
     Route::post('/log-suspension', [TestController::class, 'logSuspension'])->name('tests.log-suspension');
     Route::post('/get-unsuspend-count', [TestController::class, 'getUnsuspendCount']);
     Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
+    ->name('logout')
+    ->middleware('auth:web,candidate');
 
 });
 
-// Logout route (accessible to both admins and candidates)
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
-    ->name('logout')
-    ->middleware('auth:web,candidate');
 
