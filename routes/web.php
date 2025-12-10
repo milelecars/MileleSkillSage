@@ -143,6 +143,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout')
     ->middleware('auth:web,candidate');
 
-Route::get('/tests/{id}/show', [TestController::class, 'show'])
-    ->name('tests.show')
-    ->middleware('auth:web,candidate');
+// After the candidate middleware group, add:
+Route::middleware('auth:web,candidate')->group(function () {
+    Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
+});
