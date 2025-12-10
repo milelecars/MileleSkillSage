@@ -29,8 +29,10 @@ return new class extends Migration
             $table->renameColumn('status_new', 'status');
         });
 
-        // Step 5 (optional): Add default back using raw SQL
-        DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
+        // Step 5 (optional): Add default back using raw SQL (skip on SQLite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
+        }
     }
 
     public function down()
@@ -55,7 +57,9 @@ return new class extends Migration
             $table->renameColumn('status_old', 'status');
         });
 
-        // Step 5 (optional): Restore default
-        DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
+        // Step 5 (optional): Restore default (skip on SQLite)
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
+        }
     }
 };
