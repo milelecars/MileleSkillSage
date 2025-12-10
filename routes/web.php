@@ -113,6 +113,7 @@ Route::middleware('auth:web')->group(function () {
     Route::get('/tests/archived', [TestController::class, 'archived'])->name('tests.archived');
     Route::patch('/tests/{id}/restore', [TestController::class, 'restore'])->name('tests.restore'); 
     Route::get('/tests/{id}/invite', [TestController::class, 'invite'])->name('tests.invite');
+    Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
 
     Route::get('/admin/access-control', [AccessController::class, 'index'])->name('admin.access-control');
     Route::post('/admin/access-control', [AccessController::class, 'store'])->name('admin.access-control.store');
@@ -136,6 +137,8 @@ Route::middleware('auth:candidate')->group(function () {
     Route::post('/tests/{testId}/request-unsuspension', [TestController::class, 'requestUnsuspension'])->name('tests.request-unsuspension');
     Route::post('/log-suspension', [TestController::class, 'logSuspension'])->name('tests.log-suspension');
     Route::post('/get-unsuspend-count', [TestController::class, 'getUnsuspendCount']);
+    Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
+
 });
 
 // Logout route (accessible to both admins and candidates)
@@ -143,7 +146,3 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout')
     ->middleware('auth:web,candidate');
 
-// After the candidate middleware group, add:
-Route::middleware('auth:web,candidate')->group(function () {
-    Route::get('/tests/{id}/show', [TestController::class, 'show'])->name('tests.show');
-});
