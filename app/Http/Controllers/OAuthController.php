@@ -18,21 +18,28 @@ class OAuthController extends Controller
         $client->setAccessType('offline');
         $client->setPrompt('select_account consent');
 
-        // Check for token
         $tokenPath = storage_path('app/token.json');
         if (file_exists($tokenPath)) {
-            Log::debug('Found existing token file');
             $accessToken = json_decode(file_get_contents($tokenPath), true);
             $client->setAccessToken($accessToken);
         }
 
         if ($client->isAccessTokenExpired()) {
             Log::debug('Token is expired or missing');
+            
             if ($client->getRefreshToken()) {
-                Log::debug('Attempting to refresh token');
-                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                Log::debug('Refreshing token');
+                $newToken = $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                
+                // Save the refreshed token
+                file_put_contents($tokenPath, json_encode($newToken));
+                
             } else {
-                Log::debug('No refresh token available');
+                Log::error('No refresh token available - deleting invalid token file');
+                // Delete the invalid token file so user is forced to re-authenticate
+                if (file_exists($tokenPath)) {
+                    unlink($tokenPath);
+                }
                 throw new \Exception('Authentication required');
             }
         }
@@ -76,16 +83,20 @@ class OAuthController extends Controller
             $accessToken = $client->fetchAccessTokenWithAuthCode($request->code);
             $client->setAccessToken($accessToken);
 
-            // Check for errors
             if (array_key_exists('error', $accessToken)) {
                 throw new \Exception(join(', ', $accessToken));
             }
-
+            
+            // IMPORTANT: Verify refresh token exists
+            if (!isset($accessToken['refresh_token'])) {
+                Log::warning('No refresh token received. User may need to revoke and re-authorize.');
+                // Still save the token, but log the issue
+            }
+            
             // Save the token
             $tokenPath = storage_path('app/token.json');
-            if (!file_exists(dirname($tokenPath))) {
-                mkdir(dirname($tokenPath), 0700, true);
-            }
+            file_put_contents($tokenPath, json_encode($accessToken));
+            
 
             Log::debug('Saving token to file', [
                 'path' => $tokenPath,
