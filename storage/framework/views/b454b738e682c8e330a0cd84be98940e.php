@@ -1,0 +1,2 @@
+<img id="logo" alt="Milele Logo" src="<?php echo e(asset('images/MileleLogowhite.webp')); ?>" />
+<?php /**PATH /Users/heliahaghighi/Desktop/MyFile/Projects/MileleSkillSage/resources/views/components/application-logo.blade.php ENDPATH**/ ?>

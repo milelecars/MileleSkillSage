@@ -38,8 +38,13 @@ class CandidateController extends Controller
             // Get all invitations for this candidate's email
             $allInvitations = Invitation::whereJsonLength('invited_emails->invites', '>', 0)
                 ->with(['test:id,title,description,duration', 'test.questions'])
-                ->whereJsonContains('invited_emails->invites', ['email' => $candidate->email])
-                ->get();
+                ->get()
+                ->filter(function ($invitation) use ($candidate) {
+                    $invites = collect($invitation->invited_emails['invites']);
+                    return $invites->contains(function ($invite) use ($candidate) {
+                        return strtolower($invite['email']) === strtolower($candidate->email);
+                    });
+                });
 
             \Log::debug('Retrieved all invitations:', [
                 'count' => $allInvitations->count()
