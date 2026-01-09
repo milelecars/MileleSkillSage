@@ -29,13 +29,10 @@ return new class extends Migration
             $table->renameColumn('status_new', 'status');
         });
 
-<<<<<<< Updated upstream
-        // Step 5 (optional): Add default back using raw SQL (skip on SQLite)
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
-=======
         // Step 5 (optional): Add default back using driver-specific SQL
         $driver = DB::getDriverName();
+        if ($driver === 'pgsql') {
+            $driver = DB::getDriverName();
         if ($driver === 'pgsql') {
             DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
         } elseif ($driver === 'mysql') {
@@ -44,7 +41,14 @@ return new class extends Migration
             DB::statement("ALTER TABLE candidate_test MODIFY status ENUM('not started','in progress','suspended','completed','accepted','rejected','expired') DEFAULT 'not started'");
         } else {
             // SQLite and other drivers: skip setting default to avoid unsupported ALTERs.
->>>>>>> Stashed changes
+
+        }
+        } elseif ($driver === 'mysql') {
+            // On MySQL, ALTER COLUMN ... SET DEFAULT is supported on 8.0.13+ for non-ENUM,
+            // but since this is an ENUM we use MODIFY to re-declare the enum with a default.
+            DB::statement("ALTER TABLE candidate_test MODIFY status ENUM('not started','in progress','suspended','completed','accepted','rejected','expired') DEFAULT 'not started'");
+        } else {
+            // SQLite and other drivers: skip setting default to avoid unsupported ALTERs.
         }
     }
 
@@ -70,20 +74,14 @@ return new class extends Migration
             $table->renameColumn('status_old', 'status');
         });
 
-<<<<<<< Updated upstream
-        // Step 5 (optional): Restore default (skip on SQLite)
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
-=======
         // Step 5 (optional): Restore default with driver-specific SQL
         $driver = DB::getDriverName();
         if ($driver === 'pgsql') {
-            DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
+                DB::statement("ALTER TABLE candidate_test ALTER COLUMN status SET DEFAULT 'not started'");
         } elseif ($driver === 'mysql') {
             DB::statement("ALTER TABLE candidate_test MODIFY status ENUM('not started','in progress','suspended','completed','accepted','rejected') DEFAULT 'not started'");
         } else {
             // SQLite and other drivers: skip
->>>>>>> Stashed changes
         }
     }
 };
