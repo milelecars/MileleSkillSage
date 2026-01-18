@@ -67,9 +67,6 @@ class LoginField extends Component
             $message->setRaw(base64_encode($rawMessage));
             $response = $service->users_messages->send('me', $message);
             Log::info('Gmail API response', ['response' => $response]);
-            $accessToken = json_decode(file_get_contents(storage_path('app/token.json')), true);
-                Log::debug('Token scopes', ['scopes' => $accessToken['scope'] ?? 'None']);
-
 
             Log::info('OTP sent successfully', [
                 'email' => $admin->email,
@@ -80,8 +77,19 @@ class LoginField extends Component
             $this->successMessage = 'OTP has been sent to your email.';
             $this->errorMessage = '';
         } catch (\Exception $e) {
-            Log::error('Failed to send OTP', ['error' => $e->getMessage()]);
-            $this->errorMessage = 'Failed to send OTP. Please try again later.';
+            Log::error('Failed to send OTP', [
+                'error' => $e->getMessage(),
+                'email' => $this->email ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Check if it's an authentication error
+            if (str_contains($e->getMessage(), 'Authentication required') || 
+                str_contains($e->getMessage(), 'Authentication')) {
+                $this->errorMessage = 'Gmail authentication is required. Please visit /admin/gmail/auth to authenticate.';
+            } else {
+                $this->errorMessage = 'Failed to send OTP. Please try again later.';
+            }
             $this->successMessage = '';
         }
     }

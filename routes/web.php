@@ -19,7 +19,8 @@ use App\Http\Controllers\ScreenshotController;
 use App\Http\Controllers\OAuthController;
 use App\Http\Controllers\ExcelExportController;
 
-Route::get('/google/login/{testId}', [OAuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/google/login/{testId?}', [OAuthController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/admin/gmail/auth', [OAuthController::class, 'redirectToGoogleForAdmin'])->name('admin.gmail.auth');
 Route::get('/oauth2/callback', [OAuthController::class, 'handleGoogleCallback']);
 
 // Root route

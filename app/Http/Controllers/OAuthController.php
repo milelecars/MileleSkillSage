@@ -19,6 +19,7 @@ class OAuthController extends Controller
         $client->setPrompt('select_account consent');
 
         $tokenPath = storage_path('app/token.json');
+        $accessToken = null;
         if (file_exists($tokenPath)) {
             $accessToken = json_decode(file_get_contents($tokenPath), true);
             $client->setAccessToken($accessToken);
@@ -27,12 +28,19 @@ class OAuthController extends Controller
         if ($client->isAccessTokenExpired()) {
             Log::debug('Token is expired or missing');
             
-            if ($client->getRefreshToken()) {
+            $refreshToken = $client->getRefreshToken();
+            if ($refreshToken) {
                 Log::debug('Refreshing token');
-                $newToken = $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                $newToken = $client->fetchAccessTokenWithRefreshToken($refreshToken);
+                
+                // Preserve the refresh token if a new one wasn't provided
+                if (!isset($newToken['refresh_token']) && $accessToken && isset($accessToken['refresh_token'])) {
+                    $newToken['refresh_token'] = $accessToken['refresh_token'];
+                }
                 
                 // Save the refreshed token
                 file_put_contents($tokenPath, json_encode($newToken));
+                Log::debug('Token refreshed successfully');
                 
             } else {
                 Log::error('No refresh token available - deleting invalid token file');
@@ -47,10 +55,15 @@ class OAuthController extends Controller
         return $client;
     }
 
-    public function redirectToGoogle($testId)
+    public function redirectToGoogle($testId = null)
     {
-        session()->put('test_id', $testId); 
-        Log::debug('Storing test_id in session', ['test_id' => $testId]);
+        if ($testId) {
+            session()->put('test_id', $testId); 
+            Log::debug('Storing test_id in session', ['test_id' => $testId]);
+        } else {
+            session()->put('admin_gmail_auth', true);
+            Log::debug('Admin Gmail authentication initiated');
+        }
 
         $client = new Client();
         $client->setApplicationName('Milele SkillSage');
@@ -62,6 +75,11 @@ class OAuthController extends Controller
         $authUrl = $client->createAuthUrl();
         Log::debug('Redirecting to Google OAuth URL', ['url' => $authUrl]);
         return redirect($authUrl);
+    }
+
+    public function redirectToGoogleForAdmin()
+    {
+        return $this->redirectToGoogle(null);
     }
 
     public function handleGoogleCallback(Request $request)
@@ -96,15 +114,21 @@ class OAuthController extends Controller
             // Save the token
             $tokenPath = storage_path('app/token.json');
             file_put_contents($tokenPath, json_encode($accessToken));
-            
+            chmod($tokenPath, 0600);
 
             Log::debug('Saving token to file', [
                 'path' => $tokenPath,
-                'token_data' => array_keys($accessToken)
+                'token_data' => array_keys($accessToken),
+                'has_refresh_token' => isset($accessToken['refresh_token'])
             ]);
 
-            file_put_contents($tokenPath, json_encode($accessToken));
-            chmod($tokenPath, 0600);
+            // Check if this is admin Gmail authentication (not test invitation)
+            if (session('admin_gmail_auth')) {
+                session()->forget('admin_gmail_auth');
+                Log::debug('Admin Gmail authentication completed successfully');
+                return redirect()->route('login')
+                    ->with('success', 'Gmail authentication successful! You can now generate OTP.');
+            }
 
             $testId = session('test_id');
             if (!$testId) {
@@ -117,6 +141,14 @@ class OAuthController extends Controller
 
         } catch (\Exception $e) {
             Log::error('OAuth callback error: ' . $e->getMessage());
+            
+            // Check if this is admin Gmail authentication
+            if (session('admin_gmail_auth')) {
+                session()->forget('admin_gmail_auth');
+                return redirect()->route('login')
+                    ->with('error', 'Gmail authentication failed. Please try again.');
+            }
+            
             $testId = session('test_id') ?? 'default';
             return redirect()->route('google.login', ['testId' => $testId])
                            ->with('error', 'Authentication failed. Please try again.');
