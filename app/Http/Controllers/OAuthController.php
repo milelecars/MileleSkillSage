@@ -71,6 +71,11 @@ class OAuthController extends Controller
         $client->setAuthConfig(storage_path('app/client_secret.json'));
         $client->setAccessType('offline');
         $client->setPrompt('select_account consent');
+        
+        // Set redirect URI - must match Google Cloud Console configuration
+        $redirectUri = url('/oauth2/callback');
+        $client->setRedirectUri($redirectUri);
+        Log::debug('Setting redirect URI', ['redirect_uri' => $redirectUri]);
 
         $authUrl = $client->createAuthUrl();
         Log::debug('Redirecting to Google OAuth URL', ['url' => $authUrl]);
@@ -96,6 +101,10 @@ class OAuthController extends Controller
             $client->setAuthConfig(storage_path('app/client_secret.json'));
             $client->setAccessType('offline');
             $client->setPrompt('select_account consent');
+            
+            // Set redirect URI - must match Google Cloud Console configuration
+            $redirectUri = url('/oauth2/callback');
+            $client->setRedirectUri($redirectUri);
 
             // Exchange authorization code for access token
             $accessToken = $client->fetchAccessTokenWithAuthCode($request->code);
