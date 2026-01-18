@@ -72,8 +72,11 @@ class OAuthController extends Controller
         $client->setAccessType('offline');
         $client->setPrompt('select_account consent');
         
-        // Set redirect URI - must match Google Cloud Console configuration
-        $redirectUri = url('/oauth2/callback');
+        // Set redirect URI - must match Google Cloud Console configuration exactly
+        // Use environment variable if set, otherwise generate from APP_URL
+        $redirectUri = env('GOOGLE_REDIRECT_URI', url('/oauth2/callback'));
+        // Ensure no trailing slash
+        $redirectUri = rtrim($redirectUri, '/');
         $client->setRedirectUri($redirectUri);
         Log::debug('Setting redirect URI', ['redirect_uri' => $redirectUri]);
 
@@ -102,8 +105,11 @@ class OAuthController extends Controller
             $client->setAccessType('offline');
             $client->setPrompt('select_account consent');
             
-            // Set redirect URI - must match Google Cloud Console configuration
-            $redirectUri = url('/oauth2/callback');
+            // Set redirect URI - must match Google Cloud Console configuration exactly
+            // Use environment variable if set, otherwise generate from APP_URL
+            $redirectUri = env('GOOGLE_REDIRECT_URI', url('/oauth2/callback'));
+            // Ensure no trailing slash
+            $redirectUri = rtrim($redirectUri, '/');
             $client->setRedirectUri($redirectUri);
 
             // Exchange authorization code for access token
