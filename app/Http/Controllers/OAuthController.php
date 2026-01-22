@@ -74,11 +74,19 @@ class OAuthController extends Controller
         
         // Set redirect URI - must match Google Cloud Console configuration exactly
         // Use environment variable if set, otherwise generate from APP_URL
-        $redirectUri = env('GOOGLE_REDIRECT_URI', url('/oauth2/callback'));
+        $redirectUri = env('GOOGLE_REDIRECT_URI');
+        if (!$redirectUri) {
+            // Generate from APP_URL - ensure it uses the correct route
+            $redirectUri = url('/oauth2/callback');
+        }
         // Ensure no trailing slash
         $redirectUri = rtrim($redirectUri, '/');
         $client->setRedirectUri($redirectUri);
-        Log::debug('Setting redirect URI', ['redirect_uri' => $redirectUri]);
+        Log::debug('Setting redirect URI', [
+            'redirect_uri' => $redirectUri,
+            'from_env' => env('GOOGLE_REDIRECT_URI') !== null,
+            'app_url' => config('app.url')
+        ]);
 
         $authUrl = $client->createAuthUrl();
         Log::debug('Redirecting to Google OAuth URL', ['url' => $authUrl]);
